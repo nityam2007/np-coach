@@ -13,7 +13,7 @@ export function PageTemplate({ page }: { page: Page }) {
         crumbs={[{ label: "Home", href: "/" }, { label: page.title }]}
       />
 
-      <section className="mx-auto max-w-3xl px-4 py-14 sm:px-6">
+      <section className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
         <Reveal>
           <div className="prose" dangerouslySetInnerHTML={{ __html: page.body }} />
         </Reveal>

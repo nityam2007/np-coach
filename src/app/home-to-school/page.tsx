@@ -112,7 +112,7 @@ export default async function HomeToSchoolPage() {
                   ) : null}
                   <div>
                     <h3 className="font-display text-lg font-semibold text-navy">{school.name}</h3>
-                    <p className="mt-1 text-xs text-navy/60">
+                    <p className="mt-1 text-xs text-navy/70">
                       {count} {count === 1 ? "route" : "routes"}
                       {!school.spacesAvailable && (
                         <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 font-semibold text-amber-700">
@@ -131,7 +131,7 @@ export default async function HomeToSchoolPage() {
           })}
         </div>
         {schools.length === 0 && (
-          <p className="mt-4 text-sm text-navy/60">
+          <p className="mt-4 text-sm text-navy/70">
             School booking links are managed in the CMS. Call {settings.phone.display} for help registering.
           </p>
         )}

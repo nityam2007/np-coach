@@ -6,6 +6,7 @@ import { boardingPassFromBooking } from "@/lib/ticket";
 import { BoardingPass } from "@/components/account/BoardingPass";
 import { TicketActions } from "@/components/account/TicketActions";
 import { Icon } from "@/components/ui/Icon";
+import { ButtonLink } from "@/components/ui/Button";
 
 export const metadata: Metadata = {
   title: "Booking confirmed",
@@ -53,22 +54,17 @@ export default async function BookingSuccessPage({ searchParams }: { searchParam
         )
       )}
 
-      <div className="mt-8 flex flex-wrap gap-4">
-        <Link
-          href="/account"
-          className="rounded-xl bg-accent px-6 py-3 font-semibold text-white transition-opacity hover:opacity-90"
-        >
-          Go to my account
-        </Link>
-        <Link
-          href="/daily-express-service"
-          className="rounded-xl border border-navy/15 px-6 py-3 font-semibold text-navy transition-colors hover:bg-navy/5"
-        >
-          Back to timetable
-        </Link>
+      <div className="mt-8 flex flex-wrap gap-3">
+        <ButtonLink href="/account">Go to my account</ButtonLink>
+        <ButtonLink href="/daily-express-service/book" variant="secondary">
+          Book another journey
+        </ButtonLink>
+        <ButtonLink href="/daily-express-service" variant="secondary">
+          View timetable
+        </ButtonLink>
       </div>
 
-      <p className="mt-6 text-center text-sm text-navy/60">Please arrive 15 minutes before departure.</p>
+      <p className="mt-6 text-center text-sm text-navy/70">Please arrive 15 minutes before departure.</p>
     </article>
   );
 }

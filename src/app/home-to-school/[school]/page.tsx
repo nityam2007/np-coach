@@ -51,10 +51,10 @@ export default async function SchoolPage({ params }: { params: Promise<{ school:
           { label: info.name, path: `/home-to-school/${school}` },
         ]}
       />
-      <section className="relative overflow-hidden bg-gradient-to-br from-navy via-navy to-[#161838] text-offwhite">
+      <section className="relative overflow-hidden bg-gradient-to-br from-navy via-navy to-brand-deep text-offwhite">
         <StripesBackdrop dark />
         <FloatingBlobs dark />
-        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:py-16">
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
          <Reveal>
           {/* Breadcrumb */}
           <nav className="flex flex-wrap items-center gap-1.5 text-sm text-greyblue" aria-label="Breadcrumb">
@@ -85,7 +85,7 @@ export default async function SchoolPage({ params }: { params: Promise<{ school:
                 href={info.buyUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-md bg-accent px-6 py-3 font-semibold text-white transition-opacity hover:opacity-90"
+                className="rounded-xl bg-accent px-6 py-3 font-semibold text-white shadow-sm shadow-accent/20 transition-all hover:bg-brand-hover hover:shadow-md"
               >
                 Buy Tickets
               </a>
@@ -95,7 +95,7 @@ export default async function SchoolPage({ params }: { params: Promise<{ school:
                   href={info.waitlistUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-md bg-accent px-6 py-3 font-semibold text-white transition-opacity hover:opacity-90"
+                  className="rounded-xl bg-accent px-6 py-3 font-semibold text-white shadow-sm shadow-accent/20 transition-all hover:bg-brand-hover hover:shadow-md"
                 >
                   Join the waiting list
                 </a>
@@ -105,7 +105,7 @@ export default async function SchoolPage({ params }: { params: Promise<{ school:
               href={TRACK_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-md border border-greyblue/50 px-6 py-3 font-semibold text-offwhite transition-colors hover:bg-white/5"
+              className="rounded-lg border border-greyblue/50 px-6 py-3 font-semibold text-offwhite transition-colors hover:bg-white/5"
             >
               Track the bus
             </a>
@@ -120,7 +120,7 @@ export default async function SchoolPage({ params }: { params: Promise<{ school:
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
+      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
         {/* Route quick-nav */}
         {routes.length > 1 && (
           <nav className="flex flex-wrap gap-2" aria-label="Routes">
@@ -142,7 +142,7 @@ export default async function SchoolPage({ params }: { params: Promise<{ school:
               <div className="flex flex-wrap items-baseline justify-between gap-3">
                 <h2 className="font-display text-xl font-semibold text-navy">
                   {route.code}
-                  <span className="ml-2 text-base font-normal text-navy/60">{route.name}</span>
+                  <span className="ml-2 text-base font-normal text-navy/70">{route.name}</span>
                 </h2>
                 {info.spacesAvailable && (
                   <a
@@ -163,12 +163,12 @@ export default async function SchoolPage({ params }: { params: Promise<{ school:
         </div>
 
         {routes.length === 0 && (
-          <p className="text-sm text-navy/60">
+          <p className="text-sm text-navy/70">
             Route timetables are managed in the CMS. Call {settings.phone.display} for help.
           </p>
         )}
 
-        <p className="mt-10 text-sm text-navy/60">
+        <p className="mt-10 text-sm text-navy/70">
           Please be at your stop at least 3 minutes before the listed time. Times are approximate — track the vehicle
           for live updates. See the{" "}
           <Link href="/home-to-school" className="text-accent hover:underline">

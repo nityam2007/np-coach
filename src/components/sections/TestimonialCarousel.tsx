@@ -40,7 +40,7 @@ export function TestimonialCarousel({
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <Eyebrow shiny>{eyebrow}</Eyebrow>
+          <Eyebrow>{eyebrow}</Eyebrow>
           <h2 className="mt-3 font-display text-2xl font-bold text-navy sm:text-3xl">{heading}</h2>
         </div>
         <div className="flex items-center gap-2">
@@ -55,10 +55,10 @@ export function TestimonialCarousel({
         <AnimatePresence mode="wait">
           <motion.figure
             key={index}
-            initial={{ opacity: 0, x: 30, filter: "blur(6px)" }}
-            animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
-            exit={{ opacity: 0, x: -30, filter: "blur(6px)" }}
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            initial={{ opacity: 0, x: 24 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -24 }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
             className="rounded-2xl border border-greyblue/20 bg-white p-6 shadow-sm shadow-navy/5 sm:p-8"
           >
             <div className="flex items-center justify-between">
@@ -84,7 +84,7 @@ export function TestimonialCarousel({
               )}
               <span>
                 <span className="block font-semibold text-navy">{current.author}</span>
-                <span className="block text-xs text-navy/60">
+                <span className="block text-xs text-navy/70">
                   {current.role}
                   {current.company ? `, ${current.company}` : ""}
                 </span>

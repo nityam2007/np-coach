@@ -20,7 +20,7 @@ export default async function LoginPage() {
           <Icon name="user" className="h-6 w-6" />
         </span>
         <h1 className="mt-4 font-display text-2xl font-bold text-navy">Sign in to your account</h1>
-        <p className="mt-1 text-sm text-navy/60">View your tickets and lost-property claims — no password required.</p>
+        <p className="mt-1 text-sm text-navy/70">View your tickets and lost-property claims — no password required.</p>
         <div className="mt-6">
           <LoginForm />
         </div>

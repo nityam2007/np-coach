@@ -59,7 +59,7 @@ export function TicketActions({ targetId, reference }: { targetId: string; refer
         type="button"
         onClick={downloadPdf}
         disabled={busy !== null}
-        className="inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+        className="inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-3 text-sm font-semibold text-white shadow-sm shadow-accent/20 transition-all hover:bg-brand-hover hover:shadow-md disabled:opacity-60"
       >
         <Icon name="download" className="h-4 w-4" />
         {busy === "pdf" ? "Preparing…" : "Download PDF"}

@@ -78,7 +78,7 @@ export default async function DailyExpressPage() {
           {stops.map((stop) => (
             <li key={stop.code} className="rounded-lg border border-greyblue/30 bg-white px-4 py-3">
               <p className="font-display font-semibold text-navy">{stop.name}</p>
-              <p className="mt-1 text-xs text-navy/60">{stop.detail}</p>
+              <p className="mt-1 text-xs text-navy/70">{stop.detail}</p>
             </li>
           ))}
         </ul>
@@ -112,7 +112,7 @@ export default async function DailyExpressPage() {
         <div className="mt-12 flex flex-wrap gap-4">
           <a
             href={settings.phone.href}
-            className="rounded-md bg-accent px-6 py-3 font-semibold text-white transition-opacity hover:opacity-90"
+            className="rounded-xl bg-accent px-6 py-3 font-semibold text-white shadow-sm shadow-accent/20 transition-all hover:bg-brand-hover hover:shadow-md"
           >
             Call {settings.phone.display}
           </a>

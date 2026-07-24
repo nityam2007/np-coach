@@ -22,7 +22,7 @@ export function SchoolRouteTimetable({ route }: { route: SchoolRoute }) {
           </tbody>
         </table>
       </div>
-      {route.returnNote && <p className="mt-2 text-xs text-navy/60">{route.returnNote}</p>}
+      {route.returnNote && <p className="mt-2 text-xs text-navy/70">{route.returnNote}</p>}
     </div>
   );
 }

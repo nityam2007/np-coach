@@ -7,7 +7,8 @@ import { RouteTimetable } from "@/components/sections/RouteTimetable";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Icon } from "@/components/ui/Icon";
-import { Reveal, Stagger, StaggerItem, Tilt, Magnetic } from "@/components/ui/motion";
+import { Reveal, Stagger, StaggerItem } from "@/components/ui/motion";
+import { ButtonLink, buttonCls } from "@/components/ui/Button";
 import { StripesBackdrop, FloatingBlobs } from "@/components/ui/Backdrops";
 import { featureIcon } from "@/lib/feature-icon";
 import { assetUrl, getFleet, getFleetVehicle, getPage, getPages, getRoute, getRoutes, getSettings, getStops } from "@/lib/directus";
@@ -61,7 +62,7 @@ export default async function SlugPage({ params }: { params: Promise<{ slug: str
         />
 
         {/* Hero — animated navy, copy + tilted photo */}
-        <section className="relative overflow-hidden bg-gradient-to-br from-navy via-navy to-[#161838] text-offwhite">
+        <section className="relative overflow-hidden bg-gradient-to-br from-navy via-navy to-brand-deep text-offwhite">
           <StripesBackdrop dark />
           <FloatingBlobs dark />
           <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:py-20">
@@ -82,19 +83,11 @@ export default async function SlugPage({ params }: { params: Promise<{ slug: str
               </div>
               <p className="mt-4 max-w-2xl text-lg text-greyblue">{vehicle.summary}</p>
               <div className="mt-8 flex flex-wrap gap-3">
-                <Magnetic>
-                  <Link
-                    href="/get-a-quote"
-                    className="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-accent to-[#1e4fd6] px-6 py-3 font-semibold text-white shadow-lg shadow-accent/25 transition-all hover:shadow-xl hover:brightness-110 active:scale-[0.98]"
-                  >
-                    Get a Quote
-                    <Icon name="arrowRight" className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                  </Link>
-                </Magnetic>
-                <a
-                  href={settings.phone.href}
-                  className="inline-flex items-center gap-2 rounded-xl border border-white/20 px-6 py-3 font-semibold text-offwhite transition-colors hover:bg-white/10"
-                >
+                <ButtonLink href="/get-a-quote" className="group">
+                  Get a Quote
+                  <Icon name="arrowRight" className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </ButtonLink>
+                <a href={settings.phone.href} className={buttonCls("ghostDark")}>
                   <Icon name="phone" className="h-4 w-4" />
                   Call {settings.phone.display}
                 </a>
@@ -103,19 +96,17 @@ export default async function SlugPage({ params }: { params: Promise<{ slug: str
 
             {heroImg && (
               <Reveal delay={0.15}>
-                <Tilt max={6}>
-                  <div className="group relative aspect-[3/2] w-full overflow-hidden rounded-3xl bg-white/10 shadow-2xl shadow-black/40 ring-1 ring-white/15 transition-transform duration-700 ease-out group-hover:scale-[1.02]">
-                    <Image
-                      src={heroImg}
-                      alt={`${vehicle.name} coach`}
-                      fill
-                      sizes="(max-width: 1024px) 100vw, 50vw"
-                      className="object-cover"
-                      priority
-                    />
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-navy/40 via-transparent to-transparent" />
-                  </div>
-                </Tilt>
+                <div className="relative aspect-[3/2] w-full overflow-hidden rounded-3xl bg-white/10 shadow-lg shadow-black/30 ring-1 ring-white/15">
+                  <Image
+                    src={heroImg}
+                    alt={`${vehicle.name} coach`}
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    className="object-cover"
+                    priority
+                  />
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-navy/40 via-transparent to-transparent" />
+                </div>
               </Reveal>
             )}
           </div>
@@ -124,7 +115,7 @@ export default async function SlugPage({ params }: { params: Promise<{ slug: str
         {/* On board — icon spec cards, staggered */}
         <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
           <Reveal>
-            <Eyebrow shiny>On board</Eyebrow>
+            <Eyebrow>On board</Eyebrow>
             <h2 className="mt-3 font-display text-3xl font-bold text-navy sm:text-4xl">Comfort &amp; features</h2>
           </Reveal>
           <Stagger className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" gap={0.06}>
@@ -143,7 +134,7 @@ export default async function SlugPage({ params }: { params: Promise<{ slug: str
           {vehicle.gallery && vehicle.gallery.length > 0 && (
             <>
               <Reveal>
-                <Eyebrow shiny className="mt-16">Gallery</Eyebrow>
+                <Eyebrow className="mt-16">Gallery</Eyebrow>
                 <h2 className="mt-3 font-display text-3xl font-bold text-navy sm:text-4xl">Take a closer look</h2>
               </Reveal>
               <Stagger className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" gap={0.06}>
@@ -169,23 +160,18 @@ export default async function SlugPage({ params }: { params: Promise<{ slug: str
         </section>
 
         {/* Closing CTA band */}
-        <section className="relative overflow-hidden bg-gradient-to-br from-navy via-navy to-[#161838] text-offwhite">
+        <section className="relative overflow-hidden bg-gradient-to-br from-navy via-navy to-brand-deep text-offwhite">
           <StripesBackdrop dark />
-          <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6">
+          <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
             <Reveal className="flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="font-display text-2xl font-bold sm:text-3xl">Need the {vehicle.name.toLowerCase()}?</h2>
                 <p className="mt-2 text-greyblue">Tell us your journey and group size for a free, no-obligation quote.</p>
               </div>
-              <Magnetic>
-                <Link
-                  href="/get-a-quote"
-                  className="inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-accent to-[#1e4fd6] px-6 py-3 font-semibold text-white shadow-lg shadow-accent/30 transition-all hover:shadow-xl hover:brightness-110"
-                >
-                  Get a Quote
-                  <Icon name="arrowRight" className="h-4 w-4" />
-                </Link>
-              </Magnetic>
+              <ButtonLink href="/get-a-quote">
+                Get a Quote
+                <Icon name="arrowRight" className="h-4 w-4" />
+              </ButtonLink>
             </Reveal>
           </div>
         </section>
@@ -233,7 +219,7 @@ export default async function SlugPage({ params }: { params: Promise<{ slug: str
           ]}
         />
 
-        <section className="relative overflow-hidden bg-gradient-to-br from-navy via-navy to-[#161838] text-offwhite">
+        <section className="relative overflow-hidden bg-gradient-to-br from-navy via-navy to-brand-deep text-offwhite">
           <StripesBackdrop dark />
           <FloatingBlobs dark />
           <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
@@ -258,19 +244,11 @@ export default async function SlugPage({ params }: { params: Promise<{ slug: str
               </div>
               <p className="mt-4 max-w-2xl text-lg text-greyblue">{route.summary}</p>
               <div className="mt-8 flex flex-wrap gap-3">
-                <Magnetic>
-                  <Link
-                    href={bookHref}
-                    className="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-accent to-[#1e4fd6] px-6 py-3 font-semibold text-white shadow-lg shadow-accent/25 transition-all hover:shadow-xl hover:brightness-110 active:scale-[0.98]"
-                  >
-                    Book this route
-                    <Icon name="arrowRight" className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                  </Link>
-                </Magnetic>
-                <a
-                  href={settings.phone.href}
-                  className="inline-flex items-center gap-2 rounded-xl border border-white/20 px-6 py-3 font-semibold text-offwhite transition-colors hover:bg-white/10"
-                >
+                <ButtonLink href={bookHref} className="group">
+                  Book this route
+                  <Icon name="arrowRight" className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </ButtonLink>
+                <a href={settings.phone.href} className={buttonCls("ghostDark")}>
                   <Icon name="phone" className="h-4 w-4" />
                   Call {settings.phone.display}
                 </a>
@@ -279,9 +257,9 @@ export default async function SlugPage({ params }: { params: Promise<{ slug: str
           </div>
         </section>
 
-        <section className="mx-auto max-w-3xl px-4 py-14 sm:px-6 lg:py-16">
+        <section className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:py-20">
           <Reveal>
-            <Eyebrow shiny>Timetable</Eyebrow>
+            <Eyebrow>Timetable</Eyebrow>
             <h2 className="mt-3 font-display text-3xl font-bold text-navy sm:text-4xl">Departure times</h2>
             <p className="mt-2 text-sm text-navy/70">
               Times can change — please check on your day of travel. Online tickets must be booked at least 1 hour before
@@ -292,19 +270,13 @@ export default async function SlugPage({ params }: { params: Promise<{ slug: str
             </div>
 
             <div className="mt-10 flex flex-wrap gap-3">
-              <Link
-                href={bookHref}
-                className="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-accent to-[#1e4fd6] px-6 py-3 font-semibold text-white shadow-lg shadow-accent/25 transition-all hover:shadow-xl hover:brightness-110 active:scale-[0.98]"
-              >
+              <ButtonLink href={bookHref} className="group">
                 Book this route
                 <Icon name="arrowRight" className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Link>
-              <Link
-                href="/daily-express-service"
-                className="inline-flex items-center gap-2 rounded-xl border border-navy/15 bg-white px-6 py-3 font-semibold text-navy shadow-sm transition-all hover:border-accent/40 hover:bg-navy hover:text-white active:scale-[0.98]"
-              >
+              </ButtonLink>
+              <ButtonLink href="/daily-express-service" variant="secondary">
                 All routes
-              </Link>
+              </ButtonLink>
             </div>
           </Reveal>
         </section>

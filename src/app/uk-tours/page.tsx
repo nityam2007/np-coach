@@ -80,7 +80,7 @@ export default async function UkToursPage() {
           </p>
           <Link
             href="/get-a-quote"
-            className="mt-6 inline-block rounded-md bg-accent px-6 py-3 font-semibold text-white transition-opacity hover:opacity-90"
+            className="mt-6 inline-block rounded-xl bg-accent px-6 py-3 font-semibold text-white shadow-sm shadow-accent/20 transition-all hover:bg-brand-hover hover:shadow-md"
           >
             Get a Quote
           </Link>

@@ -1,15 +1,16 @@
 import Link from "next/link";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Icon, type IconName } from "@/components/ui/Icon";
-import { Reveal, Magnetic } from "@/components/ui/motion";
+import { Reveal } from "@/components/ui/motion";
+import { ButtonLink } from "@/components/ui/Button";
 import { StripesBackdrop, FloatingBlobs } from "@/components/ui/Backdrops";
 
 export type Crumb = { label: string; href?: string };
 
 /**
  * Shared page header, reused by every interior page so they match the homepage's
- * polished treatment: animated navy backdrop (stripes + blobs), optional breadcrumb,
- * shiny eyebrow, title, intro, and optional CTAs. Replaces the ~10 hand-rolled
+ * polished treatment: textured navy backdrop (stripes + glows), optional breadcrumb,
+ * eyebrow, title, intro, and optional CTAs. Replaces the ~10 hand-rolled
  * `<section className="bg-navy …">` headers.
  */
 export function PageHero({
@@ -28,7 +29,7 @@ export function PageHero({
   children?: React.ReactNode;
 }) {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-navy via-navy to-[#161838] text-offwhite">
+    <section className="relative overflow-hidden bg-gradient-to-br from-navy via-navy to-brand-deep text-offwhite">
       <StripesBackdrop dark />
       <FloatingBlobs dark />
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
@@ -58,24 +59,15 @@ export function PageHero({
             <div className="mt-8 flex flex-wrap gap-3">
               {ctas.map((cta) =>
                 cta.primary ? (
-                  <Magnetic key={cta.href + cta.label}>
-                    <Link
-                      href={cta.href}
-                      className="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-accent to-[#1e4fd6] px-6 py-3 font-semibold text-white shadow-lg shadow-accent/25 transition-all hover:shadow-xl hover:brightness-110 active:scale-[0.98]"
-                    >
-                      {cta.label}
-                      <Icon name={cta.icon ?? "arrowRight"} className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                    </Link>
-                  </Magnetic>
+                  <ButtonLink key={cta.href + cta.label} href={cta.href} className="group">
+                    {cta.label}
+                    <Icon name={cta.icon ?? "arrowRight"} className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </ButtonLink>
                 ) : (
-                  <Link
-                    key={cta.href + cta.label}
-                    href={cta.href}
-                    className="inline-flex items-center gap-2 rounded-xl border border-white/20 px-6 py-3 font-semibold text-offwhite transition-colors hover:bg-white/10"
-                  >
+                  <ButtonLink key={cta.href + cta.label} href={cta.href} variant="ghostDark">
                     {cta.icon && <Icon name={cta.icon} className="h-4 w-4" />}
                     {cta.label}
-                  </Link>
+                  </ButtonLink>
                 ),
               )}
             </div>

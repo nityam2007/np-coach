@@ -48,7 +48,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         items={[{ label: "Home", path: "/" }, { label: "Blog", path: "/blog" }, { label: post.title, path: `/blog/${slug}` }]}
       />
 
-      <section className="relative overflow-hidden bg-gradient-to-br from-navy via-navy to-[#161838] text-offwhite">
+      <section className="relative overflow-hidden bg-gradient-to-br from-navy via-navy to-brand-deep text-offwhite">
         <StripesBackdrop dark />
         <FloatingBlobs dark />
         <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:py-20">
@@ -67,7 +67,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         </div>
       </section>
 
-      <section className="mx-auto max-w-3xl px-4 py-14 sm:px-6 lg:py-16">
+      <section className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:py-20">
         <Reveal>
           <div className="prose" dangerouslySetInnerHTML={{ __html: post.body }} />
           <Link

@@ -32,7 +32,7 @@ export async function boardingPassFromBooking(
   const qrDataUrl = await QRCode.toDataURL(payload, {
     margin: 1,
     width: 256,
-    color: { dark: "#0e0f27", light: "#ffffff" },
+    color: { dark: "#172554", light: "#ffffff" },
   });
   return {
     siteName,

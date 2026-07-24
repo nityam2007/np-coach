@@ -30,7 +30,7 @@ export default async function LostPropertyClaimPage({
 
   return (
     <article>
-      <section className="relative overflow-hidden bg-gradient-to-br from-navy via-navy to-[#161838] text-offwhite">
+      <section className="relative overflow-hidden bg-gradient-to-br from-navy via-navy to-brand-deep text-offwhite">
         <StripesBackdrop dark />
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
           <Link href="/lost-property" className="text-sm text-greyblue transition-colors hover:text-offwhite">
@@ -44,7 +44,7 @@ export default async function LostPropertyClaimPage({
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-3">
+      <section className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <LostPropertyForm fee={priced.amount} vatRate={priced.vatRate} cancelled={cancelled === "1"} />
         </div>

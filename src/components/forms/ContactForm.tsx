@@ -5,22 +5,17 @@ import { useFormStatus } from "react-dom";
 import { submitContact } from "@/app/actions";
 import type { FormState } from "@/lib/forms";
 import { Turnstile } from "@/components/forms/Turnstile";
+import { Button } from "@/components/ui/Button";
+import { inputCls } from "@/components/ui/field";
 
 const initial: FormState = { ok: false };
-
-const inputClass =
-  "mt-1 w-full rounded-md border border-greyblue/40 px-3 py-2 text-sm text-navy focus:border-accent focus:outline-none";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="rounded-md bg-accent px-6 py-3 font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
-    >
+    <Button type="submit" disabled={pending}>
       {pending ? "Sending…" : "Send message"}
-    </button>
+    </Button>
   );
 }
 
@@ -38,36 +33,36 @@ export function ContactForm() {
 
   return (
     <form action={action} className="grid gap-4">
-      {state.message && <p className="rounded-md bg-red-50 px-4 py-2 text-sm text-red-700">{state.message}</p>}
+      {state.message && <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{state.message}</p>}
 
       <label className="text-sm font-semibold text-navy">
         Name
-        <input name="name" type="text" required autoComplete="name" className={inputClass} />
+        <input name="name" type="text" required autoComplete="name" className={inputCls} />
         {state.errors?.name && <span className="mt-1 block text-xs font-normal text-red-600">{state.errors.name}</span>}
       </label>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="text-sm font-semibold text-navy">
           Email
-          <input name="email" type="email" required autoComplete="email" className={inputClass} />
+          <input name="email" type="email" required autoComplete="email" className={inputCls} />
           {state.errors?.email && (
             <span className="mt-1 block text-xs font-normal text-red-600">{state.errors.email}</span>
           )}
         </label>
         <label className="text-sm font-semibold text-navy">
-          Phone <span className="font-normal text-navy/50">(optional)</span>
-          <input name="phone" type="tel" autoComplete="tel" className={inputClass} />
+          Phone <span className="font-normal text-navy/70">(optional)</span>
+          <input name="phone" type="tel" autoComplete="tel" className={inputCls} />
         </label>
       </div>
 
       <label className="text-sm font-semibold text-navy">
-        Subject <span className="font-normal text-navy/50">(optional)</span>
-        <input name="subject" type="text" className={inputClass} />
+        Subject <span className="font-normal text-navy/70">(optional)</span>
+        <input name="subject" type="text" className={inputCls} />
       </label>
 
       <label className="text-sm font-semibold text-navy">
         Message
-        <textarea name="message" required rows={5} className={inputClass} />
+        <textarea name="message" required rows={5} className={inputCls} />
         {state.errors?.message && (
           <span className="mt-1 block text-xs font-normal text-red-600">{state.errors.message}</span>
         )}

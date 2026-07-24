@@ -9,7 +9,6 @@ import type { SiteSettings } from "@/lib/directus";
 import type { NavLink } from "@/lib/site-config";
 import { assetUrl } from "@/lib/directus";
 import { Icon, type IconName } from "@/components/ui/Icon";
-import { Magnetic } from "@/components/ui/motion";
 
 /** Rich mega-menu panel for a nav item with children (icon + label + description). */
 function MegaMenu({ item }: { item: NavLink }) {
@@ -17,7 +16,7 @@ function MegaMenu({ item }: { item: NavLink }) {
   return (
     <div className="invisible absolute left-1/2 top-full z-50 -translate-x-1/2 translate-y-1 pt-3 opacity-0 transition-all duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
       <div
-        className={`grid max-w-[calc(100vw-1.5rem)] gap-1 rounded-2xl border border-greyblue/20 bg-white/95 p-3 shadow-xl shadow-navy/10 ring-1 ring-white/60 backdrop-blur ${
+        className={`grid max-w-[calc(100vw-1.5rem)] gap-1 rounded-2xl border border-greyblue/20 bg-white/95 p-3 shadow-lg shadow-navy/10 ring-1 ring-white/60 backdrop-blur ${
           wide ? "w-[34rem] grid-cols-2" : "w-72 grid-cols-1"
         }`}
       >
@@ -33,7 +32,7 @@ function MegaMenu({ item }: { item: NavLink }) {
             <span className="min-w-0">
               <span className="block text-sm font-semibold text-navy">{child.label}</span>
               {child.description && (
-                <span className="block text-xs leading-snug text-navy/55">{child.description}</span>
+                <span className="block text-xs leading-snug text-navy/70">{child.description}</span>
               )}
             </span>
           </Link>
@@ -71,7 +70,7 @@ export function Header({ settings }: { settings: SiteSettings }) {
       <motion.div
         animate={{
           backgroundColor: scrolled ? "rgba(253,253,253,0.92)" : "rgba(253,253,253,0.72)",
-          boxShadow: scrolled ? "0 8px 24px -14px rgba(14,15,39,0.25)" : "0 0 0 0 rgba(0,0,0,0)",
+          boxShadow: scrolled ? "0 8px 24px -14px rgba(23,37,84,0.25)" : "0 0 0 0 rgba(0,0,0,0)",
         }}
         transition={{ duration: 0.3, ease: "easeOut" }}
         className="border-b border-greyblue/20 backdrop-blur"
@@ -92,7 +91,7 @@ export function Header({ settings }: { settings: SiteSettings }) {
                 style={{ height: scrolled ? "2.4rem" : "2.75rem" }}
               />
             ) : (
-              <span className="grid h-10 w-10 place-items-center rounded-md bg-navy font-display text-sm font-bold text-offwhite transition-transform group-hover:scale-105">
+              <span className="grid h-10 w-10 place-items-center rounded-lg bg-navy font-display text-sm font-bold text-offwhite transition-transform group-hover:scale-105">
                 NP
               </span>
             )}
@@ -157,15 +156,13 @@ export function Header({ settings }: { settings: SiteSettings }) {
               <Icon name="user" className="h-4 w-4" />
               Account
             </Link>
-            <Magnetic>
-              <Link
-                href="/get-a-quote"
-                className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-accent to-[#1e4fd6] px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-accent/25 transition-all hover:shadow-xl hover:shadow-accent/30 hover:brightness-110"
-              >
-                Get a Quote
-                <Icon name="arrowRight" className="h-4 w-4" />
-              </Link>
-            </Magnetic>
+            <Link
+              href="/get-a-quote"
+              className="inline-flex items-center gap-1.5 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-accent/20 transition-all hover:bg-brand-hover hover:shadow-md"
+            >
+              Get a Quote
+              <Icon name="arrowRight" className="h-4 w-4" />
+            </Link>
           </div>
 
           <button
@@ -211,7 +208,7 @@ export function Header({ settings }: { settings: SiteSettings }) {
               exit={{ opacity: 0 }}
             />
             <motion.nav
-              className="fixed right-0 top-0 z-50 flex h-dvh w-[86%] max-w-sm flex-col overflow-y-auto bg-white shadow-2xl lg:hidden"
+              className="fixed right-0 top-0 z-50 flex h-dvh w-[86%] max-w-sm flex-col overflow-y-auto bg-white shadow-lg lg:hidden"
               aria-label="Mobile"
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
@@ -269,7 +266,7 @@ export function Header({ settings }: { settings: SiteSettings }) {
                                   <Link
                                     href={child.href}
                                     onClick={() => setOpen(false)}
-                                    className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-navy/75 hover:bg-navy/5 hover:text-navy"
+                                    className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-navy/80 hover:bg-navy/5 hover:text-navy"
                                   >
                                     <Icon name={(child.icon as IconName) ?? "arrowRight"} className="h-4 w-4 text-accent" />
                                     {child.label}
@@ -309,7 +306,7 @@ export function Header({ settings }: { settings: SiteSettings }) {
                 <Link
                   href="/get-a-quote"
                   onClick={() => setOpen(false)}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-br from-accent to-[#1e4fd6] px-4 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-accent/25"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-full bg-accent px-4 py-3 text-center text-sm font-semibold text-white shadow-sm shadow-accent/20"
                 >
                   Get a Quote
                   <Icon name="arrowRight" className="h-4 w-4" />

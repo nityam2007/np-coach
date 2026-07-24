@@ -2,25 +2,11 @@ import { Icon } from "./Icon";
 
 /**
  * Small accent label above a section heading ("TAILORED TRANSPORT SOLUTIONS").
- * Pass a className to recolour it on dark backgrounds. `shiny` adds a light
- * shimmer sweep (light backgrounds only — it clips the accent gradient to text,
- * so don't combine with a colour override).
+ * Pass a className to recolour it on dark backgrounds.
  */
-export function Eyebrow({
-  children,
-  className = "",
-  shiny = false,
-}: {
-  children: React.ReactNode;
-  className?: string;
-  shiny?: boolean;
-}) {
+export function Eyebrow({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <p
-      className={`font-display text-xs font-semibold uppercase tracking-[0.18em] ${
-        shiny ? "shiny-text" : "text-accent"
-      } ${className}`}
-    >
+    <p className={`font-display text-xs font-semibold uppercase tracking-[0.18em] text-accent ${className}`}>
       {children}
     </p>
   );

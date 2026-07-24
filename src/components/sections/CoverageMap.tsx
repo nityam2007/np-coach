@@ -33,7 +33,7 @@ function CoverageArt({ count }: { count: number }) {
       <rect width="300" height="360" fill="url(#cov-dots)" />
       <circle cx={hx} cy={hy} r="70" fill="url(#cov-glow)" />
 
-      {/* Routes from the hub to each coverage node — a slow dash flow suggests live travel */}
+      {/* Routes from the hub to each coverage node */}
       {nodes.slice(1).map(([x, y], i) => (
         <line
           key={i}
@@ -44,23 +44,15 @@ function CoverageArt({ count }: { count: number }) {
           className="stroke-accent/45"
           strokeWidth="1.5"
           strokeDasharray="3 4"
-        >
-          <animate attributeName="stroke-dashoffset" from="0" to="-14" dur="1.4s" begin={`${i * 0.18}s`} repeatCount="indefinite" />
-        </line>
+        />
       ))}
 
-      {/* Coverage nodes — each fades up in a gentle pulse */}
+      {/* Coverage nodes */}
       {nodes.slice(1).map(([x, y], i) => (
-        <circle key={i} cx={x} cy={y} r="4.5" className="fill-white stroke-accent" strokeWidth="2">
-          <animate attributeName="r" values="4.5;5.5;4.5" dur="3s" begin={`${i * 0.25}s`} repeatCount="indefinite" />
-        </circle>
+        <circle key={i} cx={x} cy={y} r="4.5" className="fill-white stroke-accent" strokeWidth="2" />
       ))}
 
-      {/* Hub with a live ping ring */}
-      <circle cx={hx} cy={hy} r="9" className="fill-accent/30">
-        <animate attributeName="r" values="9;22" dur="2.4s" repeatCount="indefinite" />
-        <animate attributeName="opacity" values="0.6;0" dur="2.4s" repeatCount="indefinite" />
-      </circle>
+      {/* Hub (West London depot) */}
       <circle cx={hx} cy={hy} r="9" className="fill-accent" />
       <circle cx={hx} cy={hy} r="9" className="fill-none stroke-accent/40" strokeWidth="6" />
     </svg>
@@ -70,10 +62,10 @@ function CoverageArt({ count }: { count: number }) {
 /** Nationwide-coverage card: copy + CTA + network map + CMS-driven area pills. */
 export function CoverageMap({ block, areas }: { block: CoverageBlock; areas: string[] }) {
   return (
-    <div className="flex h-full flex-col rounded-3xl border border-greyblue/20 bg-gradient-to-b from-white to-[#f6f8fe] p-8 shadow-sm shadow-navy/5 transition-shadow hover:shadow-lg hover:shadow-navy/10 lg:p-10">
-      <Eyebrow shiny>{block.eyebrow}</Eyebrow>
+    <div className="flex h-full flex-col rounded-3xl border border-greyblue/20 bg-gradient-to-b from-white to-tint-soft p-8 shadow-sm shadow-navy/5 lg:p-10">
+      <Eyebrow>{block.eyebrow}</Eyebrow>
       <h2 className="mt-3 font-display text-2xl font-bold text-navy sm:text-3xl">{block.heading}</h2>
-      <p className="mt-3 text-navy/60">{block.body}</p>
+      <p className="mt-3 text-navy/70">{block.body}</p>
 
       <Link
         href={block.cta.href}
@@ -85,7 +77,7 @@ export function CoverageMap({ block, areas }: { block: CoverageBlock; areas: str
 
       {areas.length > 0 && (
         <>
-          <div className="animate-float relative mx-auto mt-8 h-56 w-full max-w-xs">
+          <div className="relative mx-auto mt-8 h-56 w-full max-w-xs">
             <CoverageArt count={areas.length} />
           </div>
           <ul className="mt-6 flex flex-wrap gap-2">

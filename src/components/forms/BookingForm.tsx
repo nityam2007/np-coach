@@ -5,6 +5,8 @@ import { useFormStatus } from "react-dom";
 import { startBooking } from "@/app/actions";
 import type { FormState } from "@/lib/forms";
 import { Turnstile } from "@/components/forms/Turnstile";
+import { Button } from "@/components/ui/Button";
+import { inputCls } from "@/components/ui/field";
 
 export interface BookingStopOption {
   code: string;
@@ -13,9 +15,6 @@ export interface BookingStopOption {
 
 const initial: FormState = { ok: false };
 
-const inputClass =
-  "mt-1 w-full rounded-md border border-greyblue/40 px-3 py-2 text-sm text-navy focus:border-accent focus:outline-none";
-
 function formatGBP(pence: number) {
   return new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(pence / 100);
 }
@@ -23,13 +22,9 @@ function formatGBP(pence: number) {
 function SubmitButton({ total }: { total: number }) {
   const { pending } = useFormStatus();
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="rounded-md bg-accent px-6 py-3 font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
-    >
+    <Button type="submit" disabled={pending}>
       {pending ? "Redirecting to payment…" : `Pay ${formatGBP(total)} & book`}
-    </button>
+    </Button>
   );
 }
 
@@ -73,16 +68,16 @@ export function BookingForm({
   return (
     <form action={action} className="grid gap-4">
       {cancelled && !state.message && (
-        <p className="rounded-md bg-greyblue/15 px-4 py-2 text-sm text-navy">
+        <p className="rounded-lg bg-greyblue/15 px-4 py-2 text-sm text-navy">
           Payment cancelled — your booking wasn&apos;t taken. You can try again below.
         </p>
       )}
-      {state.message && <p className="rounded-md bg-red-50 px-4 py-2 text-sm text-red-700">{state.message}</p>}
+      {state.message && <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{state.message}</p>}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="text-sm font-semibold text-navy">
           From
-          <select name="from" value={from} onChange={(e) => setFrom(e.target.value)} className={inputClass}>
+          <select name="from" value={from} onChange={(e) => setFrom(e.target.value)} className={inputCls}>
             {stops.map((s) => (
               <option key={s.code} value={s.code}>
                 {s.name}
@@ -95,7 +90,7 @@ export function BookingForm({
         </label>
         <label className="text-sm font-semibold text-navy">
           To
-          <select name="to" value={to} onChange={(e) => setTo(e.target.value)} className={inputClass}>
+          <select name="to" value={to} onChange={(e) => setTo(e.target.value)} className={inputCls}>
             {stops.map((s) => (
               <option key={s.code} value={s.code}>
                 {s.name}
@@ -117,7 +112,7 @@ export function BookingForm({
             <label key={t} className="flex items-center gap-2 font-normal capitalize">
               <input type="radio" name="tripType" value={t} checked={tripType === t} onChange={() => setTripType(t)} />
               {t}
-              <span className="text-navy/60">({formatGBP(t === "return" ? fareReturn : fareSingle)})</span>
+              <span className="text-navy/70">({formatGBP(t === "return" ? fareReturn : fareSingle)})</span>
             </label>
           ))}
         </div>
@@ -126,7 +121,7 @@ export function BookingForm({
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="text-sm font-semibold text-navy">
           Travel date
-          <input name="date" type="date" min={today} defaultValue={defaultDate} required className={inputClass} />
+          <input name="date" type="date" min={today} defaultValue={defaultDate} required className={inputCls} />
           {state.errors?.date && (
             <span className="mt-1 block text-xs font-normal text-red-600">{state.errors.date}</span>
           )}
@@ -141,7 +136,7 @@ export function BookingForm({
             value={passengers}
             onChange={(e) => setPassengers(Math.max(1, Number(e.target.value) || 1))}
             required
-            className={inputClass}
+            className={inputCls}
           />
           {state.errors?.passengers && (
             <span className="mt-1 block text-xs font-normal text-red-600">{state.errors.passengers}</span>
@@ -151,21 +146,21 @@ export function BookingForm({
 
       <label className="text-sm font-semibold text-navy">
         Lead passenger name
-        <input name="name" type="text" required autoComplete="name" className={inputClass} />
+        <input name="name" type="text" required autoComplete="name" className={inputCls} />
         {state.errors?.name && <span className="mt-1 block text-xs font-normal text-red-600">{state.errors.name}</span>}
       </label>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="text-sm font-semibold text-navy">
           Email
-          <input name="email" type="email" required autoComplete="email" className={inputClass} />
+          <input name="email" type="email" required autoComplete="email" className={inputCls} />
           {state.errors?.email && (
             <span className="mt-1 block text-xs font-normal text-red-600">{state.errors.email}</span>
           )}
         </label>
         <label className="text-sm font-semibold text-navy">
-          Phone <span className="font-normal text-navy/50">(optional)</span>
-          <input name="phone" type="tel" autoComplete="tel" className={inputClass} />
+          Phone <span className="font-normal text-navy/70">(optional)</span>
+          <input name="phone" type="tel" autoComplete="tel" className={inputCls} />
         </label>
       </div>
 
@@ -188,7 +183,7 @@ export function BookingForm({
 
       <Turnstile />
       <SubmitButton total={total} />
-      <p className="text-xs text-navy/50">
+      <p className="text-xs text-navy/70">
         Payments are processed securely by Stripe. Online tickets are non-refundable; please book at least 1 hour before
         departure and arrive 15 minutes early.
       </p>

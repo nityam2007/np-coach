@@ -5,7 +5,8 @@ import { notFound } from "next/navigation";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Icon } from "@/components/ui/Icon";
-import { Reveal, Tilt, Magnetic } from "@/components/ui/motion";
+import { Reveal } from "@/components/ui/motion";
+import { ButtonLink, buttonCls } from "@/components/ui/Button";
 import { StripesBackdrop, FloatingBlobs } from "@/components/ui/Backdrops";
 import { assetUrl, getTour, getTours, getSettings } from "@/lib/directus";
 
@@ -54,7 +55,7 @@ export default async function TourPage({ params }: { params: Promise<{ destinati
         ]}
       />
 
-      <section className="relative overflow-hidden bg-gradient-to-br from-navy via-navy to-[#161838] text-offwhite">
+      <section className="relative overflow-hidden bg-gradient-to-br from-navy via-navy to-brand-deep text-offwhite">
         <StripesBackdrop dark />
         <FloatingBlobs dark />
         <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:py-20">
@@ -70,19 +71,11 @@ export default async function TourPage({ params }: { params: Promise<{ destinati
             <h1 className="mt-3 font-display text-4xl font-bold leading-[1.08] sm:text-5xl">{tour.destination} Coach Tours</h1>
             <p className="mt-4 max-w-2xl text-lg text-greyblue">{tour.summary}</p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Magnetic>
-                <Link
-                  href="/get-a-quote"
-                  className="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-accent to-[#1e4fd6] px-6 py-3 font-semibold text-white shadow-lg shadow-accent/25 transition-all hover:shadow-xl hover:brightness-110 active:scale-[0.98]"
-                >
-                  Get a Quote
-                  <Icon name="arrowRight" className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </Link>
-              </Magnetic>
-              <a
-                href={settings.phone.href}
-                className="inline-flex items-center gap-2 rounded-xl border border-white/20 px-6 py-3 font-semibold text-offwhite transition-colors hover:bg-white/10"
-              >
+              <ButtonLink href="/get-a-quote" className="group">
+                Get a Quote
+                <Icon name="arrowRight" className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </ButtonLink>
+              <a href={settings.phone.href} className={buttonCls("ghostDark")}>
                 <Icon name="phone" className="h-4 w-4" />
                 Call {settings.phone.display}
               </a>
@@ -90,44 +83,34 @@ export default async function TourPage({ params }: { params: Promise<{ destinati
           </Reveal>
           {heroImg && (
             <Reveal delay={0.15}>
-              <Tilt max={6}>
-                <div className="group relative aspect-[3/2] w-full overflow-hidden rounded-3xl bg-white/10 shadow-2xl shadow-black/40 ring-1 ring-white/15 transition-transform duration-700 ease-out group-hover:scale-[1.02]">
-                  <Image
-                    src={heroImg}
-                    alt={`${tour.destination} coach tour`}
-                    fill
-                    sizes="(max-width: 1024px) 100vw, 50vw"
-                    className="object-cover"
-                    priority
-                  />
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-navy/40 via-transparent to-transparent" />
-                </div>
-              </Tilt>
+              <div className="relative aspect-[3/2] w-full overflow-hidden rounded-3xl bg-white/10 shadow-lg shadow-black/30 ring-1 ring-white/15">
+                <Image
+                  src={heroImg}
+                  alt={`${tour.destination} coach tour`}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className="object-cover"
+                  priority
+                />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-navy/40 via-transparent to-transparent" />
+              </div>
             </Reveal>
           )}
         </div>
       </section>
 
-      <section className="mx-auto max-w-3xl px-4 py-14 sm:px-6 lg:py-16">
+      <section className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:py-20">
         <Reveal>
           <div className="prose" dangerouslySetInnerHTML={{ __html: tour.body }} />
 
           <div className="mt-10 flex flex-wrap gap-3">
-            <Magnetic>
-              <Link
-                href="/get-a-quote"
-                className="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-accent to-[#1e4fd6] px-6 py-3 font-semibold text-white shadow-lg shadow-accent/25 transition-all hover:shadow-xl hover:brightness-110 active:scale-[0.98]"
-              >
-                Get a Quote
-                <Icon name="arrowRight" className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Link>
-            </Magnetic>
-            <Link
-              href="/uk-tours"
-              className="inline-flex items-center gap-2 rounded-xl border border-navy/15 bg-white px-6 py-3 font-semibold text-navy shadow-sm transition-all hover:border-accent/40 hover:bg-navy hover:text-white active:scale-[0.98]"
-            >
+            <ButtonLink href="/get-a-quote" className="group">
+              Get a Quote
+              <Icon name="arrowRight" className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </ButtonLink>
+            <ButtonLink href="/uk-tours" variant="secondary">
               All UK tours
-            </Link>
+            </ButtonLink>
           </div>
         </Reveal>
       </section>

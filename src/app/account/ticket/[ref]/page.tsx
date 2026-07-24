@@ -28,14 +28,14 @@ export default async function TicketPage({ params }: { params: Promise<{ ref: st
   const pass = await boardingPassFromBooking(booking, stops, settings.name);
 
   return (
-    <section className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:py-16">
+    <section className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:py-20">
       <Link href="/account" className="inline-flex items-center gap-1 text-sm font-medium text-accent hover:underline">
         <Icon name="arrowLeft" className="h-4 w-4" />
         Back to account
       </Link>
 
       <h1 className="mt-4 font-display text-2xl font-bold text-navy">Your ticket</h1>
-      <p className="mt-1 text-sm text-navy/60">Show this at boarding — or download it below.</p>
+      <p className="mt-1 text-sm text-navy/70">Show this at boarding — or download it below.</p>
 
       <div className="mt-6">
         <BoardingPass data={pass} domId="boarding-pass" />
@@ -45,7 +45,7 @@ export default async function TicketPage({ params }: { params: Promise<{ ref: st
         <TicketActions targetId="boarding-pass" reference={booking.reference} />
       </div>
 
-      <p className="mt-6 text-sm text-navy/50">
+      <p className="mt-6 text-sm text-navy/70">
         Please arrive 15 minutes before departure. Your booking reference is{" "}
         <span className="font-mono font-semibold text-navy/70">{booking.reference}</span>.
       </p>

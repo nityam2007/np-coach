@@ -3,10 +3,17 @@
 /* Brand tokens — single source of truth for colours & fonts (see Brand Identity).
    Tailwind v4 generates utilities from these (e.g. bg-navy, text-greyblue, font-display). */
 @theme {
-  --color-navy: #0e0f27;
-  --color-greyblue: #a8abbc;
-  --color-offwhite: #fdfdfd;
-  --color-accent: #2563eb; /* accent blue for CTAs / highlighted words */
+  /* Core brand */
+  --color-navy: #172554; /* text-primary + dark surfaces — deep shade of the primary blue */
+  --color-greyblue: #a8abbc; /* muted text on dark surfaces; borders at low opacity */
+  --color-offwhite: #fdfdfd; /* default page surface */
+  --color-accent: #2563eb; /* brand blue — reserved for primary actions + highlighted words */
+
+  /* Semantic extensions (collapse the ad-hoc hexes that grew in markup) */
+  --color-brand-hover: #1e4fd6; /* hover state of any accent action */
+  --color-brand-deep: #1e3a8a; /* dark-band gradient end (blue-900) */
+  --color-tint: #e8eefb; /* strongest light-blue surface (hero wash) */
+  --color-tint-soft: #f2f5fb; /* alternating section band / soft card fills */
 
   --font-sans: var(--font-inter);
   --font-display: var(--font-geist-sans);
@@ -16,101 +23,22 @@ html {
   color-scheme: light;
 }
 
-/* --- Motion primitives (pure CSS, no JS runtime — keeps the site fast). ---
-   Ported from MagicUI's border-beam/shiny-text/blur-fade ideas as keyframes so
-   sections get depth + life without a `motion` dependency. All respect
-   prefers-reduced-motion below. */
-
-/* Traveling light around a border — a conic gradient rotated behind a masked
-   ring. Used on the search widget + featured cards to make them stand out. */
-@property --beam-angle {
-  syntax: "<angle>";
-  inherits: false;
-  initial-value: 0deg;
-}
-.border-beam::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1.5px;
-  background: conic-gradient(
-    from var(--beam-angle),
-    transparent 0deg,
-    var(--color-accent) 40deg,
-    #7aa2ff 70deg,
-    transparent 110deg
-  );
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  animation: beam-spin var(--beam-duration, 6s) linear infinite;
-  pointer-events: none;
-}
-@keyframes beam-spin {
-  to {
-    --beam-angle: 360deg;
-  }
+/* Keyboard focus is always visible, site-wide — never removed, only restyled. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
-/* Shimmer sweep across text (premium eyebrow labels). */
-.shiny-text {
-  background: linear-gradient(
-      110deg,
-      color-mix(in srgb, var(--color-accent) 55%, transparent) 40%,
-      var(--color-accent) 50%,
-      color-mix(in srgb, var(--color-accent) 55%, transparent) 60%
-    )
-    0 0 / 220% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: shiny 4s linear infinite;
-}
-@keyframes shiny {
-  to {
-    background-position: -220% 0;
-  }
-}
-
-/* Blur + rise entrance — used by the fleet photo on slide change. (Scroll reveals
-   elsewhere use the framer-motion `Reveal` primitive in ui/motion.tsx.) */
+/* Gentle fade entrance — used by the fleet photo on slide change. (Scroll reveals
+   elsewhere use the framer-motion `Reveal` primitive in ui/motion.tsx, which
+   respects prefers-reduced-motion; this one is gated by `motion-safe:`.) */
 @keyframes rise-in {
   from {
     opacity: 0;
-    transform: translateY(1.25rem);
-    filter: blur(6px);
   }
   to {
     opacity: 1;
-    transform: none;
-    filter: none;
-  }
-}
-
-/* Gentle idle float for hero/decorative art. */
-@keyframes float {
-  50% {
-    transform: translateY(-8px);
-  }
-}
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .border-beam::after,
-  .shiny-text,
-  .animate-float {
-    animation: none;
-  }
-  .shiny-text {
-    color: var(--color-accent);
   }
 }
 

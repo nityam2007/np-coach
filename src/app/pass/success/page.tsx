@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { getPassPurchaseByReference } from "@/lib/stripe";
+import { ButtonLink } from "@/components/ui/Button";
 
 export const metadata: Metadata = {
   title: "Lost property request received",
@@ -51,19 +51,11 @@ export default async function PassSuccessPage({ searchParams }: { searchParams: 
           </dl>
         )}
 
-        <div className="mt-8 flex flex-wrap gap-4">
-          <Link
-            href="/"
-            className="rounded-md bg-accent px-6 py-3 font-semibold text-white transition-opacity hover:opacity-90"
-          >
-            Back home
-          </Link>
-          <Link
-            href="/lost-property"
-            className="rounded-md border border-greyblue/50 px-6 py-3 font-semibold text-navy transition-colors hover:bg-greyblue/10"
-          >
+        <div className="mt-8 flex flex-wrap gap-3">
+          <ButtonLink href="/">Back home</ButtonLink>
+          <ButtonLink href="/lost-property" variant="secondary">
             Lost property info
-          </Link>
+          </ButtonLink>
         </div>
       </div>
     </article>

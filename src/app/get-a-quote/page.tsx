@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getSettings } from "@/lib/directus";
 import { Icon } from "@/components/ui/Icon";
+import { ButtonLink, buttonCls } from "@/components/ui/Button";
 import { PageHero } from "@/components/sections/PageHero";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { buildMetadata } from "@/lib/seo";
@@ -44,25 +45,19 @@ export default async function GetAQuotePage() {
               <Icon name="tag" className="h-6 w-6" />
             </span>
             <h3 className="mt-4 font-display text-lg font-semibold text-navy">Our quote form is on its way</h3>
-            <p className="mt-2 max-w-md text-sm text-navy/60">
+            <p className="mt-2 max-w-md text-sm text-navy/70">
               We&apos;re moving to a new online quoting system. In the meantime, call us or drop us a message and
               we&apos;ll get you a price the same day.
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
-              <a
-                href={settings.phone.href}
-                className="inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-              >
+              <a href={settings.phone.href} className={buttonCls("primary", "sm")}>
                 <Icon name="phone" className="h-4 w-4" />
                 Call {settings.phone.display}
               </a>
-              <Link
-                href="/contact-us"
-                className="inline-flex items-center gap-2 rounded-xl border border-navy/15 bg-white px-5 py-3 text-sm font-semibold text-navy transition-colors hover:bg-navy/5"
-              >
+              <ButtonLink href="/contact-us" variant="secondary" size="sm">
                 Message us
                 <Icon name="arrowRight" className="h-4 w-4" />
-              </Link>
+              </ButtonLink>
             </div>
           </div>
         </div>

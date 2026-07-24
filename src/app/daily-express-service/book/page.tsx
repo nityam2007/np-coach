@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BookingForm, type BookingStopOption } from "@/components/forms/BookingForm";
 import { StripesBackdrop } from "@/components/ui/Backdrops";
+import { Icon } from "@/components/ui/Icon";
 import { getStops, getSettings } from "@/lib/directus";
 import { computeGross } from "@/lib/stripe";
 
@@ -27,7 +28,7 @@ export default async function BookPage({
 
   return (
     <article>
-      <section className="relative overflow-hidden bg-gradient-to-br from-navy via-navy to-[#161838] text-offwhite">
+      <section className="relative overflow-hidden bg-gradient-to-br from-navy via-navy to-brand-deep text-offwhite">
         <StripesBackdrop dark />
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
           <Link href="/daily-express-service" className="text-sm text-greyblue transition-colors hover:text-offwhite">
@@ -41,7 +42,25 @@ export default async function BookPage({
         </div>
       </section>
 
-      <section className="mx-auto max-w-3xl px-4 py-14 sm:px-6">
+      <section className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+        {/* Trust rail at the decision point — reassurance where the money changes hands. */}
+        <ul className="mb-8 grid gap-3 rounded-2xl border border-greyblue/20 bg-tint-soft px-5 py-4 text-sm text-navy/80 sm:grid-cols-3">
+          <li className="flex items-center gap-2">
+            <Icon name="shield" className="h-4 w-4 shrink-0 text-accent" />
+            Secure payment by Stripe
+          </li>
+          <li className="flex items-center gap-2">
+            <Icon name="checkCircle" className="h-4 w-4 shrink-0 text-accent" />
+            E-ticket sent to your email
+          </li>
+          <li className="flex items-center gap-2">
+            <Icon name="phone" className="h-4 w-4 shrink-0 text-accent" />
+            <a href={settings.phone.href} className="hover:text-navy hover:underline">
+              Questions? {settings.phone.display}
+            </a>
+          </li>
+        </ul>
+
         <BookingForm
           stops={options}
           fareSingle={fareSingle}

@@ -3,17 +3,17 @@
 import Link from "next/link";
 import type { SiteSettings } from "@/lib/directus";
 import { Icon } from "@/components/ui/Icon";
-import { Reveal, Stagger, StaggerItem, Magnetic } from "@/components/ui/motion";
+import { Reveal, Stagger, StaggerItem } from "@/components/ui/motion";
 import { StripesBackdrop, FloatingBlobs } from "@/components/ui/Backdrops";
 
-/** Site footer: CTA band, brand blurb, link columns, contact block, legal bar — on an
- *  animated navy backdrop (drifting stripes + blobs), with reveal-on-scroll columns. */
+/** Site footer: CTA band, brand blurb, link columns, contact block, legal bar — on a
+ *  textured navy backdrop (stripes + glows), with reveal-on-scroll columns. */
 export function Footer({ settings }: { settings: SiteSettings }) {
   const { address, phone, email } = settings;
   const year = new Date().getFullYear();
 
   return (
-    <footer className="relative overflow-hidden bg-navy text-greyblue">
+    <footer className="relative overflow-hidden bg-gradient-to-br from-navy via-navy to-brand-deep text-greyblue">
       <StripesBackdrop dark />
       <FloatingBlobs dark />
 
@@ -21,26 +21,25 @@ export function Footer({ settings }: { settings: SiteSettings }) {
       <Reveal className="mx-auto max-w-7xl px-4 pt-14 sm:px-6">
         <div className="flex flex-col items-center gap-5 rounded-3xl border border-white/10 bg-white/[0.03] p-8 text-center backdrop-blur sm:flex-row sm:justify-between sm:text-left lg:p-10">
           <div>
-            <h2 className="font-display text-2xl font-bold text-offwhite sm:text-3xl">
-              Ready to plan your journey?
-            </h2>
-            <p className="mt-2 text-sm text-greyblue">
-              Get a free, no-obligation quote in under 60 seconds.
+            <p className="font-display text-xs font-semibold uppercase tracking-[0.18em] text-sky-400">
+              {settings.homepage.ctaEyebrow}
             </p>
+            <h2 className="mt-2 font-display text-2xl font-bold text-offwhite sm:text-3xl">
+              {settings.homepage.ctaHeading}
+            </h2>
+            <p className="mt-2 text-sm text-greyblue">{settings.homepage.ctaBody}</p>
           </div>
-          <Magnetic>
-            <Link
-              href="/get-a-quote"
-              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-accent to-[#1e4fd6] px-6 py-3 font-semibold text-white shadow-lg shadow-accent/30 transition-all hover:shadow-xl hover:brightness-110"
-            >
-              Get a Quote
-              <Icon name="arrowRight" className="h-4 w-4" />
-            </Link>
-          </Magnetic>
+          <Link
+            href="/get-a-quote"
+            className="inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 font-semibold text-white shadow-sm shadow-accent/20 transition-all hover:bg-brand-hover hover:shadow-md"
+          >
+            Get a Quote
+            <Icon name="arrowRight" className="h-4 w-4" />
+          </Link>
         </div>
       </Reveal>
 
-      <Stagger className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 sm:grid-cols-2 lg:grid-cols-4">
+      <Stagger className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 sm:grid-cols-2 lg:grid-cols-4">
         {settings.footerColumns
           .filter((col) => col.title.toLowerCase() !== "school transport")
           .map((col) => (

@@ -9,7 +9,7 @@ import { Icon } from "@/components/ui/Icon";
 export function SchoolTransportBlock({ block, image }: { block: HomeSchoolBlock; image: string | null }) {
   const photo = assetUrl(image);
   return (
-    <div className="relative h-full overflow-hidden rounded-3xl bg-gradient-to-br from-navy via-navy to-[#161838] p-8 text-offwhite shadow-xl shadow-navy/30 lg:p-10">
+    <div className="relative h-full overflow-hidden rounded-3xl bg-gradient-to-br from-navy via-navy to-brand-deep p-8 text-offwhite shadow-md shadow-navy/10 lg:p-10">
       {/* Depth: faint grid + accent glow bleeding from the corner. */}
       <div
         aria-hidden="true"
@@ -58,7 +58,7 @@ export function SchoolTransportBlock({ block, image }: { block: HomeSchoolBlock;
             </div>
             <Link
               href={block.cta.href}
-              className="group mt-5 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-navy shadow-lg shadow-black/20 transition-all hover:shadow-xl hover:shadow-black/30 active:scale-[0.98]"
+              className="group mt-5 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-navy shadow-sm shadow-black/10 transition-all hover:shadow-md active:scale-[0.98]"
             >
               {block.cta.label}
               <Icon name="arrowRight" className="h-4 w-4 transition-transform group-hover:translate-x-1" />

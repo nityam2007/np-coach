@@ -5,23 +5,18 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { requestOtpAction, verifyOtpAction, type AuthState } from "@/app/auth-actions";
 import { Icon } from "@/components/ui/Icon";
+import { Button } from "@/components/ui/Button";
+import { inputCls } from "@/components/ui/field";
 
 const initialReq: AuthState = { step: "email" };
 const initialVfy: AuthState = { step: "code" };
 
-const inputCls =
-  "mt-1 w-full rounded-lg border border-greyblue/40 px-3 py-2.5 text-navy focus:border-accent focus:outline-none";
-
 function Submit({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="w-full rounded-xl bg-accent px-6 py-3 font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
-    >
+    <Button type="submit" disabled={pending} className="w-full">
       {pending ? "Please wait…" : label}
-    </button>
+    </Button>
   );
 }
 
@@ -51,7 +46,7 @@ export function LoginForm() {
         </label>
         {reqState.message && <p className="text-sm text-red-600">{reqState.message}</p>}
         <Submit label="Email me a code" />
-        <p className="text-xs text-navy/50">
+        <p className="text-xs text-navy/70">
           No password needed — we&apos;ll email you a one-time code. New here? An account is created automatically.
         </p>
       </form>
@@ -90,7 +85,7 @@ export function LoginForm() {
         <button type="submit" formAction={reqAction} className="font-medium text-accent hover:underline">
           Resend code
         </button>
-        <Link href="/account/login" className="flex items-center gap-1 font-medium text-navy/60 hover:text-navy">
+        <Link href="/account/login" className="flex items-center gap-1 font-medium text-navy/70 hover:text-navy">
           <Icon name="arrowLeft" className="h-4 w-4" />
           Different email
         </Link>

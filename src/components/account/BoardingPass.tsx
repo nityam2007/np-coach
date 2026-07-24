@@ -4,7 +4,7 @@ import type { BoardingPassData } from "@/lib/ticket";
 function Field({ label, value }: { label: string; value: string | number }) {
   return (
     <div>
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-navy/45">{label}</p>
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-navy/70">{label}</p>
       <p className="mt-0.5 font-semibold text-navy">{value}</p>
     </div>
   );
@@ -20,7 +20,7 @@ export function BoardingPass({ data, domId }: { data: BoardingPassData; domId?: 
   return (
     <div
       id={domId}
-      className="mx-auto w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-navy/10"
+      className="mx-auto w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-lg ring-1 ring-navy/10"
     >
       <div className="flex items-center justify-between bg-navy px-6 py-4 text-offwhite">
         <span className="flex items-center gap-2 font-display text-lg font-bold">
@@ -36,12 +36,12 @@ export function BoardingPass({ data, domId }: { data: BoardingPassData; domId?: 
 
           <div className="mt-4 flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-navy/45">From</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-navy/70">From</p>
               <p className="truncate font-display text-xl font-bold text-navy sm:text-2xl">{data.fromName}</p>
             </div>
             <Icon name="bus" className="h-6 w-6 shrink-0 text-accent" />
             <div className="min-w-0 text-right">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-navy/45">To</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-navy/70">To</p>
               <p className="truncate font-display text-xl font-bold text-navy sm:text-2xl">{data.toName}</p>
             </div>
           </div>
@@ -60,7 +60,7 @@ export function BoardingPass({ data, domId }: { data: BoardingPassData; domId?: 
           {/* eslint-disable-next-line @next/next/no-img-element -- data URL, must be captured by html-to-image */}
           <img src={data.qrDataUrl} alt={`QR code for booking ${data.reference}`} className="h-32 w-32" />
           <div className="text-center">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-navy/45">Booking ref</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-navy/70">Booking ref</p>
             <p className="font-mono text-sm font-bold text-navy">{data.reference}</p>
           </div>
         </div>

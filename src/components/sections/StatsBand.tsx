@@ -6,7 +6,7 @@ import type { Stat } from "@/lib/site-config";
 export function StatsBand({ stats }: { stats: Stat[] }) {
   if (stats.length === 0) return null;
   return (
-    <div className="relative grid h-full grid-cols-2 content-center gap-6 overflow-hidden rounded-3xl bg-gradient-to-br from-navy via-navy to-[#161838] p-8 text-offwhite shadow-xl shadow-navy/30 lg:p-10">
+    <div className="relative grid h-full grid-cols-2 content-center gap-6 overflow-hidden rounded-3xl bg-gradient-to-br from-navy via-navy to-brand-deep p-8 text-offwhite shadow-md shadow-navy/10 lg:p-10">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute -right-20 -top-20 h-60 w-60 rounded-full bg-accent/20 blur-3xl"

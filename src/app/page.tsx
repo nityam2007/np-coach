@@ -7,7 +7,7 @@ import { CoverageMap } from "@/components/sections/CoverageMap";
 import { StatsBand } from "@/components/sections/StatsBand";
 import { TestimonialCarousel } from "@/components/sections/TestimonialCarousel";
 import { FaqAccordion } from "@/components/sections/FaqAccordion";
-import { Reveal, Tilt } from "@/components/ui/motion";
+import { Reveal } from "@/components/ui/motion";
 import { getFleet, getServices, getSettings, getStops, getTestimonials } from "@/lib/directus";
 
 export default async function HomePage() {
@@ -45,20 +45,16 @@ export default async function HomePage() {
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
         <div className="grid gap-6 lg:grid-cols-12">
           <Reveal className="lg:col-span-7">
-            <Tilt max={4} className="h-full">
-              <SchoolTransportBlock block={homepage.school} image={settings.schoolImage} />
-            </Tilt>
+            <SchoolTransportBlock block={homepage.school} image={settings.schoolImage} />
           </Reveal>
           <Reveal delay={0.12} className="lg:col-span-5">
-            <Tilt max={4} className="h-full">
-              <CoverageMap block={homepage.coverage} areas={settings.coverage} />
-            </Tilt>
+            <CoverageMap block={homepage.coverage} areas={settings.coverage} />
           </Reveal>
         </div>
       </section>
 
       {/* Testimonials + stats */}
-      <section className="bg-white">
+      <section className="bg-tint-soft">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
           <div className="grid gap-8 lg:grid-cols-3 lg:items-stretch">
             <Reveal className="lg:col-span-2">

@@ -39,11 +39,11 @@ export default async function AccountPage() {
   ]);
 
   return (
-    <section className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:py-16">
+    <section className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:py-20">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl font-bold text-navy">My account</h1>
-          <p className="mt-1 text-sm text-navy/60">
+          <p className="mt-1 text-sm text-navy/70">
             Signed in as <span className="font-semibold text-navy">{session.email}</span>
           </p>
         </div>
@@ -65,7 +65,7 @@ export default async function AccountPage() {
           My tickets
         </h2>
         {bookings.length === 0 ? (
-          <div className="mt-4 rounded-2xl border border-dashed border-greyblue/40 bg-greyblue/5 p-8 text-center text-sm text-navy/60">
+          <div className="mt-4 rounded-2xl border border-dashed border-greyblue/40 bg-greyblue/5 p-8 text-center text-sm text-navy/70">
             No tickets yet.{" "}
             <Link href="/daily-express-service/book" className="font-semibold text-accent hover:underline">
               Book a Daily Express journey →
@@ -80,14 +80,14 @@ export default async function AccountPage() {
               >
                 <div>
                   <p className="font-semibold text-navy">{b.route_label}</p>
-                  <p className="mt-0.5 text-sm text-navy/60">
+                  <p className="mt-0.5 text-sm text-navy/70">
                     {b.trip_date ?? "—"} · {b.passengers} passenger{b.passengers > 1 ? "s" : ""} · {gbp(b.amount)}
                   </p>
-                  <p className="mt-0.5 font-mono text-xs text-navy/50">{b.reference}</p>
+                  <p className="mt-0.5 font-mono text-xs text-navy/70">{b.reference}</p>
                 </div>
                 <Link
                   href={`/account/ticket/${b.reference}`}
-                  className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                  className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-accent/20 transition-all hover:bg-brand-hover hover:shadow-md"
                 >
                   <Icon name="ticket" className="h-4 w-4" />
                   View ticket
@@ -105,7 +105,7 @@ export default async function AccountPage() {
           Lost &amp; found claims
         </h2>
         {passes.length === 0 ? (
-          <div className="mt-4 rounded-2xl border border-dashed border-greyblue/40 bg-greyblue/5 p-8 text-center text-sm text-navy/60">
+          <div className="mt-4 rounded-2xl border border-dashed border-greyblue/40 bg-greyblue/5 p-8 text-center text-sm text-navy/70">
             No claims.{" "}
             <Link href="/lost-property/claim" className="font-semibold text-accent hover:underline">
               Report a lost item →
@@ -119,11 +119,11 @@ export default async function AccountPage() {
                   <p className="font-semibold text-navy">{p.item_description}</p>
                   <StatusBadge status={p.status} />
                 </div>
-                <p className="mt-1 text-sm text-navy/60">
+                <p className="mt-1 text-sm text-navy/70">
                   {p.travel_date ? `Travelled ${p.travel_date} · ` : ""}
                   {gbp(p.amount)}
                 </p>
-                <p className="mt-0.5 font-mono text-xs text-navy/50">{p.reference}</p>
+                <p className="mt-0.5 font-mono text-xs text-navy/70">{p.reference}</p>
               </li>
             ))}
           </ul>

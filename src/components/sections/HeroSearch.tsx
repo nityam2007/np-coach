@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { Stop, SearchFeature } from "@/lib/site-config";
 import { Icon, type IconName } from "@/components/ui/Icon";
-import { BorderBeam } from "@/components/ui/BorderBeam";
 
 /**
  * Daily Express online booking widget (client-side, no reload) — mirrors the live site:
@@ -27,7 +26,7 @@ function Field({ icon, label, children }: { icon: IconName; label: string; child
         <Icon name={icon} className="h-4.5 w-4.5" />
       </span>
       <label className="flex min-w-0 flex-1 flex-col">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-navy/50">{label}</span>
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-navy/70">{label}</span>
         {children}
       </label>
     </div>
@@ -68,17 +67,17 @@ export function HeroSearch({
   }
 
   return (
-    <div className="w-full">
-      <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-navy/70">
+    <div className="w-full overflow-hidden rounded-2xl border border-greyblue/25 bg-white shadow-md shadow-navy/5">
+      {/* Header — hairline-separated from the form row below. */}
+      <div className="flex items-center gap-2 border-b border-greyblue/15 px-5 py-3 text-sm font-semibold text-navy/70">
         <Icon name="route" className="h-4 w-4 text-accent" />
         Daily Express — book your tickets
       </div>
 
       <form
         onSubmit={submit}
-        className="relative grid divide-y divide-greyblue/20 rounded-2xl border border-greyblue/25 bg-white shadow-xl shadow-navy/10 ring-1 ring-inset ring-white/60 lg:grid-cols-[1fr_auto_1fr_1fr_1fr_auto] lg:divide-x lg:divide-y-0"
+        className="grid divide-y divide-greyblue/15 lg:grid-cols-[1fr_auto_1fr_1fr_1fr_auto] lg:divide-x lg:divide-y-0"
       >
-        <BorderBeam duration={7} />
         <Field icon="mapPin" label="From">
           <select value={from} onChange={(e) => setFrom(e.target.value)} className={controlCls} aria-label="Departure stop">
             {stops.map((s) => (
@@ -137,7 +136,7 @@ export function HeroSearch({
           <button
             type="submit"
             disabled={disabled}
-            className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-accent to-[#1e4fd6] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/25 transition-all hover:shadow-xl hover:shadow-accent/30 hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none lg:h-full"
+            className="group flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 text-sm font-semibold text-white shadow-sm shadow-accent/20 transition-all hover:bg-brand-hover hover:shadow-md active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none lg:h-full"
           >
             <Icon name="search" className="h-4 w-4 transition-transform group-hover:scale-110" />
             Search
@@ -146,22 +145,23 @@ export function HeroSearch({
       </form>
 
       {sameStop && (
-        <p className="mt-2 px-1 text-xs font-medium text-red-600">Please choose two different stops.</p>
+        <p className="border-t border-greyblue/15 px-5 py-2.5 text-xs font-medium text-red-600">
+          Please choose two different stops.
+        </p>
       )}
 
+      {/* Trust features — same box, hairline-separated columns. Deliberately muted
+          (neutral chips, quiet type, tinted band) so the form above stays the focus. */}
       {!compact && features.length > 0 && (
-        <ul className="mt-6 grid gap-3 sm:grid-cols-3">
+        <ul className="grid divide-y divide-greyblue/15 border-t border-greyblue/15 bg-tint-soft sm:grid-cols-3 sm:divide-y-0 sm:divide-x">
           {features.map((f) => (
-            <li
-              key={f.title}
-              className="group flex items-center gap-3 rounded-xl border border-transparent px-3 py-2 transition-colors hover:border-greyblue/20 hover:bg-white/60"
-            >
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-navy/5 text-accent transition-colors group-hover:bg-accent group-hover:text-white">
-                <Icon name={f.icon as IconName} className="h-4.5 w-4.5" />
+            <li key={f.title} className="flex items-center gap-2.5 px-5 py-3">
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-navy/5 text-navy/70">
+                <Icon name={f.icon as IconName} className="h-3.5 w-3.5" />
               </span>
               <span>
-                <span className="block text-sm font-semibold text-navy">{f.title}</span>
-                <span className="block text-xs text-navy/60">{f.blurb}</span>
+                <span className="block text-[13px] font-medium text-navy/80">{f.title}</span>
+                <span className="block text-xs text-navy/70">{f.blurb}</span>
               </span>
             </li>
           ))}

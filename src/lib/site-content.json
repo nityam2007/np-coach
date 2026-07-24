@@ -1,0 +1,941 @@
+{
+  "name": "NP Coaches",
+  "legalName": "New Punjab Coaches Ltd",
+  "tagline": "Premium Coach Transport Across the UK",
+  "subtitle": "Safe, reliable and comfortable transport for schools, businesses, tours and private groups.",
+  "description": "Family-run coach hire since 1999. Charter & private hire, UK tours, the Daily Express inter-city service and home-to-school transport — operated from Iver with a 15+ strong Euro-6, ULEZ-compliant fleet (19–98 seats).",
+  "url": "https://np-coaches.co.uk",
+  "founded": 1999,
+  "pricing": {
+    "lostPropertyFee": 500,
+    "lostPropertyVat": 20,
+    "dailyExpressVat": 0,
+    "dailyExpressSingle": 1500,
+    "dailyExpressReturn": 2500
+  },
+  "phone": {
+    "display": "0208 843 1000",
+    "href": "tel:+442088431000",
+    "hours": "Mon–Sun"
+  },
+  "email": {
+    "general": "Info@np-coaches.co.uk",
+    "bookings": "Bookings@np-coaches.co.uk"
+  },
+  "address": {
+    "line1": "Willow Tree Farm",
+    "line2": "Love Lane",
+    "city": "Iver",
+    "county": "Buckinghamshire",
+    "postcode": "SL0 9QZ"
+  },
+  "nav": [
+    {
+      "label": "Services",
+      "href": "/fleet",
+      "children": [
+        {
+          "label": "Our Fleet",
+          "href": "/fleet",
+          "icon": "bus",
+          "description": "19–98 seat Euro-6, ULEZ-compliant coaches"
+        },
+        {
+          "label": "UK Tours",
+          "href": "/uk-tours",
+          "icon": "camera",
+          "description": "Day trips & multi-day tours across the UK"
+        },
+        {
+          "label": "Daily Express",
+          "href": "/daily-express-service",
+          "icon": "route",
+          "description": "Scheduled inter-city coach service"
+        },
+        {
+          "label": "Private Hire & Quotes",
+          "href": "/get-a-quote",
+          "icon": "celebration",
+          "description": "Weddings, corporate & group travel — free quote"
+        },
+        {
+          "label": "Lost Property",
+          "href": "/lost-property",
+          "icon": "luggage",
+          "description": "Reclaim an item left on board"
+        }
+      ]
+    },
+    {
+      "label": "School Transport",
+      "href": "/home-to-school",
+      "children": [
+        {
+          "label": "Home to School",
+          "href": "/home-to-school",
+          "icon": "school",
+          "description": "Daily school routes, timetables & tickets"
+        },
+        {
+          "label": "Safeguarding",
+          "href": "/safeguarding",
+          "icon": "shield",
+          "description": "Our child-protection commitment"
+        }
+      ]
+    },
+    {
+      "label": "Daily Express",
+      "href": "/daily-express-service"
+    },
+    {
+      "label": "Blog",
+      "href": "/blog"
+    },
+    {
+      "label": "About",
+      "href": "/about-us"
+    },
+    {
+      "label": "Contact",
+      "href": "/contact-us"
+    }
+  ],
+  "services": [
+    {
+      "title": "School Transport",
+      "blurb": "Daily home-to-school routes, school trips and sports fixtures with DBS-checked drivers and live tracking.",
+      "href": "/home-to-school",
+      "icon": "school"
+    },
+    {
+      "title": "Corporate Travel",
+      "blurb": "Conferences, staff shuttles, airport transfers and business events in executive coaches.",
+      "href": "/get-a-quote",
+      "icon": "briefcase"
+    },
+    {
+      "title": "UK Tours",
+      "blurb": "Multi-day tours, sightseeing and custom itineraries across the UK.",
+      "href": "/uk-tours",
+      "icon": "camera"
+    },
+    {
+      "title": "Private Hire",
+      "blurb": "Weddings, family events, parties and special occasions in comfort and style.",
+      "href": "/get-a-quote",
+      "icon": "celebration"
+    }
+  ],
+  "footerColumns": [
+    {
+      "title": "Services",
+      "links": [
+        {
+          "label": "Fleet",
+          "href": "/fleet"
+        },
+        {
+          "label": "UK Tours",
+          "href": "/uk-tours"
+        },
+        {
+          "label": "Daily Express",
+          "href": "/daily-express-service"
+        },
+        {
+          "label": "Lost Property",
+          "href": "/lost-property"
+        },
+        {
+          "label": "Get a Quote",
+          "href": "/get-a-quote"
+        }
+      ]
+    },
+    {
+      "title": "Daily Express",
+      "links": [
+        {
+          "label": "Book tickets",
+          "href": "/daily-express-service/book"
+        },
+        {
+          "label": "Timetable & stops",
+          "href": "/daily-express-service"
+        },
+        {
+          "label": "Wolverhampton to London",
+          "href": "/wolverhampton-to-london"
+        },
+        {
+          "label": "London to Leicester",
+          "href": "/london-to-leicester"
+        },
+        {
+          "label": "Leicester to London",
+          "href": "/leicester-to-london"
+        }
+      ]
+    },
+    {
+      "title": "Company",
+      "links": [
+        {
+          "label": "About Us",
+          "href": "/about-us"
+        },
+        {
+          "label": "FAQs",
+          "href": "/faqs"
+        },
+        {
+          "label": "Blog",
+          "href": "/blog"
+        },
+        {
+          "label": "Vacancies",
+          "href": "/vacancies"
+        },
+        {
+          "label": "Downloads",
+          "href": "/downloads"
+        }
+      ]
+    }
+  ],
+  "legalLinks": [
+    {
+      "label": "Privacy Policy",
+      "href": "/privacy-policy"
+    },
+    {
+      "label": "Cookie Policy",
+      "href": "/cookie-policy"
+    },
+    {
+      "label": "Terms",
+      "href": "/terms"
+    }
+  ],
+  "stats": [
+    {
+      "value": "25+",
+      "label": "Years of Experience"
+    },
+    {
+      "value": "1M+",
+      "label": "Passengers Transported"
+    },
+    {
+      "value": "10,000+",
+      "label": "School Journeys Completed"
+    },
+    {
+      "value": "98%",
+      "label": "Customer Satisfaction"
+    }
+  ],
+  "accreditations": [
+    "CPT Member",
+    "UKCOA",
+    "Coach Tourism Association",
+    "Disability Confident",
+    "WeLoveCoaches",
+    "Transport for Buckinghamshire"
+  ],
+  "coverage": [
+    "London & West London",
+    "Southall & Heathrow",
+    "Slough & Iver",
+    "Burnham & Langley",
+    "Reading & Maidenhead",
+    "Windsor & Buckinghamshire",
+    "Coventry & Birmingham",
+    "Wolverhampton & Leicester"
+  ],
+  "faqs": [
+    {
+      "question": "How far in advance should I book?",
+      "answer": "For charter and private hire we recommend at least 24 hours so we can confirm vehicle availability. For the Daily Express scheduled service, online tickets can be booked up to 1 hour before departure."
+    },
+    {
+      "question": "What size coach do I need?",
+      "answer": "Our fleet runs 19, 35, 53, 72, 86 and 98 seats. Under 20 passengers suit a mini coach; 20–35 a midi; 36–53 a 53-seat executive; 54+ a 72-seater or double-decker. Not sure? Get a quote and we'll advise."
+    },
+    {
+      "question": "Are your coaches ULEZ-compliant?",
+      "answer": "Yes — the entire fleet is Euro-6 and fully ULEZ-compliant, so there are no extra charges for journeys inside London's Ultra Low Emission Zone."
+    },
+    {
+      "question": "Are your drivers DBS-checked?",
+      "answer": "Yes. Every driver holds a current Enhanced DBS check and a full UK PCV Category D licence — especially important for our home-to-school services."
+    }
+  ],
+  "testimonials": [
+    {
+      "quote": "NP Coaches handled our school's annual trip flawlessly — clean coaches, punctual drivers and brilliant communication throughout.",
+      "author": "Head of Trips",
+      "role": "Secondary School",
+      "company": "Slough",
+      "rating": 5
+    },
+    {
+      "quote": "We use NP Coaches for all our corporate away-days. Comfortable, professional and always on time.",
+      "author": "Operations Manager",
+      "role": "Corporate client",
+      "company": "West London",
+      "rating": 5
+    },
+    {
+      "quote": "Booked a 53-seater for a family wedding. The coach was immaculate and the driver could not have been more helpful.",
+      "author": "Wedding Party Organiser",
+      "role": "Private hire",
+      "company": "Buckinghamshire",
+      "rating": 5
+    }
+  ],
+  "homepage": {
+    "heroEyebrow": "Trusted since 1999",
+    "heroHighlight": "UK",
+    "heroRating": {
+      "platform": "Trustpilot",
+      "score": "4.9/5",
+      "reviews": "from 1000+ reviews"
+    },
+    "heroPrimaryCta": { "label": "Get a Quote", "href": "/get-a-quote" },
+    "heroSecondaryCta": { "label": "View Our Fleet", "href": "/fleet" },
+    "searchFeatures": [
+      { "icon": "bolt", "title": "Quick & Easy", "blurb": "Get a quote in 60 seconds" },
+      { "icon": "tag", "title": "No Obligation", "blurb": "Completely free to enquire" },
+      { "icon": "lock", "title": "Secure & Private", "blurb": "Your details are safe with us" }
+    ],
+    "servicesEyebrow": "Tailored transport solutions",
+    "servicesHeading": "One operator for every journey",
+    "servicesBody": "Schools, businesses, tour groups and private events — all handled in-house by one trusted team.",
+    "fleetEyebrow": "Our modern fleet",
+    "fleetHeading": "Comfort. Quality. Every Journey.",
+    "fleetBody": "A range of Euro-6, ULEZ-compliant vehicles from 19 to 98 seats to suit every journey, group size and occasion.",
+    "fleetCta": { "label": "View Full Fleet", "href": "/fleet" },
+    "school": {
+      "eyebrow": "Safety first. Every day.",
+      "heading": "Trusted School Transport Specialists",
+      "body": "We work with schools and local authorities to deliver safe, reliable and compliant home-to-school transport every single day.",
+      "highlights": [
+        "DBS Checked Drivers",
+        "GPS Fleet Tracking",
+        "Safeguarding Policies",
+        "CCTV Onboard",
+        "Real-time Route Monitoring",
+        "Full Compliance"
+      ],
+      "cta": { "label": "Explore school transport", "href": "/home-to-school" }
+    },
+    "coverage": {
+      "eyebrow": "Nationwide coverage",
+      "heading": "Wherever You Need to Go, We'll Get You There",
+      "body": "From local journeys to long-distance travel, we operate across the UK from our West London depot.",
+      "cta": { "label": "Get a Quote", "href": "/get-a-quote" }
+    },
+    "clientsEyebrow": "What our clients say",
+    "clientsHeading": "Trusted by schools, businesses and families",
+    "ctaEyebrow": "Ready when you are",
+    "ctaHeading": "Ready to Book Your Journey?",
+    "ctaBody": "Get an instant quote in under 60 seconds."
+  },
+  "schoolTransport": {
+    "schools": [
+      {
+        "slug": "pioneer-secondary-academy",
+        "name": "Pioneer Secondary (Khalsa) Academy",
+        "intro": "Daily home-to-school coaches for Pioneer Secondary Academy serving the Burnham and Langley routes.",
+        "buyUrl": "https://tickets.trackaroo.co.uk/buy/np-coaches/pioneer-secondary-academy",
+        "waitlistUrl": "",
+        "spacesAvailable": true
+      },
+      {
+        "slug": "herschel-grammar-school",
+        "name": "Herschel Grammar School",
+        "intro": "Daily home-to-school coaches for Herschel Grammar School across the XR1, XR2, XR3, S and N routes. Return departs school 15:05.",
+        "buyUrl": "https://tickets.trackaroo.co.uk/buy/np-coaches/herschel-grammar-school",
+        "waitlistUrl": "https://passenger.shuttleid.uk/waiting-list/3fb6889e-ea13-4013-919e-aaeaccb0d8b9",
+        "spacesAvailable": false
+      }
+    ]
+  },
+  "schoolRoutes": [
+    {
+      "school": "pioneer-secondary-academy",
+      "code": "PSA Burnham",
+      "name": "Burnham",
+      "returnNote": "Return: 2:45 PM from Elliman Ave / Pursers Ct (SL2 5DB). Times are approximate — please track the vehicle.",
+      "stops": [
+        {
+          "time": "07:05 AM",
+          "place": "Burnham Station, SL1 6LS"
+        },
+        {
+          "time": "07:09 AM",
+          "place": "Cippenham Ln / Mercedes Garage, SL1 5BU"
+        },
+        {
+          "time": "07:12 AM",
+          "place": "Cippenham Ln / Copthorne Hotel, SL1 2XE"
+        },
+        {
+          "time": "07:15 AM",
+          "place": "Farnham Rd / McDonald's, SL1 4UN"
+        },
+        {
+          "time": "07:18 AM",
+          "place": "Cumberland Ave / Texaco, SL2 1JA"
+        },
+        {
+          "time": "07:20 AM",
+          "place": "Northern Rd / Whiteford Rd, SL2 1LU"
+        },
+        {
+          "time": "07:27 AM",
+          "place": "Elliman Ave / Pursers Ct, SL2 5DB"
+        }
+      ]
+    },
+    {
+      "school": "pioneer-secondary-academy",
+      "code": "PSA Langley",
+      "name": "Langley",
+      "returnNote": "Return times are approximate — please track the vehicle.",
+      "stops": [
+        {
+          "time": "07:24 AM",
+          "place": "Parlaunt Rd Church (BP), SL3 8BB"
+        },
+        {
+          "time": "07:26 AM",
+          "place": "Harvester, London Rd (A4), SL3 7HX"
+        },
+        {
+          "time": "07:30 AM",
+          "place": "Langley Fire Station, London Rd (A4), SL3 7HS"
+        },
+        {
+          "time": "07:32 AM",
+          "place": "Sainsbury, London Rd (A4), SL1 1NJ"
+        },
+        {
+          "time": "07:35 AM",
+          "place": "BP, Borderside, Wexham, SL2 5HZ"
+        }
+      ]
+    },
+    {
+      "school": "herschel-grammar-school",
+      "code": "HGS XR1",
+      "name": "XR1 — Wokingham Road",
+      "returnNote": "Return departs school 15:05; afternoon stops 03:40–03:45 PM (approximate).",
+      "stops": [
+        {
+          "time": "07:12 AM",
+          "place": "The Three Tuns, Wokingham Road, RG6 1JU"
+        },
+        {
+          "time": "07:25 AM",
+          "place": "Chalfont Way, outside ASDA, RG6 5HQ"
+        }
+      ]
+    },
+    {
+      "school": "herschel-grammar-school",
+      "code": "HGS XR2",
+      "name": "XR2 — Reading",
+      "returnNote": "Return departs school 15:05; afternoon stops 03:40–04:10 PM (approximate).",
+      "stops": [
+        {
+          "time": "07:05 AM",
+          "place": "Reading College, King's Road, RG1 4HJ"
+        },
+        {
+          "time": "07:10 AM",
+          "place": "Reading Station (rear, Bagnall Way), RG1 1PZ"
+        },
+        {
+          "time": "07:15 AM",
+          "place": "Mail Boxes etc., 105 London St, RG1 4QD"
+        },
+        {
+          "time": "07:18 AM",
+          "place": "Christchurch Road, after Vicarage Road, RG2 7AR"
+        },
+        {
+          "time": "07:25 AM",
+          "place": "Rushey Way, opposite Police Station, RG6 4PS"
+        },
+        {
+          "time": "07:27 AM",
+          "place": "Chalfont Way, outside ASDA, RG6 5HQ"
+        }
+      ]
+    },
+    {
+      "school": "herschel-grammar-school",
+      "code": "HGS XR3",
+      "name": "XR3 — Earley & Wokingham",
+      "returnNote": "Return departs school 15:05; afternoon stops 03:35–04:15 PM (approximate).",
+      "stops": [
+        {
+          "time": "07:10 AM",
+          "place": "Rushey Way, before Mill Lane Roundabout, Earley, RG6 3BJ"
+        },
+        {
+          "time": "07:13 AM",
+          "place": "Kilnsea Drive, before Chilcombe Way, Earley, RG6 3DA"
+        },
+        {
+          "time": "07:22 AM",
+          "place": "St Paul's Church, Reading Road, Wokingham, RG41 1EG"
+        },
+        {
+          "time": "07:29 AM",
+          "place": "Keephatch Gardens, London Road, Wokingham, RG40 1PD"
+        }
+      ]
+    },
+    {
+      "school": "herschel-grammar-school",
+      "code": "HGS S",
+      "name": "S — Southall & Hayes",
+      "returnNote": "Return departs school 15:05; afternoon stops 03:30–04:00 PM (approximate).",
+      "stops": [
+        {
+          "time": "07:05 AM",
+          "place": "150 The Broadway, corner of Abbots Road, UB1 1LP"
+        },
+        {
+          "time": "07:10 AM",
+          "place": "Sainsbury's, Uxbridge Road, UB3 3EX"
+        },
+        {
+          "time": "07:15 AM",
+          "place": "Lees Road (Stop CC), UB3 3UE"
+        },
+        {
+          "time": "07:25 AM",
+          "place": "Outside 41 Shepiston Lane, Hayes, UB3 1LJ"
+        }
+      ]
+    },
+    {
+      "school": "herschel-grammar-school",
+      "code": "HGS N",
+      "name": "N — Southall & Slough",
+      "returnNote": "Return departs school 15:05; afternoon stops 03:15–04:00 PM (approximate).",
+      "stops": [
+        {
+          "time": "07:00 AM",
+          "place": "King Street, corner Western Road, Southall, UB2 5DS"
+        },
+        {
+          "time": "07:05 AM",
+          "place": "Wolf Pub, 143 Norwood Rd, Southall, UB2 4JB"
+        },
+        {
+          "time": "07:10 AM",
+          "place": "Norwood Green (VH), North Hyde Lane, UB2 5SE"
+        },
+        {
+          "time": "07:25 AM",
+          "place": "Harvester, London Rd, Slough, SL3 8QE"
+        },
+        {
+          "time": "07:33 AM",
+          "place": "Cedar Way, London Rd, Slough, SL3 7HT"
+        },
+        {
+          "time": "07:36 AM",
+          "place": "Langley Marish St Francis Church, Upton Ct Rd, SL3 7NE"
+        }
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "slug": "about-us",
+      "title": "About NP Coaches",
+      "subtitle": "Family-run coach hire from West London since 1999.",
+      "body": "<p>New Punjab Coaches Ltd, trading as NP Coaches, has provided premium coach hire from West London since 1999. What began as a family business is today run by the founder's sons, operating a modern fleet of 15+ Euro-6, ULEZ-compliant coaches from 19 to 98 seats.</p><p>We carry schools, businesses, tour groups, wedding parties and sports teams UK-wide, and run the daily Daily Express scheduled service between London and the Midlands. Safety and compliance come first: DBS-checked drivers, GPS-tracked vehicles and a full UK PSV operator licence.</p><p>Our depot is at Willow Tree Farm, Love Lane, Iver, Buckinghamshire SL0 9QZ.</p>",
+      "seoTitle": "About NP Coaches | Family-Run Coach Hire Since 1999",
+      "seoDescription": "NP Coaches is a family-run West London coach operator established in 1999, with a Euro-6 ULEZ-compliant fleet from 19 to 98 seats serving schools, tours and events UK-wide."
+    },
+    {
+      "slug": "faqs",
+      "title": "Frequently Asked Questions",
+      "subtitle": "Booking, pricing, routes and luggage — answered.",
+      "body": "<h2>Booking &amp; quotes</h2><p><strong>How do I request a quote?</strong> Use our <a href=\"/get-a-quote\">Get a Quote</a> page — tell us your dates, group size and journey and we aim to reply within 24 hours.</p><p><strong>How far in advance should I book?</strong> For charter and private hire we recommend at least 24 hours so we can confirm vehicle availability. For the Daily Express scheduled service, online tickets can be booked up to 1 hour before departure.</p><p><strong>What size coach do I need?</strong> Our fleet runs 19, 35, 53, 72, 86 and 98 seats. Under 20 passengers suit a 19-seat mini coach; 20–35 a midi; 36–53 a 53-seat executive; 54+ a 72-seater or double-decker. See the full <a href=\"/fleet\">fleet</a>.</p><h2>Daily Express</h2><p><strong>Where does it pick up in London?</strong> Southall (1A Priory Way) and Slough (Library, Stop W, opposite the Moxy Hotel, Wellington St, SL1 1YG). See the <a href=\"/daily-express-service\">timetable</a>.</p><p><strong>What luggage can I bring?</strong> One 20kg suitcase in the hold plus one 7kg item of hand luggage, included in your ticket. Extra luggage incurs a surcharge. Please arrive 15 minutes before departure.</p><h2>School transport</h2><p><strong>How do I register my child?</strong> Visit <a href=\"/home-to-school\">Home to School</a> and follow the link to the ShuttleID portal for your school.</p><h2>Fleet &amp; emissions</h2><p><strong>Are your coaches ULEZ-compliant?</strong> Yes — the entire fleet is Euro-6 and fully ULEZ-compliant, so there are no extra charges for journeys inside London's Ultra Low Emission Zone.</p>",
+      "seoTitle": "Coach Hire FAQs | Booking, Pricing & Routes | NP Coaches",
+      "seoDescription": "Answers to common questions about NP Coaches — quotes, booking lead times, coach sizes, Daily Express pickups, luggage allowance and home-to-school registration."
+    },
+    {
+      "slug": "lost-property",
+      "title": "Lost Property",
+      "subtitle": "Left something on board? Here's how to reclaim it.",
+      "body": "<p>Think you've lost something on one of our coaches? <a href=\"/lost-property/claim\">Report it online</a> with your travel date, time, route and a description of the item, and we'll check whether it has been handed in.</p><p>A <strong>£5 administration charge (plus VAT)</strong> applies on reclaimed items, covering handling and storage. Items must be reclaimed from our Iver depot within <strong>7 days</strong> of travel to avoid additional storage costs. Lost property is held for a maximum of <strong>14 days</strong>, after which it is disposed of.</p><p>You can also call <a href=\"tel:+442088431000\">0208 843 1000</a> or email <a href=\"mailto:Info@np-coaches.co.uk\">Info@np-coaches.co.uk</a> with your journey details. We use your contact details only to reunite you with your property and hold them for no longer than one month.</p>",
+      "seoTitle": "Lost Property | NP Coaches",
+      "seoDescription": "Lost something on an NP Coaches service? Report it with your travel details. A £5 admin fee applies on collection; items are held at our Iver depot for 14 days."
+    },
+    {
+      "slug": "safeguarding",
+      "title": "Safeguarding",
+      "subtitle": "Protecting the children and young people who travel with us.",
+      "body": "<p>New Punjab Coaches Ltd takes the safeguarding of children and young people extremely seriously. We believe it is never acceptable for a child or young person to experience abuse of any kind, and we recognise our responsibility to safeguard and promote the welfare of every child who travels with us.</p><h2>We recognise that</h2><ul><li>The welfare of the child or young person is paramount.</li><li>All children — regardless of age, ability, gender, racial heritage, religious belief, sexual orientation or identity — have an equal right to protection from harm and abuse.</li><li>Working in partnership with children, parents, carers and other agencies is essential to promoting young people's welfare.</li></ul><h2>We safeguard children by</h2><ul><li>Valuing, listening to and respecting them.</li><li>Adopting child-protection guidelines through clear procedures and a code of conduct for staff.</li><li>Sharing information about safeguarding and good practice with children, parents and staff.</li><li>Sharing concerns with the agencies who need to know, involving parents and children appropriately.</li><li>Recruiting safely — every driver holds a current Enhanced DBS check — and preventing the deployment of unsuitable individuals.</li><li>Keeping confidential, accurate records of any safeguarding concern, securely stored.</li></ul><h2>Responsibilities</h2><p>Every member of staff has a responsibility to safeguard children and a duty to report concerns wherever they arise. All staff must read and sign our full safeguarding policy, which sets out roles and responsibilities, how to record and escalate concerns, the levels of safeguarding risk, and our whistleblowing procedures.</p><p>This policy is reviewed every two years, or sooner in response to changes in legislation or guidance.</p>",
+      "seoTitle": "Safeguarding Policy | NP Coaches",
+      "seoDescription": "NP Coaches' commitment to safeguarding children and young people: DBS-checked drivers, clear child-protection procedures and a duty on all staff to report concerns."
+    },
+    {
+      "slug": "vacancies",
+      "title": "Driver Vacancies",
+      "subtitle": "Join a friendly, professional West London coach team.",
+      "body": "<p>We're always interested in hearing from safe, professional and friendly drivers. As a driver with NP Coaches you'll operate our school services, private hire, airport transfers and day tours, with a variety of work patterns to suit. To apply or ask about current openings, contact us via the <a href=\"/contact-us\">contact page</a> — we aim to reply within 48 hours.</p><h2>What you'll need</h2><ul><li>A valid UK PCV licence (Category D)</li><li>Aged 21 or over</li><li>A genuine commitment to great customer service</li><li>The ability to load and unload passenger luggage</li></ul><h2>What we offer</h2><ul><li>A competitive hourly rate</li><li>Guaranteed 45 paid hours per week, with overtime available</li><li>Free smart, comfortable uniform</li><li>Paid annual leave</li><li>No vehicle washing, refuelling or cleaning at the end of your shift</li></ul><h2>Please note</h2><p>We're proud of our health-and-safety record and operate a drugs-and-alcohol policy applicable to all employees. As part of your initial assessment, and at random during employment, you may be subject to testing.</p>",
+      "seoTitle": "Driver Vacancies | Coach & Bus Driver Jobs | NP Coaches",
+      "seoDescription": "Coach and bus driver jobs at NP Coaches in West London. PCV Category D, aged 21+, guaranteed 45 hours per week, paid leave and free uniform. Apply via our contact page."
+    },
+    {
+      "slug": "downloads",
+      "title": "Downloads",
+      "subtitle": "Operator compliance documentation.",
+      "body": "<p>Our annual compliance packs set out the documentation behind our operator licence, safety standards and procedures. For the current pack, or any document not listed here, please contact us on <a href=\"tel:+442088431000\">0208 843 1000</a> or email <a href=\"mailto:Info@np-coaches.co.uk\">Info@np-coaches.co.uk</a>.</p><ul><li>Compliance Pack 2025–2026</li><li>Compliance Pack 2024–2025</li></ul>",
+      "seoTitle": "Downloads | Compliance Documents | NP Coaches",
+      "seoDescription": "Download NP Coaches' operator compliance packs, or contact us for any document covering our PSV operator licence, safety standards and procedures."
+    },
+    {
+      "slug": "privacy-policy",
+      "title": "Privacy Policy",
+      "subtitle": "How we collect, use and protect your personal data.",
+      "body": "<p>This policy explains how New Punjab Coaches Ltd, trading as NP Coaches (\"we\", \"us\"), collects and uses personal data when you use our website np-coaches.co.uk, book travel, request a quote or use our services. We are the data controller for this information. We comply with the UK GDPR and the Data Protection Act 2018.</p><h2>What we collect</h2><ul><li><strong>Contact &amp; enquiry data</strong> — your name, email, phone number and the details you give when you contact us, request a quote or report lost property.</li><li><strong>Booking data</strong> — journey, date, passenger and payment-confirmation details when you book the Daily Express service or other travel.</li><li><strong>Payment data</strong> — card payments are processed by Stripe; we do not store your full card details.</li><li><strong>Technical data</strong> — IP address, browser type and usage data collected by essential and (with your consent) analytics cookies. See our <a href=\"/cookie-policy\">Cookie Policy</a>.</li></ul><h2>How we use it &amp; our lawful basis</h2><ul><li>To provide and confirm the travel, quotes and services you ask for — <em>performance of a contract</em>.</li><li>To respond to enquiries and reunite you with lost property — <em>legitimate interests</em>.</li><li>To meet safety, licensing and accounting obligations — <em>legal obligation</em>.</li><li>To send non-essential analytics or marketing — only with your <em>consent</em>, which you can withdraw at any time.</li></ul><h2>Sharing</h2><p>We share data only with the providers that help us run our services — for example Stripe (payments), our email provider and, for school transport, the ShuttleID ticketing platform — and with authorities where the law requires. We do not sell your personal data.</p><h2>Retention</h2><p>We keep personal data only as long as necessary for the purpose it was collected or as required by law (for example, lost-property contact details for up to one month; booking and accounting records for the periods required by HMRC).</p><h2>Your rights</h2><p>Under UK data-protection law you can request access to your data, ask us to correct or erase it, restrict or object to processing, and request portability. To exercise any right, email <a href=\"mailto:Info@np-coaches.co.uk\">Info@np-coaches.co.uk</a>. You also have the right to complain to the Information Commissioner's Office (ICO) at ico.org.uk.</p><h2>Contact</h2><p>New Punjab Coaches Ltd, Willow Tree Farm, Love Lane, Iver, Buckinghamshire SL0 9QZ. Phone 0208 843 1000. Email Info@np-coaches.co.uk.</p>",
+      "seoTitle": "Privacy Policy | NP Coaches",
+      "seoDescription": "How NP Coaches collects, uses and protects your personal data under the UK GDPR and Data Protection Act 2018, including your rights and how to contact us or the ICO."
+    },
+    {
+      "slug": "cookie-policy",
+      "title": "Cookie Policy",
+      "subtitle": "How and why we use cookies on this site.",
+      "body": "<p>Cookies are small text files stored on your device when you visit a website. This policy explains how NP Coaches uses them. We use cookies in line with the UK GDPR and the Privacy and Electronic Communications Regulations (PECR).</p><h2>Cookies we use</h2><ul><li><strong>Essential cookies</strong> — needed for the site and booking process to work (for example, keeping your session secure). These do not require consent.</li><li><strong>Analytics cookies</strong> — help us understand how visitors use the site so we can improve it. These are only set with your consent.</li></ul><p>We do not set non-essential cookies until you give consent through our cookie banner, and you can change your choice at any time.</p><h2>Managing cookies</h2><p>You can delete or block cookies through your browser settings, though some features may not work without them. General guidance is available at <a href=\"https://www.aboutcookies.org\" rel=\"nofollow\">aboutcookies.org</a>.</p><p>Questions about this policy? Email <a href=\"mailto:Info@np-coaches.co.uk\">Info@np-coaches.co.uk</a>.</p>",
+      "seoTitle": "Cookie Policy | NP Coaches",
+      "seoDescription": "How NP Coaches uses essential and analytics cookies under UK GDPR and PECR, and how you can manage or withdraw your cookie consent at any time."
+    },
+    {
+      "slug": "terms",
+      "title": "Terms & Conditions",
+      "subtitle": "The terms that apply to our services and bookings.",
+      "body": "<p>These terms govern your use of the NP Coaches website and the services you book with New Punjab Coaches Ltd. By booking travel or using our site you accept these terms. They are governed by the law of England and Wales.</p><h2>Bookings &amp; payment</h2><ul><li>Quotes for charter and private hire are confirmed in writing; prices are calculated for your specific journey.</li><li>Daily Express tickets must be booked at least 1 hour before departure. Online tickets are discounted and <strong>non-refundable</strong>.</li><li>Card payments are processed securely by Stripe.</li></ul><h2>Travel &amp; luggage</h2><ul><li>Please arrive at least 15 minutes before the scheduled departure time. Services depart on time and cannot wait for late passengers.</li><li>Each Daily Express ticket includes one 20kg suitcase and one 7kg item of hand luggage; additional luggage may incur a surcharge.</li><li>We carry passengers only between authorised stops and cannot offer door-to-door drop-offs on scheduled services.</li></ul><h2>Liability</h2><p>We are not responsible for personal items left on board — see our <a href=\"/lost-property\">Lost Property</a> page. Nothing in these terms limits any liability that cannot be limited under law, including for death or personal injury caused by our negligence. Your statutory rights as a consumer are unaffected.</p><h2>Contact</h2><p>New Punjab Coaches Ltd, Willow Tree Farm, Love Lane, Iver, Buckinghamshire SL0 9QZ. Phone 0208 843 1000. Email Info@np-coaches.co.uk.</p>",
+      "seoTitle": "Terms & Conditions | NP Coaches",
+      "seoDescription": "The terms and conditions for NP Coaches services and bookings — quotes, Daily Express tickets, luggage, liability and lost property — governed by the law of England and Wales."
+    }
+  ],
+  "tours": [
+    {
+      "slug": "london",
+      "destination": "London",
+      "summary": "Tour the capital — Buckingham Palace, the galleries and the landmarks of the City.",
+      "body": "<p>Take in a tour of our capital city and visit some of London's historic landmarks. Watch the Changing of the Guard at Buckingham Palace, walk the South Bank, or spend the day in one of London's many world-class galleries and museums. We provide the coach and a professional driver; you set the itinerary.</p>",
+      "seoTitle": "London Coach Tours & Day Trips | NP Coaches",
+      "seoDescription": "Book a coach tour of London with NP Coaches. Comfortable luxury coaches and professional drivers for group day trips to Buckingham Palace, galleries and landmarks."
+    },
+    {
+      "slug": "windsor",
+      "destination": "Windsor",
+      "summary": "Windsor Castle, the Long Walk and a cruise on the Thames — a short hop from London.",
+      "body": "<p>A short journey from London takes you to Windsor, home to Windsor Castle — a royal residence dating back to the 12th century. Tour the castle and grounds, walk the Long Walk and enjoy a cruise on the River Thames. An easy, popular day trip for groups of any size.</p>",
+      "seoTitle": "Windsor Coach Tours & Day Trips | NP Coaches",
+      "seoDescription": "Coach day trips to Windsor with NP Coaches. Visit Windsor Castle, the Long Walk and the River Thames on a relaxed group tour in a luxury coach from West London."
+    },
+    {
+      "slug": "hampton-court",
+      "destination": "Hampton Court",
+      "summary": "Henry VIII's Tudor palace in Surrey — the great hall, kitchens and world-famous gardens.",
+      "body": "<p>Located in Surrey, Hampton Court is the famous Tudor palace of King Henry VIII. Explore the palace's many historic attractions, from the great hall and Tudor kitchens to the world-renowned gardens and maze. A rich, easy day out within reach of London.</p>",
+      "seoTitle": "Hampton Court Coach Tours | NP Coaches",
+      "seoDescription": "Coach tours to Hampton Court Palace with NP Coaches. Explore Henry VIII's Tudor palace, great hall, kitchens and gardens on a comfortable group day trip."
+    },
+    {
+      "slug": "cornwall",
+      "destination": "Cornwall",
+      "summary": "The south-west's Arthurian coast — Tintagel, Cadbury Castle and Glastonbury.",
+      "body": "<p>Visit Cornwall in the south-west and discover the area's close association with the legend of King Arthur, including Tintagel, Cadbury Castle and Glastonbury, where Arthur is said to have been buried. Ideal as a multi-day tour with comfortable, well-equipped coaches.</p>",
+      "seoTitle": "Cornwall Coach Tours | NP Coaches",
+      "seoDescription": "Multi-day coach tours to Cornwall with NP Coaches. Discover Tintagel, Glastonbury and the Arthurian south-west in comfort with professional drivers."
+    },
+    {
+      "slug": "salisbury",
+      "destination": "Salisbury",
+      "summary": "Salisbury Cathedral's record-breaking spire and the mystery of Stonehenge.",
+      "body": "<p>Venture further afield to the city of Salisbury, home to a magnificent cathedral with the tallest spire in the country at 404 feet. Combine it with a visit to Stonehenge, the prehistoric monument dating back some 5,000 years — one of the UK's most extraordinary sights.</p>",
+      "seoTitle": "Salisbury & Stonehenge Coach Tours | NP Coaches",
+      "seoDescription": "Coach tours to Salisbury and Stonehenge with NP Coaches. See the cathedral's record spire and the ancient stone circle on a relaxed group day trip."
+    },
+    {
+      "slug": "bath",
+      "destination": "Bath",
+      "summary": "Georgian Bath — the Roman Baths, Bath Abbey and Sally Lunn's historic house.",
+      "body": "<p>Bath is a beautiful Georgian city, where you'll find the famous Roman Baths and spa, Bath Abbey — known as the lantern of the west — and Sally Lunn's, a historic eating house dating back to the 15th century. A relaxed, walkable day out steeped in history.</p>",
+      "seoTitle": "Bath Coach Tours & Day Trips | NP Coaches",
+      "seoDescription": "Coach day trips to Bath with NP Coaches. Visit the Roman Baths, Bath Abbey and Sally Lunn's on a comfortable group tour from West London."
+    },
+    {
+      "slug": "john-wesley",
+      "destination": "John Wesley Methodist Sites",
+      "summary": "Historic Methodist sites — Epworth, where his father was rector, and Bristol, home of the first Methodist chapel.",
+      "body": "<p>Visit the historic places associated with John Wesley, the founder of Methodism. The tour takes in Epworth, where John's father was rector, and Bristol, where he preached his first open-air sermon and founded the first Methodist chapel. A meaningful itinerary for church and heritage groups.</p>",
+      "seoTitle": "John Wesley Methodist Tour | NP Coaches",
+      "seoDescription": "Coach tours to historic John Wesley Methodist sites with NP Coaches, including Epworth and Bristol's first Methodist chapel. Comfortable group travel UK-wide."
+    }
+  ],
+  "routes": [
+    {
+      "slug": "wolverhampton-to-london",
+      "from": "Wolverhampton",
+      "to": "London",
+      "days": "7 days a week",
+      "priceSingle": 1500,
+      "priceReturn": 2500,
+      "summary": "Daily afternoon and evening coach services from Wolverhampton, Birmingham and Coventry to Slough and London.",
+      "stops": [
+        {
+          "time": "2:30 PM",
+          "place": "Wolverhampton",
+          "detail": "Faulkland Crescent Coach Park"
+        },
+        {
+          "time": "3:00 PM",
+          "place": "Birmingham",
+          "detail": "Smethwick Sikh Temple"
+        },
+        {
+          "time": "3:15 PM",
+          "place": "Birmingham",
+          "detail": "Guru Nanak Nishkam Sewak Jatha, Soho Road, Handsworth"
+        },
+        {
+          "time": "4:00 PM",
+          "place": "Coventry",
+          "detail": "Pool Meadow Bus Stand C"
+        },
+        {
+          "time": "5:50 PM",
+          "place": "Slough (London)",
+          "detail": "Library (Stop W), Wellington St, SL1 1YG"
+        },
+        {
+          "time": "6:15 PM",
+          "place": "Southall (London)",
+          "detail": "1A Priory Way, Southall"
+        }
+      ],
+      "seoTitle": "Wolverhampton to London Coach | Daily Express | NP Coaches",
+      "seoDescription": "Daily coach service from Wolverhampton, Birmingham and Coventry to Slough and London with NP Coaches. Afternoon and evening departures, 7 days a week."
+    },
+    {
+      "slug": "london-to-leicester",
+      "from": "London",
+      "to": "Leicester",
+      "days": "Friday to Monday only",
+      "priceSingle": 1800,
+      "priceReturn": 3000,
+      "summary": "Morning coach service from Southall and Slough to Leicester. Runs Friday, Saturday, Sunday and Monday only.",
+      "stops": [
+        {
+          "time": "8:15 AM",
+          "place": "Southall (London)",
+          "detail": "1A Priory Way, Southall"
+        },
+        {
+          "time": "8:45 AM",
+          "place": "Slough (London)",
+          "detail": "Library (Stop W), Wellington St, SL1 1YG"
+        },
+        {
+          "time": "11:15 AM",
+          "place": "Leicester",
+          "detail": "St Margaret's Bus Station, Bay SV"
+        }
+      ],
+      "seoTitle": "London to Leicester Coach | Fri–Mon | NP Coaches",
+      "seoDescription": "Coach service from Southall and Slough to Leicester with NP Coaches. Morning departure, Friday to Monday only. Book online up to 1 hour before travel."
+    },
+    {
+      "slug": "leicester-to-london",
+      "from": "Leicester",
+      "to": "London",
+      "days": "Friday to Monday only",
+      "priceSingle": 1800,
+      "priceReturn": 3000,
+      "summary": "Afternoon coach service from Leicester to Slough and London. Runs Friday, Saturday, Sunday and Monday only.",
+      "stops": [
+        {
+          "time": "5:00 PM",
+          "place": "Leicester",
+          "detail": "St Margaret's Bus Station, Bay SV"
+        },
+        {
+          "time": "7:15 PM",
+          "place": "Slough (London)",
+          "detail": "Library (Stop W), Wellington St, SL1 1YG"
+        },
+        {
+          "time": "7:30 PM",
+          "place": "Southall (London)",
+          "detail": "1A Priory Way, Southall"
+        }
+      ],
+      "seoTitle": "Leicester to London Coach | Fri–Mon | NP Coaches",
+      "seoDescription": "Coach service from Leicester to Slough and London with NP Coaches. Afternoon departure, Friday to Monday only. Book online up to 1 hour before travel."
+    }
+  ],
+  "stops": [
+    {
+      "code": "southall",
+      "name": "Southall (London)",
+      "detail": "1A Priory Way, Southall, UB2 5EB"
+    },
+    {
+      "code": "slough",
+      "name": "Slough (London)",
+      "detail": "Library (Stop W), opposite Moxy Hotel, Wellington St, SL1 1YG"
+    },
+    {
+      "code": "coventry",
+      "name": "Coventry",
+      "detail": "Pool Meadow Bus Stand C"
+    },
+    {
+      "code": "birmingham-soho",
+      "name": "Birmingham — Soho Road",
+      "detail": "Guru Nanak Nishkam Sewak Jatha, 14-20 Soho Road, Handsworth, B21 9BH"
+    },
+    {
+      "code": "birmingham-smethwick",
+      "name": "Birmingham — Smethwick",
+      "detail": "Smethwick Sikh Temple, High St, B66 3AP"
+    },
+    {
+      "code": "wolverhampton",
+      "name": "Wolverhampton",
+      "detail": "Faulkland Crescent Coach Park, WV1 1JN"
+    }
+  ],
+  "blogPosts": [
+    {
+      "slug": "choosing-the-right-coach-size",
+      "title": "How to choose the right coach size for your group",
+      "excerpt": "From a 19-seat mini coach to a 98-seat double decker — a quick guide to picking the right vehicle for your trip.",
+      "author": "NP Coaches",
+      "date": "2026-01-15",
+      "body": "<p>Picking the right coach is mostly about passenger numbers, but luggage, comfort and budget matter too. As a rough guide: under 20 passengers suit our <a href=\"/19-seat-coaches\">19-seat mini coach</a>; 20–35 fit a <a href=\"/35-seat-coaches\">35-seat midi</a>; 36–53 are well served by a <a href=\"/53-seat-coaches\">53-seat executive</a>; and larger groups step up to a 72-seater or one of our double-deckers.</p><p>For tours with luggage, leave a little headroom on capacity so everyone travels in comfort. Not sure? <a href=\"/get-a-quote\">Get a quote</a> and we'll recommend the right vehicle for your itinerary.</p>",
+      "seoTitle": "How to Choose the Right Coach Size | NP Coaches Blog",
+      "seoDescription": "A simple guide to choosing the right coach size for your group, from 19-seat mini coaches to 98-seat double deckers, with comfort and luggage tips from NP Coaches."
+    },
+    {
+      "slug": "what-ulez-compliant-means",
+      "title": "What ULEZ-compliant means for your coach hire",
+      "excerpt": "Our entire fleet is Euro-6 and ULEZ-compliant — here's why that saves you money and hassle in London.",
+      "author": "NP Coaches",
+      "date": "2026-02-10",
+      "body": "<p>London's Ultra Low Emission Zone (ULEZ) charges older, more polluting vehicles a daily fee to drive within the zone. Every coach in the NP Coaches fleet meets the Euro-6 emissions standard, so our vehicles are fully ULEZ-compliant.</p><p>For you, that means no ULEZ surcharge added to your quote and no surprises on journeys into central London — whether it's a school trip, a wedding or a day tour. It's also better for air quality across the city. <a href=\"/fleet\">See the fleet</a> or <a href=\"/get-a-quote\">request a quote</a>.</p>",
+      "seoTitle": "What ULEZ-Compliant Means for Coach Hire | NP Coaches Blog",
+      "seoDescription": "Every NP Coaches vehicle is Euro-6 and ULEZ-compliant, so there's no ULEZ surcharge on your London coach hire. Here's what that means for your booking."
+    }
+  ],
+  "fleet": [
+    {
+      "slug": "19-seat-coaches",
+      "name": "19 Seat Mini Coach",
+      "seats": 19,
+      "summary": "Compact and comfortable for smaller groups, airport transfers and executive travel.",
+      "features": [
+        "Reclining leather seats",
+        "Air conditioning",
+        "USB charging",
+        "On-board DVD",
+        "Luggage hold"
+      ],
+      "seoTitle": "19 Seat Mini Coach Hire London | NP Coaches",
+      "seoDescription": "Hire a 19-seat mini coach with reclining leather seats, air-con, USB charging and luggage hold. Executive mini-coach travel across the UK from West London."
+    },
+    {
+      "slug": "35-seat-coaches",
+      "name": "35 Seat Midi Coach",
+      "seats": 35,
+      "summary": "A mid-size coach with executive amenities for medium-sized groups.",
+      "features": [
+        "Reclining seats",
+        "Air conditioning",
+        "USB charging",
+        "Seat-back tables",
+        "On-board fridge",
+        "PA system"
+      ],
+      "seoTitle": "35 Seat Midi Coach Hire London | NP Coaches",
+      "seoDescription": "Hire a 35-seat midi coach with seat-back tables, on-board fridge and PA system. Comfortable group travel UK-wide from NP Coaches, Iver."
+    },
+    {
+      "slug": "53-seat-coaches",
+      "name": "53 Seat Executive Coach",
+      "seats": 53,
+      "summary": "Full executive specification — ideal for groups of 40 to 53.",
+      "features": [
+        "Full executive spec",
+        "Reclining seats",
+        "Air conditioning",
+        "USB charging",
+        "PA system",
+        "WC on selected vehicles"
+      ],
+      "seoTitle": "53 Seat Executive Coach Hire London | NP Coaches",
+      "seoDescription": "Hire a 53-seat executive coach for tours, events and corporate travel. Reclining seats, air-con, PA and washroom on selected vehicles. UK-wide from Iver."
+    },
+    {
+      "slug": "72-seat-coaches",
+      "name": "72 Seat Coach",
+      "seats": 72,
+      "summary": "High-capacity coach with executive amenities for large groups.",
+      "features": [
+        "72 forward-facing seats",
+        "Air conditioning",
+        "Reclining seats",
+        "USB charging",
+        "Large luggage hold"
+      ],
+      "seoTitle": "72 Seat Coach Hire London | NP Coaches",
+      "seoDescription": "Hire a 72-seat coach for large groups — schools, tours and events. Forward-facing reclining seats, air-con and ample luggage space. UK-wide from NP Coaches."
+    },
+    {
+      "slug": "86-seat-coaches",
+      "name": "86 Seat Double Decker",
+      "seats": 86,
+      "summary": "Double-deck coach with forward and back-facing seating for large groups.",
+      "features": [
+        "Forward & back-facing seating",
+        "Air conditioning",
+        "Reclining seats",
+        "USB charging",
+        "Executive spec"
+      ],
+      "seoTitle": "86 Seat Double Decker Coach Hire | NP Coaches",
+      "seoDescription": "Hire an 86-seat double decker coach for large group transport. Forward and back-facing executive seating, air-con and USB charging. UK-wide from Iver."
+    },
+    {
+      "slug": "98-seat-coaches",
+      "name": "98 Seat Double Decker",
+      "seats": 98,
+      "summary": "Our maximum-capacity double decker for the largest school and event groups.",
+      "features": [
+        "98 seats",
+        "Back-facing seating throughout",
+        "Air conditioning",
+        "Reclining seats",
+        "USB charging"
+      ],
+      "seoTitle": "98 Seat Double Decker Coach Hire | NP Coaches",
+      "seoDescription": "Hire a 98-seat double decker — our maximum-capacity coach for the largest groups. Air-con, reclining seats and USB charging. UK-wide from NP Coaches."
+    }
+  ]
+}

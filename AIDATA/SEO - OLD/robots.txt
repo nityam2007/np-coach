@@ -1,0 +1,52 @@
+# robots.txt for np-coaches.co.uk
+# Last updated: 2026
+
+# Default rule — allow all standard crawlers
+User-agent: *
+Allow: /
+Disallow: /wp-admin/
+Disallow: /wp-includes/
+Disallow: /?page_id=
+Disallow: /xmlrpc.php
+Allow: /wp-admin/admin-ajax.php
+
+# AI search crawlers — explicitly allowed so AI engines can cite the site
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# Common Crawl — optional. Allow unless there's a reason to opt out of training data.
+User-agent: CCBot
+Allow: /
+
+# Sitemap location
+Sitemap: https://np-coaches.co.uk/sitemap_index.xml

@@ -1,0 +1,75 @@
+# Dev environment — plain. Code is bind-mounted so edits hot-reload without
+# rebuilding any container. Reads variables from `.env` (copy from `.env.example`).
+#
+#   docker compose up        # starts MariaDB + Directus + the Next.js app
+#   web      → http://localhost:3000
+#   directus → http://localhost:8055
+
+services:
+  db:
+    image: mariadb:11
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${DB_DATABASE:-npcoaches}
+      MARIADB_USER: ${DB_USER:-directus}
+      MARIADB_PASSWORD: ${DB_PASSWORD:-change-me}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-change-me-too}
+    volumes:
+      # Named volume for DB data (persistence — not code, so not a bind mount).
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  directus:
+    image: directus/directus:latest # pin to a specific patch version before production
+    restart: unless-stopped
+    ports:
+      - "8055:8055"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      KEY: ${DIRECTUS_KEY:-dev-key-change-me}
+      SECRET: ${DIRECTUS_SECRET:-dev-secret-change-me}
+      DB_CLIENT: mysql
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_DATABASE: ${DB_DATABASE:-npcoaches}
+      DB_USER: ${DB_USER:-directus}
+      DB_PASSWORD: ${DB_PASSWORD:-change-me}
+      ADMIN_EMAIL: ${DIRECTUS_ADMIN_EMAIL:-admin@np-coaches.co.uk}
+      ADMIN_PASSWORD: ${DIRECTUS_ADMIN_PASSWORD:-change-me}
+      PUBLIC_URL: http://localhost:8055
+      CORS_ENABLED: "true"
+      CORS_ORIGIN: http://localhost:3000
+      WEBSOCKETS_ENABLED: "true" # realtime + live updates in the admin
+      MARKETPLACE_TRUST: all # dev: allow installing any Marketplace extension (review before prod)
+      EXTENSIONS_AUTO_RELOAD: "true" # hot-reload extensions added to ./directus/extensions
+    volumes:
+      # Bind mounts so uploads & custom extensions are visible/editable on the host.
+      - ./directus/uploads:/directus/uploads
+      - ./directus/extensions:/directus/extensions
+
+  # web:
+  #   image: node:20
+  #   working_dir: /app
+  #   restart: unless-stopped
+  #   command: sh -c "npm install && npm run dev"
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     WATCHPACK_POLLING: "true" # reliable file-watching across the bind mount
+  #     NEXT_PUBLIC_DIRECTUS_URL: http://localhost:8055
+  #     DIRECTUS_URL: http://directus:8055
+  #   volumes:
+  #     - ./:/app # bind: your source — edits hot-reload, no container rebuild
+  #     - /app/node_modules # keep the container's installed deps
+  #     - /app/.next # keep the container's build cache
+  #   depends_on:
+  #     - directus
+
+volumes:
+  mariadb_data:

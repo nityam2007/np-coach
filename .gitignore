@@ -1,0 +1,27 @@
+# dependencies & build
+node_modules/
+.next/
+out/
+build/
+next-env.d.ts.bak
+
+# env & secrets
+.env
+.env*.local
+.env.production
+.env.prod
+!.env.example
+
+# TLS — never commit private keys / origin certs
+traefik/certs/*.pem
+traefik/certs/*.key
+
+# Docker-mounted runtime data (bind mounts) — keep the folders, ignore contents
+directus/uploads/*
+!directus/uploads/.gitkeep
+directus/extensions/*
+!directus/extensions/.gitkeep
+
+# misc
+.DS_Store
+*.log

@@ -1,0 +1,311 @@
+/* ============================================================
+   NP COACHES — Schema JSON-LD Snippets
+   Drop each into the <head> of the relevant page, inside:
+     <script type="application/ld+json"> ... </script>
+   Or use Rank Math / Yoast schema builder UI.
+   Validate every block at: https://search.google.com/test/rich-results
+============================================================ */
+
+
+/* ============================================================
+   1. ORGANIZATION / LOCALBUSINESS
+   PLACE ON: every page (sitewide, via theme header)
+============================================================ */
+{
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",
+  "@id": "https://np-coaches.co.uk/#organization",
+  "name": "NP Coaches",
+  "alternateName": "New Punjab Coaches Ltd",
+  "url": "https://np-coaches.co.uk",
+  "logo": "https://np-coaches.co.uk/wp-content/uploads/2024/11/cropped-NPC-LOGO-1-scaled-1.jpg",
+  "image": "https://np-coaches.co.uk/wp-content/uploads/new-bus-1-1.png",
+  "description": "West London coach hire operator running charter, scheduled inter-city, and home-to-school coach services from a depot in Iver, Buckinghamshire. Founded 1999. Fleet of 19 to 98 seat Euro 6 coaches.",
+  "telephone": "+44-208-843-1000",
+  "email": "Info@np-coaches.co.uk",
+  "foundingDate": "1999",
+  "founder": { "@type": "Person", "name": "Mr Brainch" },
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Willow Tree Farm, Love Lane",
+    "addressLocality": "Iver",
+    "addressRegion": "Buckinghamshire",
+    "postalCode": "SL0 9QZ",
+    "addressCountry": "GB"
+  },
+  "geo": {
+    "@type": "GeoCoordinates",
+    "latitude": "51.5163",
+    "longitude": "-0.5037"
+  },
+  "areaServed": [
+    { "@type": "City", "name": "London" },
+    { "@type": "City", "name": "Slough" },
+    { "@type": "City", "name": "Iver" },
+    { "@type": "City", "name": "Heathrow" },
+    { "@type": "AdministrativeArea", "name": "Buckinghamshire" },
+    { "@type": "AdministrativeArea", "name": "Berkshire" }
+  ],
+  "openingHoursSpecification": [{
+    "@type": "OpeningHoursSpecification",
+    "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
+    "opens": "00:00",
+    "closes": "23:59"
+  }],
+  "employee": [
+    {
+      "@type": "Person",
+      "name": "Jujhaar Singh Brainch",
+      "jobTitle": "Director and Chief Executive Officer"
+    },
+    {
+      "@type": "Person",
+      "name": "Mandeep Singh Brainch",
+      "jobTitle": "Compliance and Operations Manager"
+    }
+  ],
+  "sameAs": [
+    "https://www.facebook.com/npcoaches/",
+    "https://www.instagram.com/npcoaches/",
+    "https://twitter.com/NPCoaches",
+    "https://www.route-one.net/features/np-coaches-strong-investment-delivering-results-for-iver-business/",
+    "https://www.yell.com/biz/new-punjab-coaches-ltd-southall-2657893/"
+  ]
+}
+
+
+/* ============================================================
+   2. WEBSITE
+   PLACE ON: homepage only
+============================================================ */
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "@id": "https://np-coaches.co.uk/#website",
+  "url": "https://np-coaches.co.uk",
+  "name": "NP Coaches",
+  "publisher": { "@id": "https://np-coaches.co.uk/#organization" },
+  "inLanguage": "en-GB"
+}
+
+
+/* ============================================================
+   3. SERVICE — Charter / UK Tours
+   PLACE ON: /uk-tours/
+============================================================ */
+{
+  "@context": "https://schema.org",
+  "@type": "Service",
+  "serviceType": "Coach hire and UK tours",
+  "name": "Charter coach hire and UK tours from West London",
+  "provider": { "@id": "https://np-coaches.co.uk/#organization" },
+  "areaServed": "United Kingdom",
+  "description": "Private coach hire for groups of 19 to 98 passengers. Suitable for school trips, weddings, corporate events, sports teams, day tours and tour operator work. UK-wide coverage from West London depot.",
+  "url": "https://np-coaches.co.uk/uk-tours/",
+  "offers": {
+    "@type": "Offer",
+    "priceCurrency": "GBP",
+    "url": "https://np-coaches.co.uk/get-a-quote/",
+    "availability": "https://schema.org/InStock"
+  }
+}
+
+
+/* ============================================================
+   4. SERVICE — Home to School
+   PLACE ON: /home-to-school/
+============================================================ */
+{
+  "@context": "https://schema.org",
+  "@type": "Service",
+  "serviceType": "Home-to-school coach transport",
+  "name": "Home-to-school coach service — Slough, Burnham, Reading",
+  "provider": { "@id": "https://np-coaches.co.uk/#organization" },
+  "description": "Daily home-to-school coach service for Pioneer Secondary Academy (Burnham and Langley campuses) and Herschel Grammar School. ShuttleID tracking, QR code boarding, DBS-checked drivers, GoCardless billing.",
+  "areaServed": [
+    { "@type": "City", "name": "Slough" },
+    { "@type": "City", "name": "Burnham" },
+    { "@type": "City", "name": "Reading" },
+    { "@type": "City", "name": "Southall" }
+  ],
+  "url": "https://np-coaches.co.uk/home-to-school/"
+}
+
+
+/* ============================================================
+   5. SERVICE — Daily Express
+   PLACE ON: /daily-express-service/
+============================================================ */
+{
+  "@context": "https://schema.org",
+  "@type": "Service",
+  "serviceType": "Scheduled inter-city coach service",
+  "name": "Daily Express coach service: London to Birmingham, Wolverhampton and Leicester",
+  "provider": { "@id": "https://np-coaches.co.uk/#organization" },
+  "description": "Daily scheduled coach service between London (Southall, Slough) and the Midlands. AM and PM departures 7 days a week to Coventry, Birmingham and Wolverhampton. Friday to Monday service to Leicester.",
+  "areaServed": [
+    { "@type": "City", "name": "London" },
+    { "@type": "City", "name": "Southall" },
+    { "@type": "City", "name": "Slough" },
+    { "@type": "City", "name": "Coventry" },
+    { "@type": "City", "name": "Birmingham" },
+    { "@type": "City", "name": "Wolverhampton" },
+    { "@type": "City", "name": "Leicester" }
+  ],
+  "url": "https://np-coaches.co.uk/daily-express-service/"
+}
+
+
+/* ============================================================
+   6. PRODUCT-LIKE — Fleet pages
+   PLACE ON: each fleet sub-page (/19-seat-coaches/, etc.)
+   Replace the values for each vehicle size.
+============================================================ */
+{
+  "@context": "https://schema.org",
+  "@type": "Service",
+  "serviceType": "53 seater coach hire",
+  "name": "53 Seater Coach Hire — West London",
+  "provider": { "@id": "https://np-coaches.co.uk/#organization" },
+  "description": "Executive 53-seater coach hire from NP Coaches. Reclining seats with seat-back tables, USB charging, air conditioning, on-board PA, on-board fridge, large luggage hold. Euro 6, ULEZ-compliant. Ideal for groups of 40 to 53 passengers including school trips, weddings, and corporate transfers.",
+  "url": "https://np-coaches.co.uk/53-seat-coaches/",
+  "offers": {
+    "@type": "Offer",
+    "priceCurrency": "GBP",
+    "url": "https://np-coaches.co.uk/get-a-quote/",
+    "availability": "https://schema.org/InStock"
+  }
+}
+
+
+/* ============================================================
+   7. FAQPAGE
+   PLACE ON: /faqs/ (and /home-to-school/ — adapt questions accordingly)
+   Rewrite questions and answers to match real content on the page.
+   Every answer kept to 40-60 words for AI extraction.
+============================================================ */
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How far in advance should I book a coach with NP Coaches?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "For charter and private hire, we recommend booking at least 24 hours in advance to confirm vehicle availability. For our Daily Express scheduled service, online bookings are accepted up to 1 hour before departure."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Are NP Coaches drivers DBS-checked?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Every NP Coaches driver holds a current Enhanced DBS check, particularly important for our home-to-school services to Pioneer Secondary Academy and Herschel Grammar School. Drivers also hold full UK PCV Category D licences."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What size coach do I need for my group?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Our fleet covers 19, 35, 53, 72, 86, and 98 seats. As a guide: under 20 passengers use a mini coach (19 seat); 20 to 35 use a midi (35 seat); 36 to 53 use a standard executive (53 seat); 54+ use a 72 seater or double-decker."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does NP Coaches operate ULEZ-compliant vehicles?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. The entire NP Coaches fleet is Euro 6 emissions standard and fully ULEZ-compliant, so there are no additional charges for journeys within London's Ultra Low Emission Zone."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Where does the Daily Express service pick up in London?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The Daily Express service picks up in Southall (West London) and in Slough at the Library (Stop W), opposite the Moxy Hotel, Wellington Street, SL1 1YG. From there it serves Coventry, Birmingham Soho Road, Birmingham Smethwick, Wolverhampton, and (Fri to Mon only) Leicester."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How much does coach hire cost in London?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Coach hire cost depends on vehicle size, journey distance, duration, and date. NP Coaches provides free, no-obligation quotes via the online quote form or by phone on +44 208 843 1000. Quotes are typically returned within one working day."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What luggage can I bring on the Daily Express coach?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Each passenger may bring 1 × 20kg suitcase in the luggage hold plus 1 × 7kg hand luggage on board, included in the ticket price. Please arrive 15 minutes before departure to allow time for luggage loading."
+      }
+    }
+  ]
+}
+
+
+/* ============================================================
+   8. BREADCRUMBLIST
+   PLACE ON: every page below the homepage.
+   This example is for /53-seat-coaches/ — adapt the items array for each page.
+============================================================ */
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "https://np-coaches.co.uk/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Fleet",
+      "item": "https://np-coaches.co.uk/fleet/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "53 Seater Coaches",
+      "item": "https://np-coaches.co.uk/53-seat-coaches/"
+    }
+  ]
+}
+
+
+/* ============================================================
+   9. REVIEW / AGGREGATERATING
+   PLACE ON: homepage (and any service page where you display reviews)
+   ONLY use if reviews are real, verifiable, and you have permission.
+   Pull from Google Reviews aggregate once GBP is set up.
+============================================================ */
+{
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",
+  "@id": "https://np-coaches.co.uk/#organization",
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.8",
+    "reviewCount": "127",
+    "bestRating": "5",
+    "worstRating": "1"
+  },
+  "review": [
+    {
+      "@type": "Review",
+      "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": "5",
+        "bestRating": "5"
+      },
+      "author": { "@type": "Person", "name": "[Real reviewer name]" },
+      "reviewBody": "[Real quoted review text]"
+    }
+  ]
+}

@@ -1,0 +1,113 @@
+# Production stack for the Hostinger VPS (KVM2). Traefik terminates TLS with a
+# Cloudflare Origin certificate (Full-strict) and routes by domain to the Next.js app
+# and the Directus admin/API. MariaDB is internal-only (no published port).
+#
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Prereqs on the VPS (see DEPLOY.md): .env.prod filled in; Cloudflare Origin cert at
+# ./traefik/certs/{origin.pem,origin-key.pem}; DNS A records (proxied) for the two hosts.
+
+services:
+  traefik:
+    image: traefik:v3
+    restart: unless-stopped
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.file.directory=/etc/traefik/dynamic
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      # Redirect all HTTP → HTTPS (TLS is the Cloudflare Origin cert, loaded via file provider).
+      - --entrypoints.web.http.redirections.entryPoint.to=websecure
+      - --entrypoints.web.http.redirections.entryPoint.scheme=https
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/dynamic:/etc/traefik/dynamic:ro
+      - ./traefik/certs:/etc/traefik/certs:ro
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
+        NEXT_PUBLIC_DIRECTUS_URL: ${NEXT_PUBLIC_DIRECTUS_URL}
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}
+    restart: unless-stopped
+    environment:
+      # Server-only: in this network the app reaches Directus by service name.
+      DIRECTUS_URL: http://directus:8055
+      DIRECTUS_SERVER_TOKEN: ${DIRECTUS_SERVER_TOKEN}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
+      NEXT_PUBLIC_DIRECTUS_URL: ${NEXT_PUBLIC_DIRECTUS_URL}
+    depends_on:
+      directus:
+        condition: service_started
+    labels:
+      - traefik.enable=true
+      # The demo host is an alternate entry point for client review. It serves the
+      # same app and does not replace the canonical SITE_HOST.
+      - traefik.http.routers.web.rule=Host(`${SITE_HOST}`) || Host(`${DEMO_HOST:-demo3000.nsheth.in}`)
+      - traefik.http.routers.web.entrypoints=websecure
+      - traefik.http.routers.web.tls=true
+      - traefik.http.services.web.loadbalancer.server.port=3000
+
+  directus:
+    image: directus/directus:11 # pin a specific patch before go-live
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      KEY: ${DIRECTUS_KEY}
+      SECRET: ${DIRECTUS_SECRET}
+      DB_CLIENT: mysql
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      ADMIN_EMAIL: ${DIRECTUS_ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${DIRECTUS_ADMIN_PASSWORD}
+      PUBLIC_URL: https://${DIRECTUS_HOST}
+      CORS_ENABLED: "true"
+      # Permit the public site and the client-review host to call the Directus API.
+      # Directus' explicit array syntax avoids unintentionally enabling every origin.
+      CORS_ORIGIN: "array:https://${SITE_HOST},https://${DEMO_HOST:-demo3000.nsheth.in}"
+      WEBSOCKETS_ENABLED: "true"
+    volumes:
+      - ./directus/uploads:/directus/uploads
+      - ./directus/extensions:/directus/extensions
+    labels:
+      - traefik.enable=true
+      # Client-review alias for the same Directus instance.
+      - traefik.http.routers.directus.rule=Host(`${DIRECTUS_HOST}`) || Host(`${DEMO_DIRECTUS_HOST:-demo8055.nsheth.in}`)
+      - traefik.http.routers.directus.entrypoints=websecure
+      - traefik.http.routers.directus.tls=true
+      - traefik.http.services.directus.loadbalancer.server.port=8055
+
+  db:
+    image: mariadb:11
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${DB_DATABASE}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  mariadb_data:

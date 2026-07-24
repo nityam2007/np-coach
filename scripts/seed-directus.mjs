@@ -1,0 +1,602 @@
+// Bootstrap Directus for NP Coaches: create the `settings` (singleton) and
+// `services` collections, grant public read, and seed them from site-content.json.
+// Idempotent — safe to re-run. Run: `npm run seed` (with Directus reachable).
+
+import content from "../src/lib/site-content.json" with { type: "json" };
+
+const BASE = process.env.DIRECTUS_URL ?? "http://localhost:8055";
+const EMAIL = process.env.DIRECTUS_ADMIN_EMAIL ?? "admin@np-coaches.co.uk";
+const PASSWORD = process.env.DIRECTUS_ADMIN_PASSWORD ?? "change-me";
+
+let token = null;
+
+async function api(path, options = {}) {
+  const res = await fetch(`${BASE}${path}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers ?? {}),
+    },
+  });
+  const text = await res.text();
+  const json = text ? JSON.parse(text) : {};
+  if (!res.ok) {
+    const message = json?.errors?.[0]?.message ?? text;
+    throw Object.assign(new Error(`${options.method ?? "GET"} ${path} → ${res.status}: ${message}`), { status: res.status });
+  }
+  return json.data;
+}
+
+// ---- field helpers ----
+const pk = (field) => ({ field, type: "integer", schema: { is_primary_key: true, has_auto_increment: true }, meta: { hidden: true } });
+const str = (field) => ({ field, type: "string", meta: {}, schema: {} });
+const text = (field) => ({ field, type: "text", meta: { interface: "input-multiline" }, schema: {} });
+const int = (field) => ({ field, type: "integer", meta: {}, schema: {} });
+const json = (field) => ({ field, type: "json", meta: { interface: "input-code", options: { language: "json" } }, schema: {} });
+// Single-file relation (M2O → directus_files). `special: ["file"]` makes Directus wire the relation.
+const fileField = (field, note) => ({ field, type: "uuid", meta: { interface: "file-image", special: ["file"], note }, schema: {} });
+
+const SETTINGS_FIELDS = [
+  pk("id"),
+  str("name"), str("legal_name"), str("tagline"), text("subtitle"), text("description"), str("url"), int("founded"),
+  str("phone_display"), str("phone_href"), str("phone_hours"),
+  str("email_general"), str("email_bookings"),
+  str("address_line1"), str("address_line2"), str("address_city"), str("address_county"), str("address_postcode"),
+  json("nav"), json("footer_columns"), json("legal_links"),
+];
+
+const SERVICES_FIELDS = [
+  pk("id"),
+  { field: "sort", type: "integer", meta: { interface: "input", hidden: false }, schema: {} },
+  str("title"), text("blurb"), str("href"), str("icon"),
+];
+
+const FLEET_FIELDS = [
+  pk("id"),
+  { field: "sort", type: "integer", meta: { interface: "input", hidden: false }, schema: {} },
+  str("slug"), str("name"), int("seats"), text("summary"), json("features"),
+  fileField("image", "Exterior photo shown on the fleet grid + hero."),
+  json("gallery"), // array of file ids for the detail-page gallery
+  str("seo_title"), text("seo_description"),
+];
+
+const wysiwyg = (field) => ({ field, type: "text", meta: { interface: "input-rich-text-html" }, schema: {} });
+
+const PAGES_FIELDS = [
+  pk("id"),
+  { field: "sort", type: "integer", meta: { interface: "input", hidden: false }, schema: {} },
+  str("slug"), str("title"), text("subtitle"), wysiwyg("body"),
+  str("seo_title"), text("seo_description"),
+];
+
+// T2 — UK Tours (per-destination SEO pages).
+const TOURS_FIELDS = [
+  pk("id"),
+  { field: "sort", type: "integer", meta: { interface: "input", hidden: false }, schema: {} },
+  str("slug"), str("destination"), text("summary"), wysiwyg("body"),
+  fileField("image", "Destination hero photo."),
+  str("seo_title"), text("seo_description"),
+];
+
+// T3 — Daily Express routes (timetable + days). `stops` is JSON: [{time, place, detail}].
+// price_single / price_return are fares in pence (GBP); the server computes totals from these.
+const ROUTES_FIELDS = [
+  pk("id"),
+  { field: "sort", type: "integer", meta: { interface: "input", hidden: false }, schema: {} },
+  str("slug"), str("from"), str("to"), str("days"),
+  { field: "price_single", type: "integer", meta: { interface: "input", note: "Single fare in pence (e.g. 1500 = £15.00)" }, schema: {} },
+  { field: "price_return", type: "integer", meta: { interface: "input", note: "Return fare in pence (e.g. 2500 = £25.00)" }, schema: {} },
+  text("summary"), json("stops"),
+  str("seo_title"), text("seo_description"),
+];
+
+// T4 — Blog posts.
+const BLOG_FIELDS = [
+  pk("id"),
+  { field: "slug", type: "string", meta: {}, schema: {} },
+  str("title"), text("excerpt"), str("author"),
+  { field: "date", type: "date", meta: { interface: "datetime" }, schema: {} },
+  wysiwyg("body"), str("seo_title"), text("seo_description"),
+];
+
+// T7 — Testimonials (homepage carousel).
+const TESTIMONIALS_FIELDS = [
+  pk("id"),
+  { field: "sort", type: "integer", meta: { interface: "input", hidden: false }, schema: {} },
+  text("quote"), str("author"), str("role"), str("company"),
+  fileField("image", "Author photo (optional — falls back to initials)."),
+  int("rating"),
+];
+
+// Daily Express corridor stops — drive the stop-to-stop From/To pickers.
+const STOPS_FIELDS = [
+  pk("id"),
+  { field: "sort", type: "integer", meta: { interface: "input", hidden: false }, schema: {} },
+  str("code"), str("name"), text("detail"),
+];
+
+// Home-to-school routes (timetables per school). `stops` is JSON: [{time, place}].
+const SCHOOL_ROUTES_FIELDS = [
+  pk("id"),
+  { field: "sort", type: "integer", meta: { interface: "input", hidden: false }, schema: {} },
+  str("school"), str("code"), str("name"), text("return_note"), json("stops"),
+];
+
+// T6 — form submissions (server-write only; public may CREATE the allowlisted fields, never READ).
+// `created_at` is filled by Directus on insert; submissions are read by staff in the admin panel.
+const datetimeCreated = { field: "created_at", type: "timestamp", meta: { interface: "datetime", readonly: true, special: ["date-created"] }, schema: {} };
+
+const CONTACT_SUBMISSIONS_FIELDS = [
+  pk("id"),
+  str("name"), str("email"), str("phone"), str("subject"), text("message"),
+  datetimeCreated,
+];
+
+// Customer accounts (passwordless). Server-write only — the app manages these with the
+// server token; the public can neither read nor write them. Identified by email.
+const CUSTOMERS_FIELDS = [
+  pk("id"),
+  { field: "email", type: "string", meta: { note: "Unique customer email (lowercased)." }, schema: { is_unique: true } },
+  str("name"),
+  datetimeCreated,
+];
+
+// Login OTPs. Server-write only. Codes are stored HASHED (sha256 of email:code) with a
+// short expiry, single-use (`consumed`) and an attempt cap — never in plaintext.
+const OTP_FIELDS = [
+  pk("id"),
+  str("email"),
+  str("code_hash"),
+  { field: "expires_at", type: "timestamp", meta: { interface: "datetime" }, schema: {} },
+  { field: "consumed", type: "boolean", meta: { interface: "boolean" }, schema: { default_value: false } },
+  int("attempts"),
+  datetimeCreated,
+];
+
+
+// P4 — Daily Express bookings. Written ONLY by the server (server token, no public access):
+// the booking is created `pending` before payment, then set `paid` by the signed Stripe webhook.
+// `stripe_session_id` is unique → webhook idempotency. Amounts stored in pence, server-computed.
+const BOOKINGS_FIELDS = [
+  pk("id"),
+  str("reference"),
+  str("from_stop"), str("to_stop"), str("route_label"),
+  { field: "trip_date", type: "date", meta: { interface: "datetime" }, schema: {} },
+  str("trip_type"), // "single" | "return"
+  int("passengers"),
+  int("amount"), // total in pence
+  str("currency"),
+  str("name"), str("email"), str("phone"),
+  { field: "status", type: "string", meta: { interface: "select-dropdown", options: { choices: [{ text: "Pending", value: "pending" }, { text: "Paid", value: "paid" }, { text: "Failed", value: "failed" }] } }, schema: { default_value: "pending" } },
+  { field: "stripe_session_id", type: "string", meta: { note: "Stripe Checkout Session id (unique — webhook idempotency)" }, schema: { is_unique: true } },
+  str("stripe_payment_intent"),
+  datetimeCreated,
+];
+
+// P5 — Lost Property reclaim pass purchases. Server-write only; fee + VAT computed
+// server-side from settings.pricing. Same pending→paid + unique session-id idempotency.
+const PASS_PURCHASES_FIELDS = [
+  pk("id"),
+  str("reference"),
+  int("amount"), str("currency"),
+  str("name"), str("email"), str("phone"),
+  { field: "travel_date", type: "date", meta: { interface: "datetime" }, schema: {} },
+  str("travel_time"),
+  { field: "school_route", type: "boolean", meta: { interface: "boolean" }, schema: { default_value: false } },
+  str("school"), str("route"), str("where_left"),
+  text("item_description"), text("notes"),
+  { field: "status", type: "string", meta: { interface: "select-dropdown", options: { choices: [{ text: "Pending", value: "pending" }, { text: "Paid", value: "paid" }, { text: "Failed", value: "failed" }] } }, schema: { default_value: "pending" } },
+  { field: "stripe_session_id", type: "string", meta: { note: "Stripe Checkout Session id (unique — webhook idempotency)" }, schema: { is_unique: true } },
+  str("stripe_payment_intent"),
+  datetimeCreated,
+];
+
+async function ensureCollection(name, meta, fields) {
+  const existing = new Set((await api("/collections?limit=-1")).map((c) => c.collection));
+  if (existing.has(name)) {
+    console.log(`• collection "${name}" already exists`);
+    return;
+  }
+  await api("/collections", { method: "POST", body: JSON.stringify({ collection: name, meta, schema: {}, fields }) });
+  console.log(`✓ created collection "${name}"`);
+}
+
+async function ensureField(collection, field) {
+  const fields = await api(`/fields/${collection}`);
+  if (fields.some((f) => f.field === field.field)) return;
+  await api(`/fields/${collection}`, { method: "POST", body: JSON.stringify(field) });
+  console.log(`✓ added field "${collection}.${field.field}"`);
+}
+
+async function ensurePublicRead(collection) {
+  const policies = await api("/policies?limit=-1");
+  const publicPolicy = policies.find((p) => p.name === "$t:public_label");
+  if (!publicPolicy) throw new Error("public policy not found");
+  const existing = await api(
+    `/permissions?filter[policy][_eq]=${publicPolicy.id}&filter[collection][_eq]=${collection}&filter[action][_eq]=read&limit=1`,
+  );
+  if (existing.length) {
+    console.log(`• public read on "${collection}" already granted`);
+    return;
+  }
+  await api("/permissions", {
+    method: "POST",
+    body: JSON.stringify({ policy: publicPolicy.id, collection, action: "read", fields: ["*"], permissions: {}, validation: {} }),
+  });
+  console.log(`✓ granted public read on "${collection}"`);
+}
+
+// Grant the Public policy CREATE on a collection. Anonymous visitors can submit
+// the form but cannot READ submissions (no read grant). Uses fields ["*"]: a
+// field-level allowlist is a "custom permission rule" gated by the Directus edition,
+// whereas a standard create rule is allowed. The server action controls exactly which
+// fields are written, and the collection only has the fields we defined.
+async function ensurePublicCreate(collection) {
+  const policies = await api("/policies?limit=-1");
+  const publicPolicy = policies.find((p) => p.name === "$t:public_label");
+  if (!publicPolicy) throw new Error("public policy not found");
+  const existing = await api(
+    `/permissions?filter[policy][_eq]=${publicPolicy.id}&filter[collection][_eq]=${collection}&filter[action][_eq]=create&limit=1`,
+  );
+  if (existing.length) {
+    console.log(`• public create on "${collection}" already granted`);
+    return;
+  }
+  await api("/permissions", {
+    method: "POST",
+    body: JSON.stringify({ policy: publicPolicy.id, collection, action: "create", fields: ["*"], permissions: {}, validation: {} }),
+  });
+  console.log(`✓ granted public create on "${collection}"`);
+}
+
+// Brand the admin panel (project name/colour, navy navigation, brand fonts, login note).
+async function applyBranding() {
+  await api("/settings", {
+    method: "PATCH",
+    body: JSON.stringify({
+      project_name: "NP Coaches",
+      project_descriptor: "Content Management",
+      project_color: "#0e0f27",
+      default_appearance: "light",
+      theme_light_overrides: {
+        primary: "#2563eb",
+        secondary: "#0e0f27",
+        fonts: { sans: { fontFamily: '"Inter", system-ui, sans-serif' } },
+        navigation: {
+          background: "#0e0f27",
+          project: { background: "#0e0f27", foreground: "#fdfdfd" },
+          modules: { background: "#0e0f27", button: { foregroundActive: "#2563eb" } },
+        },
+      },
+      public_note: "**NP Coaches** — staff sign-in. Contact your administrator for access.",
+    }),
+  });
+  console.log("✓ applied admin branding");
+}
+
+async function run() {
+  console.log(`Seeding Directus at ${BASE} ...`);
+  token = (await api("/auth/login", { method: "POST", body: JSON.stringify({ email: EMAIL, password: PASSWORD }) })).access_token;
+
+  await ensureCollection("settings", { singleton: true, icon: "settings", note: "Global site content" }, SETTINGS_FIELDS);
+  await ensureCollection("services", { sort_field: "sort", icon: "category", note: "Homepage service cards" }, SERVICES_FIELDS);
+  await ensureCollection("fleet", { sort_field: "sort", icon: "directions_bus", note: "Fleet vehicles (SEO landing pages)" }, FLEET_FIELDS);
+  await ensureCollection("pages", { sort_field: "sort", icon: "article", note: "Editable content pages (About, Contact, …)" }, PAGES_FIELDS);
+  await ensureCollection("tours", { sort_field: "sort", icon: "tour", note: "UK Tours destinations (SEO landing pages)" }, TOURS_FIELDS);
+  await ensureCollection("routes", { sort_field: "sort", icon: "route", note: "Daily Express routes + timetables" }, ROUTES_FIELDS);
+  await ensureCollection("stops", { sort_field: "sort", icon: "pin_drop", note: "Daily Express corridor stops (booking From/To)" }, STOPS_FIELDS);
+  await ensureCollection("school_routes", { sort_field: "sort", icon: "directions_bus", note: "Home-to-school route timetables" }, SCHOOL_ROUTES_FIELDS);
+  await ensureCollection("blog_posts", { icon: "feed", note: "Blog posts" }, BLOG_FIELDS);
+  await ensureCollection("testimonials", { sort_field: "sort", icon: "format_quote", note: "Homepage testimonials" }, TESTIMONIALS_FIELDS);
+  await ensureCollection("contact_submissions", { icon: "mail", note: "Contact form submissions (read in admin)" }, CONTACT_SUBMISSIONS_FIELDS);
+  await ensureCollection("bookings", { icon: "confirmation_number", note: "Daily Express bookings (server-write only; Stripe)" }, BOOKINGS_FIELDS);
+  await ensureCollection("pass_purchases", { icon: "luggage", note: "Lost Property pass purchases (server-write only; Stripe)" }, PASS_PURCHASES_FIELDS);
+  await ensureCollection("customers", { icon: "person", note: "Customer accounts (server-write only; passwordless)" }, CUSTOMERS_FIELDS);
+  await ensureCollection("otp_codes", { icon: "password", note: "Login OTP codes (server-write only; hashed, single-use)" }, OTP_FIELDS);
+
+  // Fields added after a collection already exists (idempotent extension).
+  await ensureField("settings", json("stats"));
+  await ensureField("settings", json("accreditations"));
+  await ensureField("settings", json("coverage"));
+  await ensureField("settings", json("faqs"));
+  await ensureField("settings", json("pricing")); // configurable fees + per-fee VAT rates
+  await ensureField("settings", fileField("logo", "Site logo (header + footer)."));
+  await ensureField("settings", json("accreditation_logos")); // { "<accreditation name>": "<file id>" }
+  await ensureField("settings", json("homepage")); // bespoke homepage copy blob (see HomepageContent)
+  await ensureField("settings", fileField("school_image", "Homepage school-transport block photo."));
+  await ensureField("services", fileField("image", "Photo for the homepage service card."));
+  await ensureField("services", str("icon")); // icon key for the service card
+  await ensureField("settings", fileField("hero_image", "Homepage hero background photo."));
+  // Testimonials gained author org/photo/rating (mockup cards).
+  await ensureField("testimonials", str("company"));
+  await ensureField("testimonials", fileField("image", "Author photo (optional)."));
+  await ensureField("testimonials", { field: "rating", type: "integer", meta: { interface: "input", note: "Star rating 1–5" }, schema: {} });
+  // Routes gained fares (P4) — add to any pre-existing routes collection.
+  await ensureField("routes", { field: "price_single", type: "integer", meta: { interface: "input", note: "Single fare in pence" }, schema: {} });
+  await ensureField("routes", { field: "price_return", type: "integer", meta: { interface: "input", note: "Return fare in pence" }, schema: {} });
+  // Bookings moved to stop-to-stop — add from/to stop codes to any pre-existing bookings collection.
+  await ensureField("bookings", str("from_stop"));
+  await ensureField("bookings", str("to_stop"));
+  // Media fields (added to pre-existing collections).
+  await ensureField("fleet", fileField("image", "Exterior photo."));
+  await ensureField("fleet", json("gallery"));
+  await ensureField("tours", fileField("image", "Destination hero photo."));
+  await ensureField("settings", json("school_transport"));
+
+  await ensurePublicRead("settings");
+  await ensurePublicRead("services");
+  await ensurePublicRead("fleet");
+  await ensurePublicRead("pages");
+  await ensurePublicRead("tours");
+  await ensurePublicRead("routes");
+  await ensurePublicRead("stops");
+  await ensurePublicRead("school_routes");
+  await ensurePublicRead("blog_posts");
+  await ensurePublicRead("testimonials");
+  await ensurePublicCreate("contact_submissions");
+
+  // Pricing: merge in any keys missing from the live row (e.g. newly-added fares),
+  // but never overwrite values the client has already tuned in Directus.
+  const currentSettings = await api("/items/settings").catch(() => ({}));
+  const mergedPricing = { ...content.pricing, ...(currentSettings?.pricing ?? {}) };
+  const pricingChanged = JSON.stringify(mergedPricing) !== JSON.stringify(currentSettings?.pricing ?? null);
+  // Homepage copy: same strategy — add newly-introduced keys, keep client edits.
+  const mergedHomepage = { ...content.homepage, ...(currentSettings?.homepage ?? {}) };
+
+  // Settings singleton (PATCH upserts the single row).
+  await api("/items/settings", {
+    method: "PATCH",
+    body: JSON.stringify({
+      name: content.name,
+      legal_name: content.legalName,
+      tagline: content.tagline,
+      subtitle: content.subtitle,
+      description: content.description,
+      url: content.url,
+      founded: content.founded,
+      phone_display: content.phone.display,
+      phone_href: content.phone.href,
+      phone_hours: content.phone.hours,
+      email_general: content.email.general,
+      email_bookings: content.email.bookings,
+      address_line1: content.address.line1,
+      address_line2: content.address.line2,
+      address_city: content.address.city,
+      address_county: content.address.county,
+      address_postcode: content.address.postcode,
+      nav: content.nav,
+      footer_columns: content.footerColumns,
+      legal_links: content.legalLinks,
+      stats: content.stats,
+      accreditations: content.accreditations,
+      coverage: content.coverage,
+      faqs: content.faqs,
+      pricing: mergedPricing,
+      homepage: mergedHomepage,
+    }),
+  });
+  console.log(`✓ seeded settings${pricingChanged ? " (pricing: added missing keys)" : " (pricing unchanged)"}`);
+
+  // Services — only seed if empty, to preserve any edits made in Directus.
+  const services = await api("/items/services?limit=1");
+  if (services.length === 0) {
+    await api("/items/services", {
+      method: "POST",
+      body: JSON.stringify(content.services.map((s, i) => ({ ...s, sort: i + 1 }))),
+    });
+    console.log(`✓ seeded ${content.services.length} services`);
+  } else {
+    // Backfill icons on any pre-existing service row that predates the `icon` field,
+    // matched by title. Never overwrites an icon the client has already set.
+    const iconByTitle = new Map(content.services.map((s) => [s.title, s.icon]));
+    const existing = await api("/items/services?fields=id,title,icon&limit=-1");
+    for (const row of existing) {
+      const icon = iconByTitle.get(row.title);
+      if (icon && !row.icon) {
+        await api(`/items/services/${row.id}`, { method: "PATCH", body: JSON.stringify({ icon }) });
+        console.log(`✓ services/${row.title}.icon set`);
+      }
+    }
+    console.log("• services already populated — skipped seed (icons backfilled where missing)");
+  }
+
+  // Fleet — only seed if empty.
+  const fleet = await api("/items/fleet?limit=1");
+  if (fleet.length === 0) {
+    await api("/items/fleet", {
+      method: "POST",
+      body: JSON.stringify(
+        content.fleet.map((v, i) => ({
+          slug: v.slug,
+          name: v.name,
+          seats: v.seats,
+          summary: v.summary,
+          features: v.features,
+          seo_title: v.seoTitle,
+          seo_description: v.seoDescription,
+          sort: i + 1,
+        })),
+      ),
+    });
+    console.log(`✓ seeded ${content.fleet.length} fleet vehicles`);
+  } else {
+    console.log("• fleet already populated — skipped");
+  }
+
+  // Pages — insert per-slug so a partial seed gets backfilled without clobbering
+  // any page the client has edited (existing slugs are left untouched).
+  const existingPages = await api("/items/pages?fields=slug&limit=-1");
+  const havePage = new Set(existingPages.map((p) => p.slug));
+  const missingPages = content.pages.filter((p) => !havePage.has(p.slug));
+  if (missingPages.length) {
+    await api("/items/pages", {
+      method: "POST",
+      body: JSON.stringify(
+        missingPages.map((p, i) => ({
+          slug: p.slug,
+          title: p.title,
+          subtitle: p.subtitle,
+          body: p.body,
+          seo_title: p.seoTitle,
+          seo_description: p.seoDescription,
+          sort: havePage.size + i + 1,
+        })),
+      ),
+    });
+    console.log(`✓ seeded ${missingPages.length} missing pages (${missingPages.map((p) => p.slug).join(", ")})`);
+  } else {
+    console.log("• all pages present — skipped");
+  }
+
+  // Tours — only seed if empty.
+  const tours = await api("/items/tours?limit=1");
+  if (tours.length === 0) {
+    await api("/items/tours", {
+      method: "POST",
+      body: JSON.stringify(
+        content.tours.map((t, i) => ({
+          slug: t.slug,
+          destination: t.destination,
+          summary: t.summary,
+          body: t.body,
+          seo_title: t.seoTitle,
+          seo_description: t.seoDescription,
+          sort: i + 1,
+        })),
+      ),
+    });
+    console.log(`✓ seeded ${content.tours.length} tours`);
+  } else {
+    console.log("• tours already populated — skipped");
+  }
+
+  // Insert any tour from content that isn't in Directus yet (e.g. new destinations).
+  const existingTourSlugs = new Set((await api("/items/tours?fields=slug&limit=-1")).map((t) => t.slug));
+  const maxTourSort = Math.max(0, ...(await api("/items/tours?fields=sort&limit=-1")).map((t) => t.sort ?? 0));
+  let tourSort = maxTourSort;
+  for (const t of content.tours) {
+    if (existingTourSlugs.has(t.slug)) continue;
+    tourSort += 1;
+    await api("/items/tours", {
+      method: "POST",
+      body: JSON.stringify({
+        slug: t.slug, destination: t.destination, summary: t.summary, body: t.body,
+        seo_title: t.seoTitle, seo_description: t.seoDescription, sort: tourSort,
+      }),
+    });
+    console.log(`✓ added tour "${t.slug}"`);
+  }
+
+  // Routes — only seed if empty.
+  const routes = await api("/items/routes?limit=1");
+  if (routes.length === 0) {
+    await api("/items/routes", {
+      method: "POST",
+      body: JSON.stringify(
+        content.routes.map((r, i) => ({
+          slug: r.slug,
+          from: r.from,
+          to: r.to,
+          days: r.days,
+          price_single: r.priceSingle,
+          price_return: r.priceReturn,
+          summary: r.summary,
+          stops: r.stops,
+          seo_title: r.seoTitle,
+          seo_description: r.seoDescription,
+          sort: i + 1,
+        })),
+      ),
+    });
+    console.log(`✓ seeded ${content.routes.length} routes`);
+  } else {
+    console.log("• routes already populated — skipped");
+  }
+
+  // Backfill fares on pre-existing routes that don't have a price yet (P4). Won't
+  // overwrite a price the client has already set, so it's safe to re-run.
+  const existingRoutes = await api("/items/routes?fields=id,slug,price_single&limit=-1");
+  for (const route of existingRoutes) {
+    if (route.price_single != null) continue;
+    const seed = content.routes.find((r) => r.slug === route.slug);
+    if (!seed) continue;
+    await api(`/items/routes/${route.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ price_single: seed.priceSingle, price_return: seed.priceReturn }),
+    });
+    console.log(`✓ backfilled fares for route "${route.slug}"`);
+  }
+
+  // Stops — only seed if empty.
+  const stops = await api("/items/stops?limit=1");
+  if (stops.length === 0) {
+    await api("/items/stops", {
+      method: "POST",
+      body: JSON.stringify(content.stops.map((s, i) => ({ code: s.code, name: s.name, detail: s.detail, sort: i + 1 }))),
+    });
+    console.log(`✓ seeded ${content.stops.length} stops`);
+  } else {
+    console.log("• stops already populated — skipped");
+  }
+
+  // School routes — only seed if empty.
+  const schoolRoutes = await api("/items/school_routes?limit=1");
+  if (schoolRoutes.length === 0) {
+    await api("/items/school_routes", {
+      method: "POST",
+      body: JSON.stringify(
+        content.schoolRoutes.map((r, i) => ({
+          school: r.school, code: r.code, name: r.name, return_note: r.returnNote, stops: r.stops, sort: i + 1,
+        })),
+      ),
+    });
+    console.log(`✓ seeded ${content.schoolRoutes.length} school routes`);
+  } else {
+    console.log("• school routes already populated — skipped");
+  }
+
+  // Blog posts — only seed if empty.
+  const posts = await api("/items/blog_posts?limit=1");
+  if (posts.length === 0) {
+    await api("/items/blog_posts", {
+      method: "POST",
+      body: JSON.stringify(
+        content.blogPosts.map((p) => ({
+          slug: p.slug,
+          title: p.title,
+          excerpt: p.excerpt,
+          author: p.author,
+          date: p.date,
+          body: p.body,
+          seo_title: p.seoTitle,
+          seo_description: p.seoDescription,
+        })),
+      ),
+    });
+    console.log(`✓ seeded ${content.blogPosts.length} blog posts`);
+  } else {
+    console.log("• blog posts already populated — skipped");
+  }
+
+  // Testimonials — only seed if empty.
+  const testimonials = await api("/items/testimonials?limit=1");
+  if (testimonials.length === 0) {
+    await api("/items/testimonials", {
+      method: "POST",
+      body: JSON.stringify(content.testimonials.map((t, i) => ({ ...t, sort: i + 1 }))),
+    });
+    console.log(`✓ seeded ${content.testimonials.length} testimonials`);
+  } else {
+    console.log("• testimonials already populated — skipped");
+  }
+
+  await applyBranding();
+
+  console.log("Done.");
+}
+
+run().catch((err) => {
+  console.error("Seed failed:", err.message);
+  process.exit(1);
+});

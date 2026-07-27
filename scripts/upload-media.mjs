@@ -84,6 +84,34 @@ const FLEET_GALLERY = {
   "19-seat-coaches": ["fleet-19-int1.jpeg", "fleet-19-int2.jpeg", "fleet-19-int3.jpeg", "fleet-19-layout.png"],
 };
 // Tour slug → hero image.
+// Original WordPress fleet media, grouped by the page it came from.
+const FLEET_LIVE_GALLERIES = {
+  "19-seat-coaches": ["DSC01441-scaled.jpeg", "DSC01486-scaled.jpeg", "DSC01493-scaled.jpeg", "DSC01544-scaled.jpeg", "DSC01548-scaled.jpeg", "DSC01556-scaled.jpeg"],
+  "35-seat-coaches": ["DSC01957-1-scaled.jpeg", "DSC01975-scaled.jpeg", "DSC01997-1-scaled.jpeg", "DSC02027-scaled.jpeg", "DSC02034-scaled.jpeg"],
+  "53-seat-coaches": ["DSC00069-1-scaled.jpg", "DSC00077-scaled.jpg", "DSC00079-scaled.jpg", "DSC00081-scaled.jpg", "DSC00082-scaled.jpg", "DSC00085-scaled.jpg"],
+  "72-seat-coaches": ["DSC01866-1-scaled.jpeg", "DSC01881-scaled.jpeg", "DSC01886-scaled.jpeg", "DSC01901-scaled.jpeg", "DSC01904-scaled.jpeg"],
+  "86-seat-coaches": ["DSC01667-scaled.jpeg", "DSC01674-1-scaled.jpeg", "DSC01768-scaled.jpeg", "DSC01780-scaled.jpeg", "DSC01793-scaled.jpeg", "DSC01830-scaled.jpeg"],
+  "98-seat-coaches": ["9-scaled.jpg", "11-scaled.jpg", "16-scaled.jpg", "19-scaled.jpg", "24-scaled.jpg", "31-scaled.jpg", "38-scaled.jpg"],
+};
+const FLEET_LAYOUTS = {
+  "19-seat-coaches": ["19-seater-layout.png"],
+  "35-seat-coaches": ["35-seater-layout.png"],
+  "53-seat-coaches": ["53-seater-layout.png"],
+  "72-seat-coaches": ["72-seater-layout.png"],
+  "86-seat-coaches": ["86-seater-layout-lower-floor.png", "86-seater-layout-upper-floor.png"],
+  "98-seat-coaches": ["98-seater-layout-lower-floor.png", "98-seater-layout-upper-floor.png"],
+};
+const PAGE_IMAGES = {
+  "about-us": "DSC09651.jpg",
+  "lost-property": "download.jpeg",
+  safeguarding: "Safeguarding-artwork-1.jpg",
+  timetable: "0001-1-1448x2048-1.jpg",
+};
+const BLOG_IMAGES = {
+  "choosing-the-right-coach-size": "DSC09341-3.jpg",
+  "what-ulez-compliant-means": "DSC09057.jpg",
+};
+
 const TOUR_IMAGES = {
   london: "tour-london-thames.jpeg",
   windsor: "tour-touring-coach.jpg",
@@ -178,6 +206,21 @@ async function run() {
     const folder = await ensureFolder("Live site archive");
     for (const f of liveFiles) liveIds[f] = await ensureFile(f, liveDir, folder);
     console.log(`✓ live archive: ${liveFiles.length} files in Directus`);
+  }
+
+  // Attach archived detail media only when the CMS field is still empty. Editors can
+  // replace any of these files later and repeated media runs never overwrite them.
+  for (const [slug, gallery] of Object.entries(FLEET_LIVE_GALLERIES)) {
+    await setItemImage("fleet", slug, "gallery", gallery.map((file) => liveIds[file]).filter(Boolean));
+  }
+  for (const [slug, layouts] of Object.entries(FLEET_LAYOUTS)) {
+    await setItemImage("fleet", slug, "layout_images", layouts.map((file) => liveIds[file]).filter(Boolean));
+  }
+  for (const [slug, file] of Object.entries(PAGE_IMAGES)) {
+    if (liveIds[file]) await setItemImage("pages", slug, "image", liveIds[file]);
+  }
+  for (const [slug, file] of Object.entries(BLOG_IMAGES)) {
+    if (liveIds[file]) await setItemImage("blog_posts", slug, "thumbnail", liveIds[file]);
   }
 
   // Brand assets on settings (only if unset — client edits win): the crisp NPC globe

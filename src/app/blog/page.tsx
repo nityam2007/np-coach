@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { getBlogPosts } from "@/lib/directus";
+import Image from "next/image";
+import { assetUrl, getBlogPosts } from "@/lib/directus";
 import { PageHero } from "@/components/sections/PageHero";
 import { BreadcrumbJsonLd, ItemListJsonLd } from "@/components/seo/JsonLd";
 import { buildMetadata } from "@/lib/seo";
@@ -39,6 +40,18 @@ export default async function BlogPage() {
               href={`/blog/${post.slug}`}
               className="group flex flex-col rounded-xl border border-greyblue/30 bg-white p-6 transition-shadow hover:shadow-lg"
             >
+              {post.thumbnail && assetUrl(post.thumbnail) && (
+                <div className="-mx-6 -mt-6 mb-5 aspect-[16/9] overflow-hidden rounded-t-xl bg-greyblue/10">
+                  <Image
+                    src={assetUrl(post.thumbnail)!}
+                    alt={post.title}
+                    width={960}
+                    height={540}
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                </div>
+              )}
               <time className="text-xs font-semibold uppercase tracking-wide text-accent" dateTime={post.date}>
                 {formatDate(post.date)}
               </time>

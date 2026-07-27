@@ -343,6 +343,47 @@
     "ctaHeading": "Ready to Book Your Journey?",
     "ctaBody": "Get an instant quote in under 60 seconds."
   },
+  "fleetPage": {
+    "eyebrow": "Our modern fleet",
+    "title": "Our fleet of coaches",
+    "introHeading": "Our fleet goes above and beyond the standards set out by law for coaches.",
+    "introEyebrow": "Comfort on every journey",
+    "detailHeading": "Luxury travel",
+    "introBody": "We have grown a luxurious, well-equipped and comfortable fleet that is continually improved to deliver the standards our customers expect. Every coach is modern, Euro 6 and ULEZ-compliant; what sets the fleet apart is the care we put into comfort, presentation and the on-board experience.",
+    "seatingLabel": "Wide range of seating options: 19 to 98 passengers",
+    "gridHeading": "Find the right coach for your group",
+    "facilitiesEyebrow": "On board",
+    "facilitiesHeading": "Coach facilities",
+    "layoutEyebrow": "Plan your group",
+    "layoutHeading": "Seating layout",
+    "galleryEyebrow": "Inside and out",
+    "galleryHeading": "Quick preview",
+    "charterEyebrow": "Premium coach charter",
+    "charterHeading": "Group transportation just got easier",
+    "charterBody": "Reliable, comfortable and professional coach hire tailored to your journey. From group travel and corporate events to school trips, our experienced team has you covered.",
+    "charterCta": { "label": "Get a Quote", "href": "/get-a-quote" },
+    "stepsEyebrow": "How it works",
+    "stepsHeading": "4 steps to booking your coach",
+    "stepsIntro": "Booking your coach is simple with these four clear steps.",
+    "steps": [
+      {
+        "title": "Select Your Coach",
+        "body": "Choose the right coach from our fleet to suit your group and journey."
+      },
+      {
+        "title": "Booking & Confirm",
+        "body": "Share your journey details, receive a quote and confirm your booking."
+      },
+      {
+        "title": "Booking Payment",
+        "body": "Complete the agreed booking payment securely to reserve your coach."
+      },
+      {
+        "title": "Start Your Road Trip",
+        "body": "Travel in comfort with a professional driver and a well-prepared vehicle."
+      }
+    ]
+  },
   "schoolTransport": {
     "schools": [
       {
@@ -623,6 +664,14 @@
       "seoDescription": "How NP Coaches uses essential and analytics cookies under UK GDPR and PECR, and how you can manage or withdraw your cookie consent at any time."
     },
     {
+      "slug": "timetable",
+      "title": "Daily Express Timetable",
+      "subtitle": "Current scheduled coach times between London, the Midlands and Leicester.",
+      "body": "<p>Check the current Daily Express departure times for all scheduled journeys. Services connect Southall and Slough with Coventry, Birmingham and Wolverhampton every day, with Leicester services operating Friday to Monday.</p><p>Times and pickup points can change, so please use the live <a href=\"/daily-express-service\">Daily Express timetable</a> before travelling. Online tickets must be booked at least one hour before departure and passengers should arrive 15 minutes early.</p><p>For timetable help, call <a href=\"tel:+442088431000\">0208 843 1000</a> or email <a href=\"mailto:Info@np-coaches.co.uk\">Info@np-coaches.co.uk</a>.</p>",
+      "seoTitle": "Daily Express Coach Timetable | NP Coaches",
+      "seoDescription": "Current NP Coaches Daily Express timetable for London, Slough, Coventry, Birmingham, Wolverhampton and Leicester services."
+    },
+    {
       "slug": "terms",
       "title": "Terms & Conditions",
       "subtitle": "The terms that apply to our services and bookings.",
@@ -849,6 +898,7 @@
       "slug": "19-seat-coaches",
       "name": "19 Seat Mini Coach",
       "seats": 19,
+      "groupLabel": "For small groups",
       "summary": "Compact and comfortable for smaller groups, airport transfers and executive travel.",
       "features": [
         "Reclining leather seats",
@@ -864,6 +914,7 @@
       "slug": "35-seat-coaches",
       "name": "35 Seat Midi Coach",
       "seats": 35,
+      "groupLabel": "For small and medium groups",
       "summary": "A mid-size coach with executive amenities for medium-sized groups.",
       "features": [
         "Reclining seats",
@@ -880,6 +931,7 @@
       "slug": "53-seat-coaches",
       "name": "53 Seat Executive Coach",
       "seats": 53,
+      "groupLabel": "For medium and large groups",
       "summary": "Full executive specification — ideal for groups of 40 to 53.",
       "features": [
         "Full executive spec",
@@ -896,6 +948,7 @@
       "slug": "72-seat-coaches",
       "name": "72 Seat Coach",
       "seats": 72,
+      "groupLabel": "For large groups",
       "summary": "High-capacity coach with executive amenities for large groups.",
       "features": [
         "72 forward-facing seats",
@@ -911,6 +964,7 @@
       "slug": "86-seat-coaches",
       "name": "86 Seat Double Decker",
       "seats": 86,
+      "groupLabel": "For large groups",
       "summary": "Double-deck coach with forward and back-facing seating for large groups.",
       "features": [
         "Forward & back-facing seating",
@@ -926,6 +980,7 @@
       "slug": "98-seat-coaches",
       "name": "98 Seat Double Decker",
       "seats": 98,
+      "groupLabel": "For large groups",
       "summary": "Our maximum-capacity double decker for the largest school and event groups.",
       "features": [
         "98 seats",

@@ -7,6 +7,7 @@ import { requestOtpAction, verifyOtpAction, type AuthState } from "@/app/auth-ac
 import { Icon } from "@/components/ui/Icon";
 import { Button } from "@/components/ui/Button";
 import { inputCls } from "@/components/ui/field";
+import { Turnstile } from "@/components/forms/Turnstile";
 
 const initialReq: AuthState = { step: "email" };
 const initialVfy: AuthState = { step: "code" };
@@ -45,6 +46,7 @@ export function LoginForm() {
           />
         </label>
         {reqState.message && <p className="text-sm text-red-600">{reqState.message}</p>}
+        <Turnstile />
         <Submit label="Email me a code" />
         <p className="text-xs text-navy/70">
           No password needed — we&apos;ll email you a one-time code. New here? An account is created automatically.

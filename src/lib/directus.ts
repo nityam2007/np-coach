@@ -17,6 +17,7 @@ import {
   type SchoolTransport,
   type SchoolRoute,
   type HomepageContent,
+  type FleetPageContent,
 } from "./site-config";
 
 /**
@@ -38,7 +39,10 @@ const REVALIDATE_SECONDS = 30;
  * don't pass sizes here. Directus does the resizing; Next's optimizer is bypassed (which
  * also avoids Next 16's private-IP block in local dev).
  */
-export function assetUrl(id?: string | null): string | null {
+type DirectusFileRef = string | { id?: string | null } | null | undefined;
+
+export function assetUrl(file: DirectusFileRef): string | null {
+  const id = typeof file === "string" ? file : file?.id;
   if (!id) return null;
   return `${PUBLIC_DIRECTUS_URL}/assets/${id}`;
 }
@@ -64,6 +68,7 @@ export interface SiteSettings {
   coverage: string[];
   faqs: Faq[];
   homepage: HomepageContent;
+  fleetPage: FleetPageContent;
   schoolTransport: SchoolTransport;
   /** Accreditation name → Directus file id (badge image). */
   accreditationLogos: Record<string, string>;
@@ -102,6 +107,7 @@ interface SettingsRow {
   coverage: string[];
   faqs: Faq[];
   homepage: HomepageContent | null;
+  fleet_page: FleetPageContent | null;
   school_transport: { logos?: Record<string, string> } | null;
   accreditation_logos: Record<string, string> | null;
   logo: string | null;
@@ -125,10 +131,12 @@ interface FleetRow {
   slug: string;
   name: string;
   seats: number;
+  group_label: string | null;
   summary: string;
   features: string[];
   image: string | null;
   gallery: string[] | null;
+  layout_images: string[] | null;
   seo_title: string;
   seo_description: string;
 }
@@ -166,6 +174,7 @@ const fallbackSettings: SiteSettings = {
   coverage: siteConfig.coverage,
   faqs: siteConfig.faqs,
   homepage: siteConfig.homepage,
+  fleetPage: siteConfig.fleetPage,
   schoolTransport: siteConfig.schoolTransport,
   accreditationLogos: {},
   logo: null,
@@ -204,6 +213,7 @@ export async function getSettings(): Promise<SiteSettings> {
     // Merge homepage copy so newly-added keys fall back to the seed defaults even if
     // the client's stored blob predates them.
     homepage: { ...siteConfig.homepage, ...(row.homepage ?? {}) },
+    fleetPage: { ...siteConfig.fleetPage, ...(row.fleet_page ?? {}) },
     // Schools list/config is authoritative in site-content; logos (Directus file ids)
     // are merged in from the school_transport blob, keyed by school slug.
     schoolTransport: mergeSchoolLogos(row.school_transport),
@@ -240,10 +250,12 @@ export async function getServices(): Promise<ServiceCard[]> {
 function toVehicle(row: FleetRow): FleetVehicle {
   return {
     slug: row.slug,
+    groupLabel: row.group_label ?? siteConfig.fleet.find((vehicle) => vehicle.slug === row.slug)?.groupLabel ?? "",
     name: row.name,
     seats: row.seats,
     summary: row.summary,
     features: row.features,
+    layoutImages: row.layout_images ?? [],
     image: row.image ?? null,
     gallery: row.gallery ?? [],
     seoTitle: row.seo_title,
@@ -272,6 +284,7 @@ interface PageRow {
   title: string;
   subtitle: string;
   body: string;
+  image: string | null;
   seo_title: string;
   seo_description: string;
 }
@@ -283,6 +296,7 @@ function toPage(row: PageRow): Page {
     subtitle: row.subtitle,
     body: row.body,
     seoTitle: row.seo_title,
+    image: row.image ?? null,
     seoDescription: row.seo_description,
   };
 }
@@ -422,6 +436,7 @@ interface BlogRow {
   date: string;
   body: string;
   seo_title: string;
+  thumbnail: DirectusFileRef;
   seo_description: string;
 }
 
@@ -434,6 +449,7 @@ function toBlogPost(row: BlogRow): BlogPost {
     date: row.date,
     body: row.body,
     seoTitle: row.seo_title,
+    thumbnail: typeof row.thumbnail === "string" ? row.thumbnail : row.thumbnail?.id ?? null,
     seoDescription: row.seo_description,
   };
 }

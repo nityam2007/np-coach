@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { getBookingByReference } from "@/lib/stripe";
+import { confirmCheckoutSession, getBookingByReference } from "@/lib/stripe";
 import { getStops, getSettings } from "@/lib/directus";
 import { boardingPassFromBooking } from "@/lib/ticket";
 import { BoardingPass } from "@/components/account/BoardingPass";
@@ -14,11 +13,12 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
-export default async function BookingSuccessPage({ searchParams }: { searchParams: Promise<{ ref?: string }> }) {
-  const { ref } = await searchParams;
-  const booking = ref ? await getBookingByReference(ref) : null;
+export default async function BookingSuccessPage({ searchParams }: { searchParams: Promise<{ session_id?: string }> }) {
+  const { session_id } = await searchParams;
+  const reference = session_id ? await confirmCheckoutSession(session_id, "booking") : null;
+  const booking = reference ? await getBookingByReference(reference) : null;
   const [stops, settings] = await Promise.all([getStops(), getSettings()]);
-  const pass = booking ? await boardingPassFromBooking(booking, stops, settings.name) : null;
+  const pass = booking?.status === "paid" ? await boardingPassFromBooking(booking, stops, settings.name) : null;
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
@@ -26,14 +26,9 @@ export default async function BookingSuccessPage({ searchParams }: { searchParam
         <span className="grid h-12 w-12 place-items-center rounded-full bg-accent text-white">
           <Icon name="check" className="h-6 w-6" />
         </span>
-        <h1 className="mt-4 font-display text-3xl font-bold">Thank you — your booking is confirmed</h1>
+        <h1 className="mt-4 font-display text-3xl font-bold">{pass ? "Thank you — your booking is confirmed" : "We’re confirming your payment"}</h1>
         <p className="mt-3 text-navy/70">
-          We&apos;ve received your payment and a receipt has been emailed to you. Your ticket is below — download it or
-          find it any time in{" "}
-          <Link href="/account" className="font-semibold text-accent hover:underline">
-            your account
-          </Link>{" "}
-          (sign in with the email you booked with).
+          {pass ? "Stripe has verified your payment and emailed your receipt. Your ticket is below." : "Your payment is being confirmed securely with Stripe. No ticket is issued until that check succeeds."}
         </p>
       </div>
 
@@ -47,9 +42,9 @@ export default async function BookingSuccessPage({ searchParams }: { searchParam
           </div>
         </>
       ) : (
-        ref && (
+        !pass && (
           <p className="mt-8 text-sm">
-            Booking reference: <span className="font-display text-lg font-bold text-navy">{ref}</span>
+            Please refresh this page in a moment, or check your email for the Stripe receipt.
           </p>
         )
       )}

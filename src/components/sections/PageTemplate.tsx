@@ -1,10 +1,14 @@
 import type { Page } from "@/lib/site-config";
+import Image from "next/image";
 import { PageHero } from "@/components/sections/PageHero";
 import { Reveal } from "@/components/ui/motion";
+import { assetUrl } from "@/lib/directus";
 
 /** Renders an editable content page (PageHero + HTML body). One change here upgrades
  *  every CMS content page (About, FAQs, legal, …). */
 export function PageTemplate({ page }: { page: Page }) {
+  const image = assetUrl(page.image);
+
   return (
     <article>
       <PageHero
@@ -13,10 +17,29 @@ export function PageTemplate({ page }: { page: Page }) {
         crumbs={[{ label: "Home", href: "/" }, { label: page.title }]}
       />
 
-      <section className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-        <Reveal>
-          <div className="prose" dangerouslySetInnerHTML={{ __html: page.body }} />
-        </Reveal>
+      <section className="bg-offwhite">
+        <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6 lg:py-20">
+          {image && (
+            <Reveal>
+              <div className="relative mb-8 aspect-[16/7] overflow-hidden rounded-3xl bg-greyblue/15 shadow-lg shadow-navy/10">
+                <Image
+                  src={image}
+                  alt=""
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 960px"
+                  className="object-cover"
+                  priority
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-navy/30 via-transparent to-transparent" />
+              </div>
+            </Reveal>
+          )}
+          <Reveal>
+            <div className="rounded-3xl border border-greyblue/15 bg-white px-6 py-8 shadow-sm sm:px-10 sm:py-12">
+              <div className="prose mx-auto" dangerouslySetInnerHTML={{ __html: page.body }} />
+            </div>
+          </Reveal>
+        </div>
       </section>
     </article>
   );

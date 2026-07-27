@@ -1,18 +1,16 @@
 "use server";
 
-import { headers } from "next/headers";
 import {
   contactSchema,
   bookingSchema,
   lostPropertySchema,
   fieldErrors,
   verifyTurnstile,
-  rateLimited,
+  quoteSchema,
   createSubmission,
   type FormState,
 } from "@/lib/forms";
 import {
-  stripeConfigured,
   getStripe,
   priceBooking,
   priceLostPropertyPass,
@@ -20,17 +18,11 @@ import {
   createPendingBooking,
   createPendingPassPurchase,
   attachSession,
-  markPaidByReference,
 } from "@/lib/stripe";
 import { upsertCustomer } from "@/lib/account";
 import { getSettings } from "@/lib/directus";
-import { sendEmail } from "@/lib/email";
+import { clientIp, rateLimited, rateLimitKey, RATE_LIMITS } from "@/lib/security";
 
-async function clientIp(): Promise<string> {
-  const h = await headers();
-  const fwd = h.get("x-forwarded-for");
-  return (fwd ? fwd.split(",")[0] : h.get("cf-connecting-ip"))?.trim() || "unknown";
-}
 
 export async function submitContact(_prev: FormState, formData: FormData): Promise<FormState> {
   const parsed = contactSchema.safeParse(Object.fromEntries(formData));
@@ -38,8 +30,8 @@ export async function submitContact(_prev: FormState, formData: FormData): Promi
   const data = parsed.data;
 
   const ip = await clientIp();
-  if (rateLimited(`contact:${ip}`)) {
-    return { ok: false, message: "Too many submissions — please try again in a minute." };
+  if (rateLimited(rateLimitKey("contact", ip), RATE_LIMITS.contact)) {
+    return { ok: false, message: "Too many submissions — please try again in 10 minutes." };
   }
 
   const token = formData.get("cf-turnstile-response");
@@ -59,14 +51,37 @@ export async function submitContact(_prev: FormState, formData: FormData): Promi
   return { ok: true, message: "Thanks — we've received your message and aim to reply within 24 hours." };
 }
 
+export async function submitQuote(_prev: FormState, formData: FormData): Promise<FormState> {
+  const parsed = quoteSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { ok: false, errors: fieldErrors(parsed.error) };
+  const data = parsed.data;
+
+  const ip = await clientIp();
+  if (rateLimited(rateLimitKey("quote", ip), RATE_LIMITS.quote)) {
+    return { ok: false, message: "Too many submissions — please try again in 10 minutes." };
+  }
+  const token = formData.get("cf-turnstile-response");
+  if (!(await verifyTurnstile(typeof token === "string" ? token : undefined, ip))) {
+    return { ok: false, message: "Spam check failed — please try again." };
+  }
+
+  const saved = await createSubmission("quote_requests", {
+    name: data.name, email: data.email, phone: data.phone, pickup: data.pickup, destination: data.destination,
+    outbound_date: data.outboundDate, return_date: data.returnDate || null, passengers: data.passengers,
+    coach_size: data.coachSize, journey_details: data.journeyDetails,
+  });
+  if (!saved) return { ok: false, message: "Something went wrong saving your request. Please call us instead." };
+  return { ok: true, message: "Thanks — we have your quote request and will be in touch shortly." };
+}
+
 export async function startBooking(_prev: FormState, formData: FormData): Promise<FormState> {
   const parsed = bookingSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { ok: false, errors: fieldErrors(parsed.error) };
   const data = parsed.data;
 
   const ip = await clientIp();
-  if (rateLimited(`booking:${ip}`)) {
-    return { ok: false, message: "Too many attempts — please try again in a minute." };
+  if (rateLimited(rateLimitKey("booking", ip), RATE_LIMITS.checkout)) {
+    return { ok: false, message: "Too many attempts — please try again in 10 minutes." };
   }
 
   const token = formData.get("cf-turnstile-response");
@@ -78,6 +93,9 @@ export async function startBooking(_prev: FormState, formData: FormData): Promis
   const priced = await priceBooking(data.from, data.to, data.tripType, data.passengers);
   if (!priced) return { ok: false, message: "That journey or passenger count isn't available. Please check and try again." };
 
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return { ok: false, message: "Online payments are not available at the moment. Please call us to book." };
+  }
   const reference = bookingReference();
   // Persist the booking as `pending` BEFORE payment (data-safety rule).
   const booking = await createPendingBooking({
@@ -101,12 +119,6 @@ export async function startBooking(_prev: FormState, formData: FormData): Promis
   const settings = await getSettings();
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? settings.url;
 
-  // ponytail: dummy checkout — no Stripe keys, so mark paid and skip straight to the ticket.
-  if (!stripeConfigured()) {
-    await markPaidByReference("bookings", reference);
-    return { ok: true, redirect: `${baseUrl}/booking/success?ref=${reference}` };
-  }
-
   try {
     const session = await getStripe().checkout.sessions.create({
       mode: "payment",
@@ -125,7 +137,8 @@ export async function startBooking(_prev: FormState, formData: FormData): Promis
         },
       ],
       metadata: { kind: "booking", reference, from: priced.from.code, to: priced.to.code, trip_type: priced.tripType },
-      success_url: `${baseUrl}/booking/success?ref=${reference}`,
+      payment_intent_data: { receipt_email: data.email },
+      success_url: `${baseUrl}/booking/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/daily-express-service/book?cancelled=1`,
     });
 
@@ -144,8 +157,8 @@ export async function startPassPurchase(_prev: FormState, formData: FormData): P
   const data = parsed.data;
 
   const ip = await clientIp();
-  if (rateLimited(`pass:${ip}`)) {
-    return { ok: false, message: "Too many attempts — please try again in a minute." };
+  if (rateLimited(rateLimitKey("pass", ip), RATE_LIMITS.checkout)) {
+    return { ok: false, message: "Too many attempts — please try again in 10 minutes." };
   }
 
   const token = formData.get("cf-turnstile-response");
@@ -156,6 +169,9 @@ export async function startPassPurchase(_prev: FormState, formData: FormData): P
   // Fee + VAT computed server-side from CMS pricing — never sent by the client.
   const priced = await priceLostPropertyPass();
   const reference = bookingReference();
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return { ok: false, message: "Online payments are not available at the moment. Please call us to make your request." };
+  }
 
   const record = await createPendingPassPurchase({
     reference,
@@ -177,34 +193,8 @@ export async function startPassPurchase(_prev: FormState, formData: FormData): P
   // Auto-create/link a customer account so the claim shows up in /account.
   await upsertCustomer(data.email, data.name);
 
-  // Notify the lost-property team (no-ops gracefully until SMTP creds are set). ponytail:
-  // fire-and-forget — a failed notification must not block the customer's checkout.
-  void sendEmail({
-    to: process.env.LOST_PROPERTY_TO ?? "info@np-coaches.co.uk",
-    subject: `Lost property claim ${reference} — ${data.itemDescription.slice(0, 60)}`,
-    text: [
-      `Reference: ${reference}`,
-      `Name: ${data.name}`,
-      `Email: ${data.email}`,
-      `Phone: ${data.phone}`,
-      `Travel date: ${data.travelDate ?? "—"} ${data.travelTime ?? ""}`.trim(),
-      data.schoolRoute === "yes" ? `School route: ${data.school ?? ""} ${data.route ?? ""}`.trim() : null,
-      `Where left: ${data.whereLeft ?? "—"}`,
-      `Item: ${data.itemDescription}`,
-      data.notes ? `Notes: ${data.notes}` : null,
-    ]
-      .filter(Boolean)
-      .join("\n"),
-  });
-
   const settings = await getSettings();
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? settings.url;
-
-  // ponytail: dummy checkout — no Stripe keys, so mark paid and skip straight to the receipt.
-  if (!stripeConfigured()) {
-    await markPaidByReference("pass_purchases", reference);
-    return { ok: true, redirect: `${baseUrl}/pass/success?ref=${reference}` };
-  }
 
   try {
     const session = await getStripe().checkout.sessions.create({
@@ -224,7 +214,8 @@ export async function startPassPurchase(_prev: FormState, formData: FormData): P
         },
       ],
       metadata: { kind: "pass", reference },
-      success_url: `${baseUrl}/pass/success?ref=${reference}`,
+      payment_intent_data: { receipt_email: data.email },
+      success_url: `${baseUrl}/pass/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/lost-property/claim?cancelled=1`,
     });
 

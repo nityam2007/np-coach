@@ -2,7 +2,7 @@
 
 This is the **single source of truth for picking up the build** (new chat / another agent). Read this first, then [../CLAUDE.md](../CLAUDE.md) → [PLAN.md](PLAN.md) → [TASKS.md](TASKS.md). Keep this file current as you work.
 
-> Convert relative dates to absolute. Today's reference when this file was last updated: **2026-07-04**.
+> Convert relative dates to absolute. Today's reference when this file was last updated: **2026-07-24**.
 
 ---
 
@@ -20,6 +20,7 @@ Branch: **`p2-marketing-complete`** (off `main`). Commit as `nityam2007`, **neve
 - **SEO hardening** (2026-07-04): OpenGraph + Twitter defaults in the root layout; `alternates.canonical` on fleet/pages/routes/tours/blog detail + the book page; `public/llms.txt` served; sitemap includes `/daily-express-service/book` + `/lost-property/claim`; footer gained a **Daily Express column** (book + timetable + the 3 route pages) so no route is orphaned.
 - **UI pass (2026-07-04):** real **accreditation badge images** (CPT, UKCOA, CTA, Disability Confident, WeLoveCoaches, Transport for Bucks) via `settings.accreditation_logos`; **photo service cards** (`services.image`); header logo switched to the crisp **io.png** globe; hero background now the flagship coach (`DSC09341-3`); testimonial 5-star row; **lost-property claim page** redesigned (form + how-it-works/`Good to know` aside). Accreditations text list updated to the real set (mockup names were placeholder).
 - **Local → prod migration story** (2026-07-04): `npm run bootstrap` (= seed + configure + media) prefILLS any empty Directus from the repo; `npm run schema:snapshot` / `schema:apply` (scripts/schema.sh) move the **exact** schema via `directus/schema-snapshot.yaml` (committed). Prod bootstrap = compose up → `schema:apply` → `bootstrap` with prod env vars.
+- **Fleet/content/media pass (2026-07-24):** rebuilt `/fleet` and all six vehicle pages from the archived WordPress structure (CMS copy, facility bands, per-vehicle galleries, seating plans, charter CTA and four booking steps); added `settings.fleet_page`, `fleet.group_label`, `fleet.layout_images` and `pages.image`; migrated `/timetable`; upgraded generic content pages with optional CMS imagery. Blog thumbnails now accept UUID or expanded Directus file values, render on cards/articles/Open Graph/BlogPosting schema, and `npm run media` safely assigns starter images when empty. Verified both blog assets as public `image/jpeg`, all fleet media counts, six updated routes at HTTP 200, fresh TypeScript and lint.
 
 **Not done — pick up here:**
 1. **Actual launch** (needs the VPS — can't be done from this dev box): provision Hostinger VPS, Cloudflare DNS/SSL + Origin cert, live Stripe keys + webhook at `/api/stripe/webhook`, then `docker compose -f docker-compose.prod.yml up -d --build` + run seed/media/configure against the live Directus. Full steps in [../DEPLOY.md](../DEPLOY.md). Lighthouse pass after.
@@ -35,7 +36,7 @@ Branch: **`p2-marketing-complete`** (off `main`). Commit as `nityam2007`, **neve
 docker compose up db directus     # MariaDB + Directus (host dev) — app runs on host
 npm run bootstrap                 # = seed + configure + media (all idempotent)
 npm run dev:poll                  # dev server WITH working hot-reload (see gotcha #1)
-npm run build && npm run lint     # MUST both pass before committing
+npx tsc --noEmit && npm run lint  # agent-safe verification; the human owns dev/build processes
 # extras: npm run crawl (refresh live-site image archive) ·
 #         npm run schema:snapshot / schema:apply (exact Directus schema ⇄ directus/schema-snapshot.yaml)
 ```
@@ -65,23 +66,23 @@ Directus collection → seed (`scripts/seed-directus.mjs`) → typed in `src/lib
 - Order collections (`bookings`, `pass_purchases`) are **server-write only** (no public read/create); written with `DIRECTUS_SERVER_TOKEN` (dev falls back to admin login).
 - Graceful "being set up" notice when `STRIPE_SECRET_KEY` is unset.
 
-**Forms (P3):** server actions in `src/app/actions.ts` (`submitContact`, `submitQuote`, `startBooking`, `startPassPurchase`); validation/helpers in `src/lib/forms.ts`; submission collections are **public create, no read**.
+**Forms (P3):** server actions in `src/app/actions.ts` (`submitContact`, `submitQuote`, `startBooking`, `startPassPurchase`); validation/helpers in `src/lib/forms.ts`; contact/quote writes use the scoped Directus server token after zod, honeypot, rate-limit and Turnstile checks. Submission collections have **no anonymous create/read permission**.
 
 **Pricing/VAT:** `settings.pricing` (pence + whole-% VAT, per-fee): `lostPropertyFee`/`lostPropertyVat`, `dailyExpressVat`, `dailyExpressSingle`/`dailyExpressReturn`. Seed **merges new keys** without clobbering client-edited values.
 
-**Images:** `npm run media` uploads from `directus/seed-media/`, idempotent (matched by file `title`), grants public read on `directus_files`, links by slug. `assetUrl(id)` builds the bare `/assets/<id>` URL; the loader appends size/quality.
+**Images:** `npm run media` uploads from `directus/seed-media/`, idempotent (matched by file `title`), grants public read on `directus_files`, and links by slug without replacing editor-set media. It covers fleet exteriors/galleries/seating plans, tours, school logos, selected content-page heroes and starter blog thumbnails. `assetUrl(file)` accepts a UUID or expanded `{id}` file value and builds the bare `/assets/<id>` URL; the loader appends size/quality.
 
 ---
 
 ## 5. Directus collections (current)
 
 Grouped (via `npm run configure`):
-- **Content:** `pages`, `blog_posts`
-- **Marketing:** `fleet` (+`image`,`gallery`), `tours` (+`image`), `testimonials`, `services`
+- **Content:** `pages` (+ optional `image`), `blog_posts` (+ `thumbnail`)
+- **Marketing:** `fleet` (+`image`,`gallery`,`layout_images`,`group_label`), `tours` (+`image`), `testimonials`, `services`
 - **Daily Express:** `routes` (timetable + per-route fares, now informational), `stops` (6 corridor stops → booking From/To), `school_routes` (home-to-school timetables)
 - **Bookings & Payments:** `bookings`, `pass_purchases` (server-write only)
-- **Leads:** `contact_submissions`, `quote_requests` (public create, no read)
-- **Settings** (singleton): site config, nav (grouped/dropdown), footer, `pricing`, `coverage`, `faqs`, `school_transport` (schools list + `logos` by slug).
+- **Leads:** `contact_submissions`, `quote_requests` (server-token create, no anonymous access)
+- **Settings** (singleton): site config, nav (grouped/dropdown), footer, `pricing`, `coverage`, `faqs`, `fleet_page`, `school_transport` (schools list + `logos` by slug).
 
 **Routes/URLs of note:** stop-to-stop booking at `/daily-express-service/book`; school pages at `/home-to-school/<slug>`; `/[slug]` resolves fleet vehicle OR content page OR Daily Express route; coded routes `/contact-us`, `/get-a-quote`, `/booking/success`, `/pass/success`, `/lost-property/claim`.
 
@@ -95,4 +96,4 @@ Production WordPress site: **np-coaches.co.uk**. When unsure about content/flow,
 
 ## 7. Working rules (from CLAUDE.md — non-negotiable)
 
-Don't over-engineer · simple-yet-complete (no stubs) · everything user-facing from Directus with a fallback · mobile-first responsive · preserve WP URLs + SEO · **UK law governs** (UK GDPR / DPA 2018 / PECR — cookie consent before non-essential cookies) · app never touches MariaDB (only Directus) · Stripe server-side + signature-verified webhooks · commit as `nityam2007`, no AI trailers · keep README + this file current.
+Don't over-engineer · simple-yet-complete (no stubs) · **read every target file and its immediate caller before editing; extend the existing source of truth rather than layering duplicate UI** · everything user-facing from Directus with a fallback · mobile-first responsive · preserve WP URLs + SEO · **UK law governs** (UK GDPR / DPA 2018 / PECR — cookie consent before non-essential cookies) · app never touches MariaDB (only Directus) · Stripe server-side + signature-verified webhooks · commit as `nityam2007`, no AI trailers · keep README + this file current.

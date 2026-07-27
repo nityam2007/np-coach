@@ -55,9 +55,10 @@ const SERVICES_FIELDS = [
 const FLEET_FIELDS = [
   pk("id"),
   { field: "sort", type: "integer", meta: { interface: "input", hidden: false }, schema: {} },
-  str("slug"), str("name"), int("seats"), text("summary"), json("features"),
+  str("slug"), str("name"), int("seats"), str("group_label"), text("summary"), json("features"),
   fileField("image", "Exterior photo shown on the fleet grid + hero."),
   json("gallery"), // array of file ids for the detail-page gallery
+  json("layout_images"), // one or more seating-plan file ids
   str("seo_title"), text("seo_description"),
 ];
 
@@ -67,6 +68,7 @@ const PAGES_FIELDS = [
   pk("id"),
   { field: "sort", type: "integer", meta: { interface: "input", hidden: false }, schema: {} },
   str("slug"), str("title"), text("subtitle"), wysiwyg("body"),
+  fileField("image", "Optional hero image for the content page."),
   str("seo_title"), text("seo_description"),
 ];
 
@@ -98,6 +100,7 @@ const BLOG_FIELDS = [
   str("title"), text("excerpt"), str("author"),
   { field: "date", type: "date", meta: { interface: "datetime" }, schema: {} },
   wysiwyg("body"), str("seo_title"), text("seo_description"),
+  fileField("thumbnail", "Blog card and article preview image."),
 ];
 
 // T7 — Testimonials (homepage carousel).
@@ -134,6 +137,14 @@ const CONTACT_SUBMISSIONS_FIELDS = [
 ];
 
 // Customer accounts (passwordless). Server-write only — the app manages these with the
+const QUOTE_REQUESTS_FIELDS = [
+  pk("id"),
+  str("name"), str("email"), str("phone"), str("pickup"), str("destination"),
+  { field: "outbound_date", type: "date", meta: { interface: "datetime" }, schema: {} },
+  { field: "return_date", type: "date", meta: { interface: "datetime" }, schema: {} },
+  int("passengers"), str("coach_size"), text("journey_details"), datetimeCreated,
+];
+
 // server token; the public can neither read nor write them. Identified by email.
 const CUSTOMERS_FIELDS = [
   pk("id"),
@@ -251,6 +262,17 @@ async function ensurePublicCreate(collection) {
 }
 
 // Brand the admin panel (project name/colour, navy navigation, brand fonts, login note).
+async function revokePublicCreate(collection) {
+  const policies = await api("/policies?limit=-1");
+  const publicPolicy = policies.find((p) => p.name === "$t:public_label");
+  if (!publicPolicy) throw new Error("public policy not found");
+  const existing = await api(`/permissions?filter[policy][_eq]=${publicPolicy.id}&filter[collection][_eq]=${collection}&filter[action][_eq]=create&limit=-1`);
+  for (const permission of existing) {
+    await api(`/permissions/${permission.id}`, { method: "DELETE" });
+  }
+  console.log(`✓ anonymous create removed from "${collection}"`);
+}
+
 async function applyBranding() {
   await api("/settings", {
     method: "PATCH",
@@ -291,6 +313,7 @@ async function run() {
   await ensureCollection("testimonials", { sort_field: "sort", icon: "format_quote", note: "Homepage testimonials" }, TESTIMONIALS_FIELDS);
   await ensureCollection("contact_submissions", { icon: "mail", note: "Contact form submissions (read in admin)" }, CONTACT_SUBMISSIONS_FIELDS);
   await ensureCollection("bookings", { icon: "confirmation_number", note: "Daily Express bookings (server-write only; Stripe)" }, BOOKINGS_FIELDS);
+  await ensureCollection("quote_requests", { icon: "request_quote", note: "Coach-hire quote requests (read in admin)" }, QUOTE_REQUESTS_FIELDS);
   await ensureCollection("pass_purchases", { icon: "luggage", note: "Lost Property pass purchases (server-write only; Stripe)" }, PASS_PURCHASES_FIELDS);
   await ensureCollection("customers", { icon: "person", note: "Customer accounts (server-write only; passwordless)" }, CUSTOMERS_FIELDS);
   await ensureCollection("otp_codes", { icon: "password", note: "Login OTP codes (server-write only; hashed, single-use)" }, OTP_FIELDS);
@@ -304,6 +327,7 @@ async function run() {
   await ensureField("settings", fileField("logo", "Site logo (header + footer)."));
   await ensureField("settings", json("accreditation_logos")); // { "<accreditation name>": "<file id>" }
   await ensureField("settings", json("homepage")); // bespoke homepage copy blob (see HomepageContent)
+  await ensureField("settings", json("fleet_page")); // fleet listing/detail shared copy and booking steps
   await ensureField("settings", fileField("school_image", "Homepage school-transport block photo."));
   await ensureField("services", fileField("image", "Photo for the homepage service card."));
   await ensureField("services", str("icon")); // icon key for the service card
@@ -321,9 +345,13 @@ async function run() {
   // Media fields (added to pre-existing collections).
   await ensureField("fleet", fileField("image", "Exterior photo."));
   await ensureField("fleet", json("gallery"));
+  await ensureField("fleet", str("group_label"));
+  await ensureField("fleet", json("layout_images"));
+  await ensureField("pages", fileField("image", "Optional hero image for the content page."));
   await ensureField("tours", fileField("image", "Destination hero photo."));
   await ensureField("settings", json("school_transport"));
 
+  await ensureField("blog_posts", fileField("thumbnail", "Blog card and article preview image."));
   await ensurePublicRead("settings");
   await ensurePublicRead("services");
   await ensurePublicRead("fleet");
@@ -334,8 +362,9 @@ async function run() {
   await ensurePublicRead("school_routes");
   await ensurePublicRead("blog_posts");
   await ensurePublicRead("testimonials");
-  await ensurePublicCreate("contact_submissions");
+  await revokePublicCreate("contact_submissions");
 
+  await revokePublicCreate("quote_requests");
   // Pricing: merge in any keys missing from the live row (e.g. newly-added fares),
   // but never overwrite values the client has already tuned in Directus.
   const currentSettings = await api("/items/settings").catch(() => ({}));
@@ -343,6 +372,8 @@ async function run() {
   const pricingChanged = JSON.stringify(mergedPricing) !== JSON.stringify(currentSettings?.pricing ?? null);
   // Homepage copy: same strategy — add newly-introduced keys, keep client edits.
   const mergedHomepage = { ...content.homepage, ...(currentSettings?.homepage ?? {}) };
+  // Fleet listing/detail shared copy follows the same preserve-editor-edits strategy.
+  const mergedFleetPage = { ...content.fleetPage, ...(currentSettings?.fleet_page ?? {}) };
 
   // Settings singleton (PATCH upserts the single row).
   await api("/items/settings", {
@@ -374,6 +405,7 @@ async function run() {
       faqs: content.faqs,
       pricing: mergedPricing,
       homepage: mergedHomepage,
+      fleet_page: mergedFleetPage,
     }),
   });
   console.log(`✓ seeded settings${pricingChanged ? " (pricing: added missing keys)" : " (pricing unchanged)"}`);
@@ -413,6 +445,7 @@ async function run() {
           seats: v.seats,
           summary: v.summary,
           features: v.features,
+          group_label: v.groupLabel,
           seo_title: v.seoTitle,
           seo_description: v.seoDescription,
           sort: i + 1,
@@ -422,6 +455,20 @@ async function run() {
     console.log(`✓ seeded ${content.fleet.length} fleet vehicles`);
   } else {
     console.log("• fleet already populated — skipped");
+  }
+
+  // Backfill presentation fields added after the original fleet seed. Existing CMS
+  // values always win, so rerunning the seed remains safe for editor changes.
+  const existingFleet = await api("/items/fleet?fields=id,slug,group_label&limit=-1");
+  for (const vehicle of existingFleet) {
+    if (vehicle.group_label) continue;
+    const seed = content.fleet.find((item) => item.slug === vehicle.slug);
+    if (!seed) continue;
+    await api(`/items/fleet/${vehicle.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ group_label: seed.groupLabel }),
+    });
+    console.log(`✓ fleet/${vehicle.slug}.group_label set`);
   }
 
   // Pages — insert per-slug so a partial seed gets backfilled without clobbering
@@ -571,6 +618,7 @@ async function run() {
           body: p.body,
           seo_title: p.seoTitle,
           seo_description: p.seoDescription,
+          thumbnail: p.thumbnail ?? null,
         })),
       ),
     });

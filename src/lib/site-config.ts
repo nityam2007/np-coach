@@ -43,12 +43,16 @@ export interface FleetVehicle {
   slug: string;
   name: string;
   seats: number;
+  /** Short group-size label shown beneath the luxury-travel heading. */
+  groupLabel: string;
   summary: string;
   features: string[];
   /** Directus file id for the exterior photo (rendered via /assets/<id>). */
   image?: string | null;
   /** Directus file ids for the detail-page gallery. */
   gallery?: string[];
+  /** Directus file ids for one or more seating-plan images. */
+  layoutImages?: string[];
   seoTitle: string;
   seoDescription: string;
 }
@@ -58,10 +62,37 @@ export interface Page {
   title: string;
   subtitle: string;
   body: string;
+  /** Optional Directus hero image for an interior content page. */
+  image?: string | null;
   seoTitle: string;
   seoDescription: string;
 }
 
+
+export interface FleetPageContent {
+  eyebrow: string;
+  title: string;
+  introHeading: string;
+  introEyebrow: string;
+  detailHeading: string;
+  introBody: string;
+  seatingLabel: string;
+  gridHeading: string;
+  charterEyebrow: string;
+  facilitiesEyebrow: string;
+  facilitiesHeading: string;
+  layoutEyebrow: string;
+  layoutHeading: string;
+  galleryEyebrow: string;
+  galleryHeading: string;
+  charterHeading: string;
+  charterBody: string;
+  charterCta: Cta;
+  stepsEyebrow: string;
+  stepsHeading: string;
+  stepsIntro: string;
+  steps: { title: string; body: string }[];
+}
 export interface Tour {
   slug: string;
   destination: string;
@@ -131,6 +162,7 @@ export interface BlogPost {
   date: string;
   body: string;
   seoTitle: string;
+  thumbnail?: string | null;
   seoDescription: string;
 }
 
@@ -262,6 +294,7 @@ export interface SiteContent {
   schoolTransport: SchoolTransport;
   schoolRoutes: SchoolRoute[];
   fleet: FleetVehicle[];
+  fleetPage: FleetPageContent;
   pages: Page[];
   tours: Tour[];
   routes: CoachRoute[];

@@ -7,6 +7,7 @@ Operating rules for anyone (human or AI) working in this repo. Read before makin
 ## AI / assistant rules (do NOT do these)
 
 - **Never run `npm run dev`, `npm run dev:poll`, or `npm run build`.** They start long-running servers or heavy compiles the human owns. The assistant verifies with `tsc --noEmit`, `npm run lint`, `npm run seed`, and live Directus checks (`curl`) only. The human restarts the dev server and confirms the UI.
+- **Never edit before reading the current implementation.** Read every file you will change and the immediate callers/components that determine placement or shared behaviour. Prefer changing the existing source of truth over wrapping it with duplicate UI.
 - **Never commit real `.env`.** Only `.env.example`. The app holds scoped Directus tokens + Stripe/M365 creds — never DB creds.
 - **Never add AI / "Co-Authored-By" trailers to commits.** Commit as `nityam2007`.
 - **Never hardcode user-facing content.** Copy, images, fleet, routes, prices, SEO, nav, footer all come from Directus. Add a collection/field + seed, don't inline it.

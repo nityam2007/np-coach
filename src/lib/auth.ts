@@ -9,15 +9,15 @@ import crypto from "node:crypto";
  * AUTH_SECRET must be set in production — a warning is logged if it isn't.
  */
 
-const COOKIE = "np_session";
+const COOKIE = process.env.NODE_ENV === "production" ? "__Host-np_session" : "np_session";
 const MAX_AGE = 60 * 60 * 24 * 30; // 30 days (seconds)
 
-if (process.env.NODE_ENV === "production" && !process.env.AUTH_SECRET) {
-  console.warn("[auth] AUTH_SECRET is not set — set a strong secret in production.");
-}
-
 function secret(): string {
-  return process.env.AUTH_SECRET ?? "np-coaches-dev-only-secret-change-me";
+  if (process.env.AUTH_SECRET) return process.env.AUTH_SECRET;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("AUTH_SECRET must be configured in production");
+  }
+  return "np-coaches-dev-only-secret-change-me";
 }
 
 function sign(payload: string): string {
@@ -40,6 +40,7 @@ export async function createSession(email: string): Promise<void> {
     sameSite: "lax",
     path: "/",
     maxAge: MAX_AGE,
+    priority: "high",
   });
 }
 

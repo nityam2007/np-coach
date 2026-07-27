@@ -25,6 +25,7 @@ Rebuild np-coaches.co.uk as a fast, CMS-driven Next.js site. Three non-negotiabl
 - **UK law governs the live site and all customer data** (UK GDPR / Data Protection Act 2018, PECR for cookies, ICO guidance, UK consumer rules). India is only the *developer's* location and imposes nothing on the production site.
 - **Keep `README.md` current** — update it as the build progresses.
 - **Match existing code's idioms** once the app exists.
+- **Read before editing.** Inspect every target file and its immediate caller/consumer first; extend the existing source of truth instead of adding duplicate UI around it.
 - **Git:** commit as the repo's configured author (`nityam2007`); **never add AI / "Co-Authored-By" trailers.**
 
 ## Build status & extending (read before adding features)

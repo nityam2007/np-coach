@@ -44,6 +44,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
   // `standalone` keeps the production Docker image small (used at deploy / P7).
   output: "standalone",
   // Allow the dev server to be reached through a tunnel / preview host (dev only;
@@ -55,6 +56,11 @@ const nextConfig: NextConfig = {
   images: {
     loader: "custom",
     loaderFile: "./src/lib/directus-loader.ts",
+  },
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "256kb",
+    },
   },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];

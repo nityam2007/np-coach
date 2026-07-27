@@ -1,12 +1,12 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createAndSendOtp, verifyOtp } from "@/lib/account";
 import { createSession, destroySession } from "@/lib/auth";
-import { rateLimited } from "@/lib/forms";
+import { verifyTurnstile } from "@/lib/forms";
 import { getSettings } from "@/lib/directus";
+import { clientIp, rateLimited, rateLimitKey, RATE_LIMITS } from "@/lib/security";
 
 /** Passwordless login: request an emailed OTP, then verify it to open a session. */
 
@@ -20,20 +20,22 @@ export interface AuthState {
   devCode?: string;
 }
 
-async function clientIp(): Promise<string> {
-  const h = await headers();
-  const fwd = h.get("x-forwarded-for");
-  return (fwd ? fwd.split(",")[0] : h.get("cf-connecting-ip"))?.trim() || "unknown";
-}
-
 export async function requestOtpAction(_prev: AuthState, formData: FormData): Promise<AuthState> {
   const parsed = emailSchema.safeParse(formData.get("email"));
   if (!parsed.success) return { step: "email", message: "Please enter a valid email address." };
   const email = parsed.data;
 
   const ip = await clientIp();
-  if (rateLimited(`otp-req:${ip}`) || rateLimited(`otp-req:${email}`)) {
-    return { step: "email", email, message: "Too many requests — please wait a minute and try again." };
+  if (
+    rateLimited(rateLimitKey("otp-request-ip", ip), RATE_LIMITS.otpRequest) ||
+    rateLimited(rateLimitKey("otp-request-email", email), RATE_LIMITS.otpRequest)
+  ) {
+    return { step: "email", email, message: "Too many requests — please wait 15 minutes and try again." };
+  }
+
+  const turnstile = formData.get("cf-turnstile-response");
+  if (!(await verifyTurnstile(typeof turnstile === "string" ? turnstile : undefined, ip))) {
+    return { step: "email", email, message: "Security check failed — please refresh and try again." };
   }
 
   const settings = await getSettings();
@@ -55,8 +57,11 @@ export async function verifyOtpAction(_prev: AuthState, formData: FormData): Pro
   const code = String(formData.get("code") ?? "").trim();
 
   const ip = await clientIp();
-  if (rateLimited(`otp-vfy:${ip}`)) {
-    return { step: "code", email, message: "Too many attempts — please wait a minute and try again." };
+  if (
+    rateLimited(rateLimitKey("otp-verify-ip", ip), RATE_LIMITS.otpVerify) ||
+    rateLimited(rateLimitKey("otp-verify-email", email), { ...RATE_LIMITS.otpVerify, limit: 5 })
+  ) {
+    return { step: "code", email, message: "Too many attempts — please wait 15 minutes and try again." };
   }
 
   const ok = await verifyOtp(email, code);

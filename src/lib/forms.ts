@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { directusServerWrite } from "@/lib/directus-server";
 
 /**
  * Server-side form helpers: zod schemas, Cloudflare Turnstile verification, a
@@ -21,6 +22,29 @@ export const contactSchema = z.object({
   message: z.string().trim().min(10, "Please tell us a little more (10+ characters)").max(4000),
   website: honeypot,
 });
+
+export const quoteSchema = z
+  .object({
+    name: z.string().trim().min(2, "Please enter your name").max(120),
+    email: z.string().trim().email("Please enter a valid email").max(200),
+    phone: z.string().trim().min(7, "Please enter a contact number").max(40),
+    pickup: z.string().trim().min(2, "Please enter the pickup location").max(200),
+    destination: z.string().trim().min(2, "Please enter the destination").max(200),
+    outboundDate: z.string().trim().min(1, "Please choose the outward date").max(40),
+    returnDate: z.string().trim().max(40).optional().default(""),
+    passengers: z.coerce.number().int().min(1, "At least 1 passenger").max(200, "Maximum 200 passengers"),
+    coachSize: z.string().trim().max(80).optional().default(""),
+    journeyDetails: z
+      .string()
+      .trim()
+      .min(10, "Please tell us a little more about the journey")
+      .max(4000),
+    website: honeypot,
+  })
+  .refine((data) => !data.returnDate || data.returnDate >= data.outboundDate, {
+    path: ["returnDate"],
+    message: "The return date must be on or after the outward date",
+  });
 
 // Daily Express booking (P4, stop-to-stop). Amounts/prices are NOT accepted from the
 // client — only the From/To stop codes, trip type, date, passenger count and contact.
@@ -61,6 +85,7 @@ export const lostPropertySchema = z.object({
 });
 
 export type ContactInput = z.infer<typeof contactSchema>;
+export type QuoteInput = z.infer<typeof quoteSchema>;
 export type BookingInput = z.infer<typeof bookingSchema>;
 export type LostPropertyInput = z.infer<typeof lostPropertySchema>;
 
@@ -106,38 +131,8 @@ export async function verifyTurnstile(token: string | undefined, ip?: string): P
   }
 }
 
-// ---- Rate limiting (in-memory, per IP) ----
-// Simple sliding window. Sufficient for a single app instance behind Cloudflare;
-// for multi-instance, move to a shared store. Not a substitute for Turnstile.
-const WINDOW_MS = 60_000;
-const MAX_PER_WINDOW = 5;
-const hits = new Map<string, number[]>();
-
-export function rateLimited(key: string): boolean {
-  const now = Date.now();
-  const recent = (hits.get(key) ?? []).filter((t) => now - t < WINDOW_MS);
-  recent.push(now);
-  hits.set(key, recent);
-  return recent.length > MAX_PER_WINDOW;
-}
-
 // ---- Directus write ----
 /** Create an item in a server-write collection. Returns true on success. */
 export async function createSubmission(collection: string, data: Record<string, unknown>): Promise<boolean> {
-  try {
-    const res = await fetch(`${DIRECTUS_URL}/items/${collection}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(process.env.DIRECTUS_SERVER_TOKEN
-          ? { Authorization: `Bearer ${process.env.DIRECTUS_SERVER_TOKEN}` }
-          : {}),
-      },
-      body: JSON.stringify(data),
-      cache: "no-store",
-    });
-    return res.ok;
-  } catch {
-    return false;
-  }
+  return Boolean(await directusServerWrite(`/items/${collection}`, "POST", data));
 }

@@ -179,23 +179,25 @@ export async function markPaidBySession(
   return row.reference;
 }
 
-/**
- * Mark a row `paid` by reference without going through Stripe. Used only as a
- * dev/test bypass when STRIPE_SECRET_KEY isn't configured (see actions.ts).
- * ponytail: dummy checkout — delete this + the !stripeConfigured() branches once Stripe keys are live.
- */
-export async function markPaidByReference(collection: string, reference: string): Promise<void> {
-  const rows = await directusServerRead<Array<{ id: number; status: string }>>(
-    `/items/${collection}?filter[reference][_eq]=${encodeURIComponent(reference)}&limit=1`,
-  );
-  const row = rows?.[0];
-  if (row && row.status !== "paid") {
-    await directusServerWrite(`/items/${collection}/${row.id}`, "PATCH", { status: "paid" });
+
+/** Verify the Checkout session with Stripe after redirect, never from a public reference. */
+export async function confirmCheckoutSession(sessionId: string, kind: "booking" | "pass"): Promise<string | null> {
+  if (!stripeConfigured() || !sessionId.startsWith("cs_")) return null;
+  try {
+    const session = await getStripe().checkout.sessions.retrieve(sessionId);
+    if (session.payment_status !== "paid" || session.metadata?.kind !== kind) return null;
+    const collection = kind === "pass" ? "pass_purchases" : "bookings";
+    return markPaidBySession(
+      collection,
+      session.id,
+      typeof session.payment_intent === "string" ? session.payment_intent : (session.payment_intent?.id ?? null),
+    );
+  } catch {
+    return null;
   }
 }
-
-/** Read a row by reference for the success page (server-side only). */
 async function getByReference<T>(collection: string, reference: string): Promise<T | null> {
+/** Read a row by reference for the success page (server-side only). */
   const rows = await directusServerRead<T[]>(
     `/items/${collection}?filter[reference][_eq]=${encodeURIComponent(reference)}&limit=1`,
   );

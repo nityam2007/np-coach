@@ -35,8 +35,11 @@ export async function POST(req: Request) {
       const paymentIntent =
         typeof session.payment_intent === "string" ? session.payment_intent : (session.payment_intent?.id ?? null);
       // `kind` metadata tells us which collection this session belongs to.
-      const collection = session.metadata?.kind === "pass" ? "pass_purchases" : "bookings";
-      await markPaidBySession(collection, session.id, paymentIntent);
+      const kind = session.metadata?.kind;
+      if (kind === "booking" || kind === "pass") {
+        const collection = kind === "pass" ? "pass_purchases" : "bookings";
+        await markPaidBySession(collection, session.id, paymentIntent);
+      }
     }
   }
 

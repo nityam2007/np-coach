@@ -106,7 +106,9 @@ export function Header({ settings }: { settings: SiteSettings }) {
             aria-label="Primary"
           >
             {settings.nav.map((item) => {
-              const active = isActive(item.href);
+              const directGroupMatch = isActive(item.href);
+              const anotherGroupMatches = settings.nav.some((candidate) => candidate !== item && isActive(candidate.href));
+              const active = directGroupMatch || (!anotherGroupMatches && !!item.children?.some((child) => isActive(child.href)));
               return item.children?.length ? (
                 <div key={item.label} className="group relative">
                   <Link

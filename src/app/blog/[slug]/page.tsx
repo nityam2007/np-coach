@@ -3,10 +3,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
-import { Eyebrow } from "@/components/ui/Eyebrow";
+import { PageHero } from "@/components/sections/PageHero";
 import { Icon } from "@/components/ui/Icon";
 import { Reveal } from "@/components/ui/motion";
-import { StripesBackdrop, FloatingBlobs } from "@/components/ui/Backdrops";
 import { assetUrl, getBlogPost, getBlogPosts, getSettings } from "@/lib/directus";
 
 export async function generateStaticParams() {
@@ -38,6 +37,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
   const settings = await getSettings();
   const thumbnail = assetUrl(post.thumbnail);
+  const articleDate = formatDate(post.date);
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
@@ -57,46 +57,56 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         items={[{ label: "Home", path: "/" }, { label: "Blog", path: "/blog" }, { label: post.title, path: `/blog/${slug}` }]}
       />
 
-      <section className="relative overflow-hidden bg-gradient-to-br from-navy via-navy to-brand-deep text-offwhite">
-        <StripesBackdrop dark />
-        <FloatingBlobs dark />
-        <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:py-20">
-          <Reveal>
-            <nav aria-label="Breadcrumb" className="mb-5 flex flex-wrap items-center gap-1.5 text-sm text-greyblue">
-              <Link href="/" className="transition-colors hover:text-offwhite">Home</Link>
-              <span className="text-greyblue/50">/</span>
-              <Link href="/blog" className="transition-colors hover:text-offwhite">Blog</Link>
-            </nav>
-            <Eyebrow className="text-sky-400">
-              <time dateTime={post.date}>{formatDate(post.date)}</time> · {post.author}
-            </Eyebrow>
-            <h1 className="mt-3 font-display text-3xl font-bold leading-[1.12] sm:text-4xl">{post.title}</h1>
-            {post.excerpt && <p className="mt-4 max-w-2xl text-lg text-greyblue">{post.excerpt}</p>}
-          </Reveal>
-        </div>
-      </section>
+      <PageHero
+        eyebrow={`${articleDate} · ${post.author}`}
+        title={post.title}
+        intro={post.excerpt}
+        crumbs={[{ label: "Home", href: "/" }, { label: "Blog", href: "/blog" }, { label: post.title }]}
+      />
 
-      <section className="bg-offwhite">
-        <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6 lg:py-20">
-          {thumbnail && (
+      <section className="bg-gradient-to-b from-offwhite via-tint-soft/70 to-offwhite">
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-14 sm:px-6 lg:grid-cols-[minmax(0,1fr)_17rem] lg:gap-12 lg:py-20">
+          <div>
+            {thumbnail && (
+              <Reveal>
+                <div className="relative mb-8 aspect-[16/8] overflow-hidden rounded-3xl border border-accent/10 bg-greyblue/15 shadow-xl shadow-navy/10">
+                  <Image src={thumbnail} alt={post.title} fill sizes="(max-width: 1024px) 100vw, 900px" className="object-cover" priority />
+                </div>
+              </Reveal>
+            )}
             <Reveal>
-              <div className="relative mb-8 aspect-[16/8] overflow-hidden rounded-3xl bg-greyblue/15 shadow-lg shadow-navy/10">
-                <Image src={thumbnail} alt={post.title} fill sizes="(max-width: 1024px) 100vw, 960px" className="object-cover" priority />
+              <div className="relative overflow-hidden rounded-3xl border border-greyblue/15 bg-white px-6 py-8 shadow-sm sm:px-10 sm:py-12">
+                <div aria-hidden="true" className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-400 via-accent to-sky-300" />
+                <div className="prose" dangerouslySetInnerHTML={{ __html: post.body }} />
+                <Link
+                  href="/blog"
+                  className="group mt-12 inline-flex items-center gap-2 text-sm font-semibold text-accent hover:underline"
+                >
+                  <Icon name="arrowLeft" className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+                  All posts
+                </Link>
               </div>
             </Reveal>
-          )}
-          <Reveal>
-            <div className="mx-auto max-w-3xl rounded-3xl border border-greyblue/15 bg-white px-6 py-8 shadow-sm sm:px-10 sm:py-12">
-              <div className="prose" dangerouslySetInnerHTML={{ __html: post.body }} />
-              <Link
-                href="/blog"
-                className="group mt-12 inline-flex items-center gap-2 text-sm font-semibold text-accent hover:underline"
-              >
-                <Icon name="arrowLeft" className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-                All posts
-              </Link>
-            </div>
-          </Reveal>
+          </div>
+
+          <aside className="lg:pt-2">
+            <Reveal>
+              <div className="rounded-3xl border border-accent/10 bg-white p-6 shadow-sm lg:sticky lg:top-28">
+                <time dateTime={post.date} className="block text-sm font-semibold text-navy">{articleDate}</time>
+                <p className="mt-1 text-sm text-navy/60">{post.author}</p>
+                <div className="my-6 border-t border-greyblue/20" />
+                <p className="font-display text-xl font-bold text-navy">{settings.name}</p>
+                <p className="mt-2 text-sm leading-6 text-navy/65">{settings.tagline}</p>
+                <Link
+                  href={settings.homepage.heroPrimaryCta.href}
+                  className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-accent hover:underline"
+                >
+                  {settings.homepage.heroPrimaryCta.label}
+                  <Icon name="arrowRight" className="h-4 w-4" />
+                </Link>
+              </div>
+            </Reveal>
+          </aside>
         </div>
       </section>
     </article>

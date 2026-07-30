@@ -50,7 +50,7 @@ export default async function DailyExpressPage() {
         crumbs={[{ label: "Home", href: "/" }, { label: "Daily Express" }]}
         ctas={[{ label: "Book online", href: "/daily-express-service/book", primary: true }]}
       >
-        <div className="mt-6 max-w-2xl rounded-lg bg-white/10 px-4 py-3 text-sm text-offwhite ring-1 ring-white/10">
+        <div className="mt-6 max-w-2xl rounded-xl border border-accent/15 bg-white/85 px-4 py-3 text-sm text-navy/80 shadow-sm">
           <strong>Slough stop update:</strong> pickup / drop-off is now Library (Stop W), opposite the Moxy Hotel,
           Wellington St, Slough, SL1 1YG.
         </div>

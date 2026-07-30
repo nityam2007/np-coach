@@ -17,8 +17,8 @@ export function PageTemplate({ page }: { page: Page }) {
         crumbs={[{ label: "Home", href: "/" }, { label: page.title }]}
       />
 
-      <section className="bg-offwhite">
-        <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6 lg:py-20">
+      <section className="bg-gradient-to-b from-offwhite via-tint-soft/70 to-offwhite">
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
           {image && (
             <Reveal>
               <div className="relative mb-8 aspect-[16/7] overflow-hidden rounded-3xl bg-greyblue/15 shadow-lg shadow-navy/10">
@@ -35,8 +35,9 @@ export function PageTemplate({ page }: { page: Page }) {
             </Reveal>
           )}
           <Reveal>
-            <div className="rounded-3xl border border-greyblue/15 bg-white px-6 py-8 shadow-sm sm:px-10 sm:py-12">
-              <div className="prose mx-auto" dangerouslySetInnerHTML={{ __html: page.body }} />
+            <div className="relative overflow-hidden rounded-3xl border border-accent/10 bg-white px-6 py-9 shadow-md shadow-navy/5 sm:px-10 sm:py-14">
+              <div aria-hidden="true" className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-accent via-sky-400 to-accent/20" />
+              <div className="prose mx-auto max-w-3xl" dangerouslySetInnerHTML={{ __html: page.body }} />
             </div>
           </Reveal>
         </div>

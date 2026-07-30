@@ -30,77 +30,32 @@
     "postcode": "SL0 9QZ"
   },
   "nav": [
-    {
-      "label": "Services",
-      "href": "/fleet",
-      "children": [
-        {
-          "label": "Our Fleet",
-          "href": "/fleet",
-          "icon": "bus",
-          "description": "19–98 seat Euro-6, ULEZ-compliant coaches"
-        },
-        {
-          "label": "UK Tours",
-          "href": "/uk-tours",
-          "icon": "camera",
-          "description": "Day trips & multi-day tours across the UK"
-        },
-        {
-          "label": "Daily Express",
-          "href": "/daily-express-service",
-          "icon": "route",
-          "description": "Scheduled inter-city coach service"
-        },
-        {
-          "label": "Private Hire & Quotes",
-          "href": "/get-a-quote",
-          "icon": "celebration",
-          "description": "Weddings, corporate & group travel — free quote"
-        },
-        {
-          "label": "Lost Property",
-          "href": "/lost-property",
-          "icon": "luggage",
-          "description": "Reclaim an item left on board"
-        }
-      ]
-    },
-    {
-      "label": "School Transport",
-      "href": "/home-to-school",
-      "children": [
-        {
-          "label": "Home to School",
-          "href": "/home-to-school",
-          "icon": "school",
-          "description": "Daily school routes, timetables & tickets"
-        },
-        {
-          "label": "Safeguarding",
-          "href": "/safeguarding",
-          "icon": "shield",
-          "description": "Our child-protection commitment"
-        }
-      ]
-    },
-    {
-      "label": "Daily Express",
-      "href": "/daily-express-service"
-    },
-    {
-      "label": "Blog",
-      "href": "/blog"
-    },
-    {
-      "label": "About",
-      "href": "/about-us"
-    },
-    {
-      "label": "Contact",
-      "href": "/contact-us"
-    }
-  ],
+    { "label": "Services", "href": "/fleet", "children": [
+      { "label": "Fleet", "href": "/fleet", "icon": "bus", "description": "19–98 seat Euro-6, ULEZ-compliant coaches" },
+      { "label": "UK Tours", "href": "/uk-tours", "icon": "camera", "description": "Day trips & multi-day tours across the UK" },
+      { "label": "Daily Express", "href": "/daily-express-service", "icon": "route", "description": "Scheduled inter-city coach service" },
+      { "label": "Lost Property", "href": "/lost-property", "icon": "luggage", "description": "Reclaim an item left on board" },
+      { "label": "Get a Quote", "href": "/get-a-quote", "icon": "celebration", "description": "Weddings, corporate and group travel" }
+    ] },
+    { "label": "School Transport", "href": "/home-to-school", "children": [
+      { "label": "Home to School", "href": "/home-to-school", "icon": "school", "description": "Daily school routes, timetables and tickets" },
+      { "label": "Safeguarding", "href": "/safeguarding", "icon": "shield", "description": "Our child-protection commitment" }
+    ] },
+    { "label": "Daily Express", "href": "/daily-express-service", "children": [
+      { "label": "Book tickets", "href": "/daily-express-service/book", "icon": "ticket", "description": "Book your scheduled coach journey online" },
+      { "label": "Timetable & stops", "href": "/daily-express-service", "icon": "route", "description": "Service times, stops and fares" },
+      { "label": "Wolverhampton to London", "href": "/wolverhampton-to-london", "icon": "mapPin", "description": "Route times and boarding points" },
+      { "label": "London to Leicester", "href": "/london-to-leicester", "icon": "mapPin", "description": "Route times and boarding points" },
+      { "label": "Leicester to London", "href": "/leicester-to-london", "icon": "mapPin", "description": "Route times and boarding points" }
+    ] },
+    { "label": "Company", "href": "/about-us", "children": [
+      { "label": "About Us", "href": "/about-us", "icon": "star", "description": "Meet the family-run team behind NP Coaches" },
+      { "label": "FAQs", "href": "/faqs", "icon": "search", "description": "Answers about booking, fleet and travel" },
+      { "label": "Blog", "href": "/blog", "icon": "table", "description": "Travel tips, news and destination ideas" },
+      { "label": "Vacancies", "href": "/vacancies", "icon": "briefcase", "description": "Join the NP Coaches team" },
+      { "label": "Downloads", "href": "/downloads", "icon": "download", "description": "Useful customer information and documents" }
+    ] },
+    { "label": "Contact Us", "href": "/contact-us", "icon": "phone", "description": "Talk to our friendly team" }  ],
   "services": [
     {
       "title": "School Transport",
@@ -255,24 +210,20 @@
     "Wolverhampton & Leicester"
   ],
   "faqs": [
-    {
-      "question": "How far in advance should I book?",
-      "answer": "For charter and private hire we recommend at least 24 hours so we can confirm vehicle availability. For the Daily Express scheduled service, online tickets can be booked up to 1 hour before departure."
-    },
-    {
-      "question": "What size coach do I need?",
-      "answer": "Our fleet runs 19, 35, 53, 72, 86 and 98 seats. Under 20 passengers suit a mini coach; 20–35 a midi; 36–53 a 53-seat executive; 54+ a 72-seater or double-decker. Not sure? Get a quote and we'll advise."
-    },
-    {
-      "question": "Are your coaches ULEZ-compliant?",
-      "answer": "Yes — the entire fleet is Euro-6 and fully ULEZ-compliant, so there are no extra charges for journeys inside London's Ultra Low Emission Zone."
-    },
-    {
-      "question": "Are your drivers DBS-checked?",
-      "answer": "Yes. Every driver holds a current Enhanced DBS check and a full UK PCV Category D licence — especially important for our home-to-school services."
-    }
-  ],
-  "testimonials": [
+    { "question": "How far in advance should I book?", "answer": "For charter and private hire, please allow at least 24 hours so we can confirm vehicle availability. Daily Express tickets can be booked online up to one hour before departure." },
+    { "question": "What size coach do I need?", "answer": "Our fleet runs from 19 to 98 seats. Under 20 passengers suit a mini coach; 20–35 a midi coach; 36–53 an executive coach; and larger groups can choose a 72-seat or double-decker vehicle. Ask for a quote and we will advise." },
+    { "question": "Are your coaches ULEZ-compliant?", "answer": "Yes — the entire fleet is Euro-6 and fully ULEZ-compliant, so there are no extra charges for journeys inside London's Ultra Low Emission Zone." },
+    { "question": "Are your drivers DBS-checked?", "answer": "Yes. Every driver holds a current Enhanced DBS check and a full UK PCV Category D licence — especially important for our home-to-school services." },
+    { "question": "How do I request a quote?", "answer": "Use the Get a Quote page and tell us your travel date, group size and journey. Our team aims to reply within 24 hours." },
+    { "question": "How do I contact NP Coaches?", "answer": "Use our contact form, call 0208 843 1000 or email Info@np-coaches.co.uk. We aim to respond to enquiries within 24 hours." },
+    { "question": "Where does the Daily Express pick up in London?", "answer": "The London corridor stops are Southall at 1A Priory Way and Slough Library, Stop W, opposite the Moxy Hotel on Wellington Street. Check the timetable before travelling." },
+    { "question": "What luggage can I bring on the Daily Express?", "answer": "Each ticket includes one 20kg suitcase in the hold and one 7kg item of hand luggage. Extra luggage may incur a surcharge, so please contact us before travelling." },
+    { "question": "How do I book a Daily Express ticket?", "answer": "Choose Book tickets under Daily Express, select your stops, journey date and number of passengers, then complete secure payment online." },
+    { "question": "Have you got a timetable?", "answer": "Yes. The Daily Express timetable lists current times, stops and route information for London, the Midlands and Leicester. Please check it again on your day of travel as times can change." },
+    { "question": "How do I register my child for school transport?", "answer": "Visit Home to School, choose the relevant school and follow the secure ShuttleID or ticket portal link. The school page includes its routes, pass information and any waiting-list guidance." },
+    { "question": "Where can I read your privacy policy and terms?", "answer": "Both documents are available from the footer. They explain how we handle personal data, cookies, bookings, luggage and passenger travel." },
+    { "question": "What is NP Coaches' story?", "answer": "New Punjab Coaches Ltd has been family-run since 1999. From our Iver depot in West London, we provide coach travel for schools, businesses, tours, private groups and scheduled passengers across the UK." }
+  ],  "testimonials": [
     {
       "quote": "NP Coaches handled our school's annual trip flawlessly — clean coaches, punctual drivers and brilliant communication throughout.",
       "author": "Head of Trips",
@@ -885,12 +836,12 @@
     {
       "slug": "what-ulez-compliant-means",
       "title": "What ULEZ-compliant means for your coach hire",
-      "excerpt": "Our entire fleet is Euro-6 and ULEZ-compliant — here's why that saves you money and hassle in London.",
+      "excerpt": "Our entire fleet is Euro-6 and ULEZ-compliant — learn what that means for a straightforward, lower-emission London coach journey.",
       "author": "NP Coaches",
       "date": "2026-02-10",
-      "body": "<p>London's Ultra Low Emission Zone (ULEZ) charges older, more polluting vehicles a daily fee to drive within the zone. Every coach in the NP Coaches fleet meets the Euro-6 emissions standard, so our vehicles are fully ULEZ-compliant.</p><p>For you, that means no ULEZ surcharge added to your quote and no surprises on journeys into central London — whether it's a school trip, a wedding or a day tour. It's also better for air quality across the city. <a href=\"/fleet\">See the fleet</a> or <a href=\"/get-a-quote\">request a quote</a>.</p>",
+      "body": "<p>ULEZ is London&apos;s Ultra Low Emission Zone. It is designed to encourage cleaner vehicles and improve air quality by applying a daily emissions charge to vehicles that do not meet the required standard when they travel within the zone.</p>\n<p>For a group trip, that can affect the cost and planning of a journey. Every coach in the NP Coaches fleet meets the Euro-6 emissions standard and is fully ULEZ-compliant, so you can travel into London without a ULEZ surcharge being added to your coach-hire quote.</p>\n<h2>What ULEZ-compliant actually means</h2>\n<p>ULEZ compliance is about the vehicle&apos;s emissions standard, rather than its age alone. Euro-6 is the modern emissions standard used by our coaches. In practical terms, it means the vehicle meets the requirements to operate in London&apos;s ULEZ without the daily ULEZ charge that can apply to older, more polluting vehicles.</p>\n<h2>Why it matters for coach hire</h2>\n<p>London journeys often involve a lot of moving parts: school visits, hotel drop-offs, theatre trips, airport transfers, sporting fixtures and event timetables. A compliant coach keeps one potential cost out of the equation, helping you plan a clear, straightforward quote from the start.</p>\n<ul><li>No ULEZ surcharge added to your NP Coaches quote for a compliant vehicle.</li><li>Confidence for journeys into central and outer London.</li><li>A lower-emission fleet choice for schools, businesses, tour groups and private events.</li></ul>\n<h2>What it means when you travel with NP Coaches</h2>\n<p>ULEZ compliance is one part of the standard we set for every vehicle. Our fleet covers 19 to 98 seats, so we can match the coach to your passenger numbers, luggage and itinerary while keeping your London travel simple. Whether you are arranging a school trip, wedding, corporate transfer or UK tour, our team will build the right vehicle into your quote.</p>\n<h2>Planning a journey in London</h2>\n<p>When you ask for a quote, share your travel date, pick-up points, destination, passenger numbers and any luggage or access requirements. We will use that information to recommend a suitable coach and plan the journey with you. If your itinerary changes, let us know as early as possible so we can help keep the day running smoothly.</p>\n<h2>Frequently asked questions</h2>\n<h3>Do passengers need to pay a ULEZ charge?</h3>\n<p>No. ULEZ is a vehicle emissions scheme, not a passenger charge. As our fleet is Euro-6 and ULEZ-compliant, there is no ULEZ surcharge to add to your NP Coaches coach-hire quote.</p>\n<h3>Does ULEZ compliance make a difference outside London?</h3>\n<p>It is particularly useful for London itineraries, but a modern Euro-6 fleet also supports lower-emission travel wherever your group is going.</p>\n<h3>Can you help us choose the right coach?</h3>\n<p>Yes. <a href=\"/fleet\">Explore the fleet</a> to see the available sizes, or <a href=\"/get-a-quote\">request a quote</a> and our team will recommend a coach for your journey.</p>",
       "seoTitle": "What ULEZ-Compliant Means for Coach Hire | NP Coaches Blog",
-      "seoDescription": "Every NP Coaches vehicle is Euro-6 and ULEZ-compliant, so there's no ULEZ surcharge on your London coach hire. Here's what that means for your booking."
+      "seoDescription": "Understand ULEZ-compliant coach hire with NP Coaches: how our Euro-6 fleet helps keep London journeys straightforward, with no ULEZ surcharge added to your quote."
     }
   ],
   "fleet": [

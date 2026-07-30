@@ -8,7 +8,8 @@ Rebuild of [np-coaches.co.uk](https://np-coaches.co.uk) — a UK coach-hire oper
 >
 > **CMS and pages:** Directus drives settings, services, fleet copy/photos/galleries/seating plans, pages and hero images, tours, routes, blog posts/thumbnails and testimonials, with `site-content.json` as the offline fallback. `/fleet` and all six vehicle pages use the archived fleet structure; `/timetable` and the archived content/legal routes are migrated; blog thumbnails render on cards, articles and Open Graph metadata. The homepage remains independently CMS-driven.
 >
-> **SEO and UI:** canonical/Open Graph/Twitter metadata, sitemap/robots/llms.txt and JSON-LD are site-wide. Interior content pages share `PageHero` and the upgraded image/prose layout; bespoke fleet, route, blog, tour and school pages retain their structured designs.
+> **SEO and UI:** canonical/Open Graph/Twitter metadata, sitemap/robots/llms.txt and JSON-LD are site-wide. Interior content pages share `PageHero` and the upgraded image/prose layout; blog articles use the same light editorial treatment and remain fully CMS-managed. Bespoke fleet, route, tour and school pages retain their structured designs.
+> The header and footer navigation are CMS-managed; Contact Us remains a primary menu item. `/faqs` is a dedicated SEO-ready accordion page sourced from the same editable FAQ settings as the homepage, with the homepage showing the four priority questions only.
 ## Current payment and form controls
 
 - Contact and quote records are created only by protected server actions (not by Directus' public role); each action validates input, uses a honeypot, verifies Turnstile, and is rate-limited.

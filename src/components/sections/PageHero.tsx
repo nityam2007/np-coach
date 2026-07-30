@@ -29,23 +29,23 @@ export function PageHero({
   children?: React.ReactNode;
 }) {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-navy via-navy to-brand-deep text-offwhite">
-      <StripesBackdrop dark />
-      <FloatingBlobs dark />
+    <section className="relative overflow-hidden border-b border-accent/10 bg-gradient-to-br from-white via-tint-soft to-tint text-navy">
+      <StripesBackdrop />
+      <FloatingBlobs />
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
         <Reveal>
           {crumbs && crumbs.length > 0 && (
-            <nav aria-label="Breadcrumb" className="mb-5 flex flex-wrap items-center gap-1.5 text-sm text-greyblue">
+            <nav aria-label="Breadcrumb" className="mb-5 flex flex-wrap items-center gap-1.5 text-sm text-navy/60">
               {crumbs.map((c, i) => (
                 <span key={c.label} className="inline-flex items-center gap-1.5">
                   {c.href ? (
-                    <Link href={c.href} className="transition-colors hover:text-offwhite">
+                    <Link href={c.href} className="transition-colors hover:text-navy">
                       {c.label}
                     </Link>
                   ) : (
-                    <span className="text-offwhite/90">{c.label}</span>
+                    <span className="text-navy/90">{c.label}</span>
                   )}
-                  {i < crumbs.length - 1 && <span aria-hidden="true" className="text-greyblue/50">/</span>}
+                  {i < crumbs.length - 1 && <span aria-hidden="true" className="text-navy/35">/</span>}
                 </span>
               ))}
             </nav>
@@ -53,7 +53,7 @@ export function PageHero({
 
           {eyebrow && <Eyebrow className="text-sky-400">{eyebrow}</Eyebrow>}
           <h1 className="mt-3 max-w-3xl font-display text-4xl font-bold leading-[1.08] sm:text-5xl">{title}</h1>
-          {intro && <p className="mt-4 max-w-2xl text-lg text-greyblue">{intro}</p>}
+          {intro && <p className="mt-4 max-w-2xl text-lg text-navy/70">{intro}</p>}
 
           {ctas && ctas.length > 0 && (
             <div className="mt-8 flex flex-wrap gap-3">
@@ -64,7 +64,7 @@ export function PageHero({
                     <Icon name={cta.icon ?? "arrowRight"} className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </ButtonLink>
                 ) : (
-                  <ButtonLink key={cta.href + cta.label} href={cta.href} variant="ghostDark">
+                  <ButtonLink key={cta.href + cta.label} href={cta.href} variant="secondary">
                     {cta.icon && <Icon name={cta.icon} className="h-4 w-4" />}
                     {cta.label}
                   </ButtonLink>

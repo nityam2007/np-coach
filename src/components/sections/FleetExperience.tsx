@@ -18,7 +18,7 @@ export function FleetExperience({
 
   return (
     <>
-      <section className="relative isolate overflow-hidden bg-navy text-offwhite">
+      <section className="relative isolate overflow-hidden border-y border-accent/10 bg-gradient-to-br from-tint-soft via-white to-tint text-navy">
         {background && (
           <>
             <Image
@@ -26,18 +26,18 @@ export function FleetExperience({
               alt=""
               fill
               sizes="100vw"
-              className="object-cover opacity-30"
+              className="object-cover opacity-20"
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-navy via-navy/90 to-navy/60" />
+            <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/90 to-tint/85" />
           </>
         )}
-        <StripesBackdrop dark />
+        <StripesBackdrop />
         <Reveal className="relative mx-auto max-w-4xl px-4 py-20 text-center sm:px-6 lg:py-24">
-          <Eyebrow className="text-sky-400">{content.charterEyebrow}</Eyebrow>
+          <Eyebrow className="text-accent">{content.charterEyebrow}</Eyebrow>
           <h2 className="mt-3 font-display text-3xl font-bold sm:text-4xl lg:text-5xl">
             {content.charterHeading}
           </h2>
-          <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-greyblue sm:text-lg">
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-navy/70 sm:text-lg">
             {content.charterBody}
           </p>
           <ButtonLink href={content.charterCta.href} className="mt-8">
@@ -62,19 +62,19 @@ export function FleetExperience({
                 <div
                   className={`h-full rounded-2xl border p-6 shadow-sm ${
                     index === 0
-                      ? "border-navy bg-navy text-offwhite"
+                      ? "border-accent bg-accent text-white"
                       : "border-greyblue/20 bg-white text-navy"
                   }`}
                 >
                   <span
                     className={`grid h-9 w-9 place-items-center rounded-full text-sm font-bold ${
-                      index === 0 ? "bg-accent text-white" : "bg-accent/10 text-accent"
+                      index === 0 ? "bg-white/20 text-white" : "bg-accent/10 text-accent"
                     }`}
                   >
                     {index + 1}
                   </span>
                   <h3 className="mt-5 font-display text-lg font-bold">{step.title}</h3>
-                  <p className={`mt-2 text-sm leading-6 ${index === 0 ? "text-greyblue" : "text-navy/65"}`}>
+                  <p className={`mt-2 text-sm leading-6 ${index === 0 ? "text-white/80" : "text-navy/65"}`}>
                     {step.body}
                   </p>
                 </div>

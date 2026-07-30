@@ -31,7 +31,7 @@ export default async function UkToursPage() {
       >
         <ul className="mt-6 flex flex-wrap gap-2">
           {amenities.map((a) => (
-            <li key={a} className="rounded-full bg-white/10 px-3 py-1 text-sm text-offwhite ring-1 ring-white/10">
+            <li key={a} className="rounded-full border border-accent/15 bg-white/80 px-3 py-1 text-sm text-navy/70 shadow-sm">
               {a}
             </li>
           ))}

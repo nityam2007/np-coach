@@ -86,7 +86,7 @@ export default async function HomeToSchoolPage() {
         intro="Safe, tracked daily coach travel with DBS-checked drivers, QR-code boarding and live tracking via ShuttleID. Select your school below to buy passes and manage tickets."
         crumbs={[{ label: "Home", href: "/" }, { label: "Home to School" }]}
       >
-        <div className="mt-6 max-w-2xl rounded-lg bg-white/10 px-4 py-3 text-sm text-offwhite ring-1 ring-white/10">
+        <div className="mt-6 max-w-2xl rounded-xl border border-accent/15 bg-white/85 px-4 py-3 text-sm text-navy/80 shadow-sm">
           <strong>Notice:</strong> due to fuel and operating costs, fares may be reviewed during the academic year.
           Parents are notified in advance and may cancel before any revised price takes effect.
         </div>

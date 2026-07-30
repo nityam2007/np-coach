@@ -41,14 +41,19 @@ export default async function HomePage() {
         cta={homepage.fleetCta}
       />
 
-      {/* School transport + nationwide coverage */}
-      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
-        <div className="grid gap-6 lg:grid-cols-12">
-          <Reveal className="lg:col-span-7">
+      {/* Dedicated two-column highlights: school transport and nationwide coverage. */}
+      <section className="bg-offwhite">
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
+          <Reveal>
             <SchoolTransportBlock block={homepage.school} image={settings.schoolImage} />
           </Reveal>
-          <Reveal delay={0.12} className="lg:col-span-5">
-            <CoverageMap block={homepage.coverage} areas={settings.coverage} />
+        </div>
+      </section>
+
+      <section className="bg-tint-soft">
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
+          <Reveal>
+            <CoverageMap block={homepage.coverage} areas={settings.coverage} depot={`${settings.address.city}, ${settings.address.county}`} />
           </Reveal>
         </div>
       </section>
@@ -72,7 +77,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <FaqAccordion faqs={settings.faqs} />
+      <FaqAccordion faqs={settings.faqs.slice(0, 4)} />
     </>
   );
 }

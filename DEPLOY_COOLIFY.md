@@ -10,7 +10,7 @@ This is the recommended production path when Coolify is already installed on the
 | `directus` | Yes, port 8055 through a separate Coolify domain | `directus_uploads`, `directus_extensions` | CMS, API, admin |
 | `database` | No | `mariadb_data` | MariaDB, used only by Directus |
 | `redis` | No | `redis_data` | Password-protected Directus cache/rate-limit store |
-| `schema-migrate` | No; one-shot | None | Applies the committed Directus schema snapshot |
+| `schema-migrate` | No; one-shot | Snapshot packaged in its image | Applies the committed Directus schema snapshot |
 | `cms-bootstrap` | No; one-shot | Writes through Directus | Idempotently seeds content, admin configuration, and media |
 
 No host ports are published. Coolify creates the isolated stack network, and containers use the service names `database`, `redis`, and `directus` internally.
@@ -24,7 +24,7 @@ The first deployment does not need a database dump:
 - `directus/seed-media/` contains the committed starter media archive.
 - `scripts/seed-directus.mjs`, `configure-directus.mjs`, and `upload-media.mjs` are idempotent.
 
-`schema-migrate` applies the schema before Directus starts. `cms-bootstrap` then fills only missing content/media and exits successfully before the web container starts. Redeploying is safe and does not overwrite editor-managed values covered by the existing seed safeguards.
+`schema-migrate` applies the schema before Directus starts. Its tiny image packages the snapshot directly, avoiding deployment-host bind mounts. `cms-bootstrap` then fills only missing content/media and exits successfully before the web container starts. Redeploying is safe and does not overwrite editor-managed values covered by the existing seed safeguards.
 
 Do not commit a live SQL dump. It can contain customers, bookings, password hashes, tokens, and other personal data. Production data belongs in encrypted off-site backups, not Git.
 

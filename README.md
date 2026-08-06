@@ -90,6 +90,7 @@ directus/               Directus uploads + extensions (bind-mounted in dev)
 docker-compose.yml      dev stack: MariaDB + Directus + app
 docker-compose.coolify.yml  production stack managed by Coolify
 Dockerfile.bootstrap    one-shot committed CMS/content/media bootstrap
+Dockerfile.schema       packages the Directus snapshot for Coolify migration
 AIDATA/                 plan, brand, UI mockups, SEO assets, Pages OLD/ archive (read-only)
 ```
 

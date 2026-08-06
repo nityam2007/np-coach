@@ -22,7 +22,7 @@ Rebuild of [np-coaches.co.uk](https://np-coaches.co.uk) — a UK coach-hire oper
 
 - Contact, quote, booking, lost-property, and OTP requests use the existing Managed Turnstile widget. Tokens are verified server-side through Cloudflare Siteverify and production fails closed when the server secret is absent or invalid.
 - Stripe Checkout receives the customer's email for receipts. A booking, ticket, or lost-property claim is shown as complete only after Stripe verifies the Checkout session; public booking references cannot complete an order.
-- Coolify deployments apply the committed schema and run the idempotent content/admin/media bootstrap automatically. Standalone deployments can still run `npm run bootstrap` manually.
+- Coolify deployments apply the committed schema and run the idempotent content/admin/media bootstrap automatically. Every bootstrap API call is paced and retries temporary Directus throttling/upstream failures; the production API limiter remains enabled. Standalone deployments can still run `npm run bootstrap` manually.
 
 ## Stack
 

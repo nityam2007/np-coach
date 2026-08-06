@@ -8,30 +8,15 @@
 // This only touches admin-panel metadata (collection/field `meta`, dashboards/panels).
 // It never changes content or schema, so it can't break the running app.
 
+import { createDirectusApi } from "./directus-api.mjs";
+
 const BASE = process.env.DIRECTUS_URL ?? "http://localhost:8055";
 const EMAIL = process.env.DIRECTUS_ADMIN_EMAIL ?? "admin@np-coaches.co.uk";
 const PASSWORD = process.env.DIRECTUS_ADMIN_PASSWORD ?? "change-me";
 const STATIC_TOKEN = process.env.DIRECTUS_ADMIN_TOKEN;
 
-let token = STATIC_TOKEN ?? null;
-
-async function api(path, options = {}) {
-  const res = await fetch(`${BASE}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers ?? {}),
-    },
-  });
-  const txt = await res.text();
-  const json = txt ? JSON.parse(txt) : {};
-  if (!res.ok) {
-    const message = json?.errors?.[0]?.message ?? txt;
-    throw Object.assign(new Error(`${options.method ?? "GET"} ${path} → ${res.status}: ${message}`), { status: res.status });
-  }
-  return json.data;
-}
+const directus = createDirectusApi({ base: BASE, token: STATIC_TOKEN });
+const api = directus.request;
 
 // ---- groups (folder collections) ----
 const GROUPS = [
@@ -43,8 +28,7 @@ const GROUPS = [
   { collection: "grp_accounts", name: "Accounts", icon: "group", color: "#6b7280", sort: 6 },
 ];
 
-async function ensureGroup(g) {
-  const existing = new Set((await api("/collections?limit=-1")).map((c) => c.collection));
+async function ensureGroup(g, existing) {
   if (existing.has(g.collection)) {
     await api(`/collections/${g.collection}`, {
       method: "PATCH",
@@ -58,6 +42,7 @@ async function ensureGroup(g) {
     method: "POST",
     body: JSON.stringify({ collection: g.collection, meta: { icon: g.icon, color: g.color, sort: g.sort, note: g.name }, schema: null }),
   });
+  existing.add(g.collection);
   console.log(`✓ created group "${g.name}"`);
 }
 
@@ -254,13 +239,15 @@ async function ensureDashboard() {
 
 async function run() {
   console.log(`Configuring Directus admin at ${BASE} ...`);
-  if (!token) {
-    token = (await api("/auth/login", { method: "POST", body: JSON.stringify({ email: EMAIL, password: PASSWORD }) })).access_token;
+  if (!directus.hasToken()) {
+    directus.setToken(
+      (await api("/auth/login", { method: "POST", body: JSON.stringify({ email: EMAIL, password: PASSWORD }) })).access_token,
+    );
   }
 
-  for (const g of GROUPS) await ensureGroup(g);
-
   const existing = new Set((await api("/collections?limit=-1")).map((c) => c.collection));
+  for (const g of GROUPS) await ensureGroup(g, existing);
+
   for (const [collection, meta] of Object.entries(COLLECTION_META)) {
     if (!existing.has(collection)) continue;
     await applyCollectionMeta(collection, meta);

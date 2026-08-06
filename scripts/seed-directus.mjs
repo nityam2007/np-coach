@@ -3,31 +3,15 @@
 // Idempotent — safe to re-run. Run: `npm run seed` (with Directus reachable).
 
 import content from "../src/lib/site-content.json" with { type: "json" };
+import { createDirectusApi } from "./directus-api.mjs";
 
 const BASE = process.env.DIRECTUS_URL ?? "http://localhost:8055";
 const EMAIL = process.env.DIRECTUS_ADMIN_EMAIL ?? "admin@np-coaches.co.uk";
 const PASSWORD = process.env.DIRECTUS_ADMIN_PASSWORD ?? "change-me";
 const STATIC_TOKEN = process.env.DIRECTUS_ADMIN_TOKEN;
 
-let token = STATIC_TOKEN ?? null;
-
-async function api(path, options = {}) {
-  const res = await fetch(`${BASE}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers ?? {}),
-    },
-  });
-  const text = await res.text();
-  const json = text ? JSON.parse(text) : {};
-  if (!res.ok) {
-    const message = json?.errors?.[0]?.message ?? text;
-    throw Object.assign(new Error(`${options.method ?? "GET"} ${path} → ${res.status}: ${message}`), { status: res.status });
-  }
-  return json.data;
-}
+const directus = createDirectusApi({ base: BASE, token: STATIC_TOKEN });
+const api = directus.request;
 
 // ---- field helpers ----
 const pk = (field) => ({ field, type: "integer", schema: { is_primary_key: true, has_auto_increment: true }, meta: { hidden: true } });
@@ -300,8 +284,10 @@ async function applyBranding() {
 
 async function run() {
   console.log(`Seeding Directus at ${BASE} ...`);
-  if (!token) {
-    token = (await api("/auth/login", { method: "POST", body: JSON.stringify({ email: EMAIL, password: PASSWORD }) })).access_token;
+  if (!directus.hasToken()) {
+    directus.setToken(
+      (await api("/auth/login", { method: "POST", body: JSON.stringify({ email: EMAIL, password: PASSWORD }) })).access_token,
+    );
   }
 
   await ensureCollection("settings", { singleton: true, icon: "settings", note: "Global site content" }, SETTINGS_FIELDS);

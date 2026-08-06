@@ -24,7 +24,9 @@ The first deployment does not need a database dump:
 - `directus/seed-media/` contains the committed starter media archive.
 - `scripts/seed-directus.mjs`, `configure-directus.mjs`, and `upload-media.mjs` are idempotent.
 
-`schema-migrate` applies the schema before Directus starts. Its tiny image packages the snapshot directly, avoiding deployment-host bind mounts. `cms-bootstrap` then fills only missing content/media and exits successfully before the web container starts. Redeploying is safe and does not overwrite editor-managed values covered by the existing seed safeguards.
+`schema-migrate` applies the schema before Directus starts. Its tiny image packages the snapshot directly, avoiding deployment-host bind mounts. `cms-bootstrap` then fills only missing content/media and exits successfully before the web container starts. All three bootstrap phases use one paced API client with bounded retries for `429` and temporary upstream errors. Redeploying is safe and does not overwrite editor-managed values covered by the existing seed safeguards.
+
+Directus's Redis-backed API limiter remains enabled at an explicit 50 requests per IP per one-second window. The bootstrap deliberately stays below that burst ceiling (20 requests/second by default). A bootstrap `429` therefore means the one-shot deployment worker sent admin requests too quickly; it is not evidence that normal website traffic exhausted hourly capacity. Even 1,000 page views/hour averages only 0.28 views/second, while Next.js ISR and Cloudflare prevent every visitor from becoming an equivalent burst of Directus API calls.
 
 Do not commit a live SQL dump. It can contain customers, bookings, password hashes, tokens, and other personal data. Production data belongs in encrypted off-site backups, not Git.
 
@@ -84,7 +86,7 @@ Deploy the resource and inspect the service logs. A healthy first run has this o
 1. `database` and `redis` become healthy.
 2. `schema-migrate` exits with code 0.
 3. `directus` becomes healthy at `/server/ping`.
-4. `cms-bootstrap` reports `Done` for seed, configuration, and media, then exits with code 0. The media importer is idempotent and automatically paces/retries Directus `429` responses, so a redeploy safely resumes any interrupted first import.
+4. `cms-bootstrap` reports `Done` for seed, configuration, and media, then exits with code 0. Seed, admin configuration, and media import all pace requests and automatically retry Directus `429` plus temporary `408/425/502/503/504` responses. Retry log lines are expected during a transient burst; the service fails only after the bounded retry budget is exhausted.
 5. `web` becomes healthy and Coolify routes traffic to it.
 
 Verify:

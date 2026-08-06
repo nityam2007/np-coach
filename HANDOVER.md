@@ -96,7 +96,7 @@ For an application rollback, select the last known-good Git commit in Coolify an
 
 - The schema snapshot is packaged inside `Dockerfile.schema`; it is not a deployment-host bind mount.
 - Coolify-generated secret identifiers deliberately contain no underscores so all required MariaDB and Directus values are populated.
-- The media bootstrap paces requests and retries Directus `429` responses; interrupted imports safely resume by matching existing file titles.
+- Every CMS bootstrap phase paces Directus requests and retries `429`/temporary upstream responses with bounded backoff. The configured 50-request/second Redis-backed limiter remains enabled; bootstrap defaults to 20 requests/second. Interrupted imports safely resume by matching existing file titles.
 - `DIRECTUS_SERVER_TOKEN` may be blank for the infrastructure bootstrap, but protected application writes remain disabled until a scoped token is configured.
 
 ## CMS operations

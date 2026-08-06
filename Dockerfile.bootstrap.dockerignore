@@ -1,5 +1,6 @@
 *
 !scripts/
+!scripts/directus-api.mjs
 !scripts/seed-directus.mjs
 !scripts/configure-directus.mjs
 !scripts/upload-media.mjs

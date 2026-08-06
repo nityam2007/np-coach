@@ -2,19 +2,20 @@
 
 This is the **single source of truth for picking up the build** (new chat / another agent). Read this first, then [../CLAUDE.md](../CLAUDE.md) → [PLAN.md](PLAN.md) → [TASKS.md](TASKS.md). Keep this file current as you work.
 
-> Convert relative dates to absolute. Today's reference when this file was last updated: **2026-07-24**.
+> Convert relative dates to absolute. Today's reference when this file was last updated: **2026-08-06**.
 
 ---
 
 ## 1. Where the build is
 
-Branch: **`p2-marketing-complete`** (off `main`). Commit as `nityam2007`, **never add AI / Co-Authored-By trailers** (CLAUDE.md rule).
+Branch: **`main`**. Commit as `nityam2007`, **never add AI / Co-Authored-By trailers** (CLAUDE.md rule).
 
 **Done (P0–P7 in-app):**
 - **P0** foundation · **P1** Directus data layer · **P2** full marketing site (fleet, UK tours, Daily Express + routes, blog, content/legal pages, homepage) · **P3** Contact + Get-a-Quote forms (zod + honeypot + rate-limit + Turnstile → Directus) · **P4** Daily Express booking (Stripe Checkout, **stop-to-stop**) · **P5** Lost Property pass (Stripe, configurable VAT) · **P6** home-to-school per-school pages · **P7** compliance + deploy artifacts.
 - Real **images** uploaded to Directus and linked (fleet/tours/school logos).
 - Directus admin organised (groups, field UX, display templates, status colours, Insights dashboard).
 - **P7:** cookie-consent banner (UK PECR), security headers (CSP/HSTS/etc. in `next.config.ts` — **dev-aware**: unsafe-eval/ws only in dev), production `Dockerfile` (multi-stage standalone — **build + run verified**), `docker-compose.prod.yml` (Traefik + app + Directus + MariaDB), Traefik TLS (Cloudflare Origin cert), cron backup `scripts/backup-db.sh`, runbook [../DEPLOY.md](../DEPLOY.md).
+- **Coolify deploy path (2026-08-06):** root `docker-compose.coolify.yml` deploys Next.js + Directus 12.0.2 + MariaDB 11.8.8 + private password-protected Redis through Coolify's own proxy. Exact schema migration and the committed content/admin/~103 MB media bootstrap run automatically as health-gated one-shot services. See [../DEPLOY_COOLIFY.md](../DEPLOY_COOLIFY.md) and `.env.coolify.example`; the older Traefik stack remains the non-Coolify alternative.
 - **Hero booking search** (2026-07-04): tabbed `HeroSearch` (Daily Express tickets ↔ private-hire quote) with From/To **stop dropdowns** from the CMS `stops`, date + passengers → prefills `/daily-express-service/book?from&to&date&pax` (BookingForm accepts `defaultDate`/`defaultPassengers`). Old QuoteWidget removed.
 - **Live-site image archive** (2026-07-04): `npm run crawl` scraped **all 91 original images** from every np-coaches.co.uk page → `directus/seed-media/live/` (+ manifest.json) → uploaded to Directus in a "Live site archive" folder by `npm run media`. Real **logo** (`settings.logo`) now in the header; **hero background** (`settings.hero_image`) on the homepage — both CMS-editable, only set when unset (client edits win).
 - **SEO hardening** (2026-07-04): OpenGraph + Twitter defaults in the root layout; `alternates.canonical` on fleet/pages/routes/tours/blog detail + the book page; `public/llms.txt` served; sitemap includes `/daily-express-service/book` + `/lost-property/claim`; footer gained a **Daily Express column** (book + timetable + the 3 route pages) so no route is orphaned.
@@ -23,10 +24,10 @@ Branch: **`p2-marketing-complete`** (off `main`). Commit as `nityam2007`, **neve
 - **Fleet/content/media pass (2026-07-24):** rebuilt `/fleet` and all six vehicle pages from the archived WordPress structure (CMS copy, facility bands, per-vehicle galleries, seating plans, charter CTA and four booking steps); added `settings.fleet_page`, `fleet.group_label`, `fleet.layout_images` and `pages.image`; migrated `/timetable`; upgraded generic content pages with optional CMS imagery. Blog thumbnails now accept UUID or expanded Directus file values, render on cards/articles/Open Graph/BlogPosting schema, and `npm run media` safely assigns starter images when empty. Verified both blog assets as public `image/jpeg`, all fleet media counts, six updated routes at HTTP 200, fresh TypeScript and lint.
 
 **Not done — pick up here:**
-1. **Actual launch** (needs the VPS — can't be done from this dev box): provision Hostinger VPS, Cloudflare DNS/SSL + Origin cert, live Stripe keys + webhook at `/api/stripe/webhook`, then `docker compose -f docker-compose.prod.yml up -d --build` + run seed/media/configure against the live Directus. Full steps in [../DEPLOY.md](../DEPLOY.md). Lighthouse pass after.
+1. **Actual launch** (needs the VPS — can't be done from this dev box): create the Coolify Public Repository resource with `/docker-compose.coolify.yml`, assign the web/CMS domains, set Cloudflare + live Stripe/Turnstile/M365 values, create the scoped Directus web token, deploy, and run the launch checks/Lighthouse pass in [../DEPLOY_COOLIFY.md](../DEPLOY_COOLIFY.md). Use [../DEPLOY.md](../DEPLOY.md) only for a non-Coolify VPS.
 2. **Cross-cutting — M365 SMTP email** *(next in-app task)*: forms, bookings and pass purchases persist to Directus + rely on Stripe's receipt. Our own branded confirmation emails are **not wired** (M365 Basic SMTP auth is being deprecated → use OAuth2/Graph). `nodemailer` not yet installed. SMTP env vars scaffolded in `.env.example`.
 3. **301 `redirects`** for any old WordPress URLs that changed.
-4. Pin Directus + Traefik to exact patch versions before go-live.
+4. The Coolify images are pinned; the standalone `docker-compose.prod.yml` still needs exact Directus + Traefik patch pins before it is used.
 
 ---
 

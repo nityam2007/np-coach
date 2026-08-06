@@ -1,0 +1,16 @@
+# One-shot CMS bootstrap image used by docker-compose.coolify.yml.
+# The scripts only use Node's built-in APIs, so no dependency install is needed.
+FROM node:22.23.1-alpine3.24
+
+WORKDIR /bootstrap
+
+COPY scripts/seed-directus.mjs scripts/configure-directus.mjs scripts/upload-media.mjs ./scripts/
+COPY src/lib/site-content.json ./src/lib/site-content.json
+COPY directus/seed-media ./directus/seed-media
+
+ENV NODE_ENV=production
+ENV DIRECTUS_URL=http://directus:8055
+
+USER node
+
+CMD ["sh", "-c", "node scripts/seed-directus.mjs && node scripts/configure-directus.mjs && node scripts/upload-media.mjs"]

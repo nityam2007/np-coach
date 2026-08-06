@@ -2,7 +2,7 @@
 
 Rebuild of [np-coaches.co.uk](https://np-coaches.co.uk) — a UK coach-hire operator — as a fast, CMS-driven Next.js site.
 
-> **Status:** P0–P7 in-app complete — marketing, CMS content, protected forms, Stripe Daily Express booking, paid lost-property claims, home-to-school pages, compliance and the production Docker/Traefik stack. Launch still needs the VPS, Cloudflare and live Stripe configuration; branded M365 confirmation emails remain the main in-app follow-up. Read [AIDATA/CONTINUE.md](AIDATA/CONTINUE.md) before continuing.
+> **Status:** P0–P7 in-app complete — marketing, CMS content, protected forms, Stripe Daily Express booking, paid lost-property claims, home-to-school pages, compliance, and production Docker stacks for Coolify or standalone Traefik. Launch still needs the live VPS resource, Cloudflare, Stripe, scoped Directus token, and M365 credentials. Read [AIDATA/CONTINUE.md](AIDATA/CONTINUE.md) before continuing.
 >
 > **Payments and forms:** prices are computed server-side; Stripe Checkout receives the customer email; pending orders become paid only after a verified Checkout session or signed idempotent webhook. Tickets and claim completion are hidden while payment is pending. Contact and quote submissions pass server-side validation, honeypot, rate-limit and Turnstile checks, then use the scoped Directus server token—there is no anonymous create permission.
 >
@@ -14,7 +14,7 @@ Rebuild of [np-coaches.co.uk](https://np-coaches.co.uk) — a UK coach-hire oper
 
 - Contact and quote records are created only by protected server actions (not by Directus' public role); each action validates input, uses a honeypot, verifies Turnstile, and is rate-limited.
 - Stripe Checkout receives the customer's email for receipts. A booking, ticket, or lost-property claim is shown as complete only after Stripe verifies the Checkout session; public booking references cannot complete an order.
-- Run `npm run seed` and then `npm run media` after deployment to apply the latest CMS fields and attach the archived fleet, page and blog media without overwriting editor-set files.
+- Coolify deployments apply the committed schema and run the idempotent content/admin/media bootstrap automatically. Standalone deployments can still run `npm run bootstrap` manually.
 
 ## Stack
 
@@ -24,12 +24,13 @@ Rebuild of [np-coaches.co.uk](https://np-coaches.co.uk) — a UK coach-hire oper
 | CMS / admin | **Directus** (Dockerized) — content + transactional, one client admin |
 | Database | **MariaDB** (Dockerized) — reached only by Directus, **no Prisma** |
 | Media    | Directus uploads (Docker volume) |
-| Reverse proxy | Traefik · **Cloudflare** for DNS · Proxy/CDN · SSL · WAF |
+| Cache / rate limits | Redis (private, password-protected in production) |
+| Reverse proxy | Coolify proxy (recommended) or bundled Traefik · **Cloudflare** at the edge |
 | Payments | Stripe |
 | Email    | Microsoft 365 SMTP |
 | Host     | Hostinger VPS — KVM2 (2 vCPU / 8 GB), Docker |
 
-**Architecture:** `Cloudflare (DNS/Proxy/SSL/WAF) → Hostinger VPS (Docker + Traefik) → Next.js → Directus → MariaDB`. Fully self-hosted (the original [SOW.md](AIDATA/SOW.md) stack). The app never touches MariaDB directly — only Directus does; it holds scoped Directus tokens, never DB creds.
+**Architecture:** `Cloudflare → Coolify proxy → Next.js → Directus → MariaDB`, with Redis private beside Directus. The standalone Traefik stack remains available. The app never touches MariaDB directly — only Directus does; it holds a scoped Directus token, never DB credentials.
 
 ## Local development
 
@@ -61,6 +62,14 @@ npm install && npm run dev      # Next.js app on http://localhost:3000
 
 `npm run build` for a production build, `npm run lint` to lint. Never commit `.env`.
 
+## Coolify production deployment
+
+Use the root-level [`docker-compose.coolify.yml`](docker-compose.coolify.yml) with Coolify's Docker Compose build pack. It deploys the Next.js app, Directus, MariaDB, Redis, an exact-schema migration, and an idempotent CMS/media bootstrap as one private stack; only the web and CMS services receive domains.
+
+Copy [`.env.coolify.example`](.env.coolify.example) into Coolify's environment-variable editor and follow [`DEPLOY_COOLIFY.md`](DEPLOY_COOLIFY.md). The older [`docker-compose.prod.yml`](docker-compose.prod.yml) and [`DEPLOY.md`](DEPLOY.md) are the non-Coolify alternative.
+
+Do not deploy the standalone Traefik service inside Coolify—Coolify already owns the VPS reverse proxy and ports 80/443.
+
 ## Principles
 
 Simple · modular · dynamic (whole site editable from Directus) · responsive · fast · secure. No over-engineering; simple-yet-complete code (no stubs). **UK law governs the live site and customer data** (UK GDPR / DPA 2018 / PECR).
@@ -79,10 +88,12 @@ src/
     site-config.ts      single source of truth for nav/footer/contact (→ Directus in P1)
 directus/               Directus uploads + extensions (bind-mounted in dev)
 docker-compose.yml      dev stack: MariaDB + Directus + app
+docker-compose.coolify.yml  production stack managed by Coolify
+Dockerfile.bootstrap    one-shot committed CMS/content/media bootstrap
 AIDATA/                 plan, brand, UI mockups, SEO assets, Pages OLD/ archive (read-only)
 ```
 
-Root config: `package.json` · `tsconfig.json` · `next.config.ts` · `postcss.config.mjs` · `eslint.config.mjs` · `.env.example`.
+Root config: `package.json` · `tsconfig.json` · `next.config.ts` · `postcss.config.mjs` · `eslint.config.mjs` · `.env.example` · `.env.coolify.example`.
 
 ---
 _Keep this README updated as the build progresses._

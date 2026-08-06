@@ -1,0 +1,176 @@
+# Coolify production stack. Select this root-level file with the Docker Compose
+# build pack. Coolify supplies the reverse proxy and isolated network; only assign
+# domains to `web` (port 3000) and `directus` (port 8055) in its UI.
+
+x-directus-database: &directus-database
+  DB_CLIENT: mysql
+  DB_HOST: database
+  DB_PORT: "3306"
+  DB_DATABASE: npcoaches
+  DB_USER: directus
+  DB_PASSWORD: ${SERVICE_PASSWORD_64_DATABASE}
+
+x-directus-bootstrap: &directus-bootstrap
+  <<: *directus-database
+  KEY: ${SERVICE_BASE64_64_DIRECTUS_KEY}
+  SECRET: ${SERVICE_BASE64_64_DIRECTUS_SECRET}
+  ADMIN_EMAIL: ${DIRECTUS_ADMIN_EMAIL:?}
+  ADMIN_PASSWORD: ${DIRECTUS_ADMIN_PASSWORD:?}
+  ADMIN_TOKEN: ${SERVICE_BASE64_64_DIRECTUS_ADMIN}
+
+services:
+  database:
+    image: mariadb:11.8.8
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: npcoaches
+      MARIADB_USER: directus
+      MARIADB_PASSWORD: ${SERVICE_PASSWORD_64_DATABASE}
+      MARIADB_ROOT_PASSWORD: ${SERVICE_PASSWORD_64_DATABASE_ROOT}
+      MARIADB_AUTO_UPGRADE: "1"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+
+  redis:
+    image: redis:7.4.10-alpine
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${SERVICE_PASSWORD_64_REDIS}
+    command: ["sh", "-c", "exec redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru --requirepass \"$${REDIS_PASSWORD}\""]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
+
+  schema-migrate:
+    image: directus/directus:12.0.2
+    restart: "no"
+    exclude_from_hc: true
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["npx directus bootstrap && npx directus schema apply --yes /directus/schema-snapshot.yaml"]
+    environment:
+      <<: *directus-bootstrap
+    configs:
+      - source: directus_schema
+        target: /directus/schema-snapshot.yaml
+    depends_on:
+      database:
+        condition: service_healthy
+
+  directus:
+    image: directus/directus:12.0.2
+    restart: unless-stopped
+    expose:
+      - "8055"
+    environment:
+      <<: *directus-bootstrap
+      PUBLIC_URL: ${NEXT_PUBLIC_DIRECTUS_URL:?}
+      CORS_ENABLED: "true"
+      CORS_ORIGIN: "array:${NEXT_PUBLIC_SITE_URL:?}"
+      WEBSOCKETS_ENABLED: "true"
+      REDIS: redis://:${SERVICE_PASSWORD_64_REDIS}@redis:6379
+      CACHE_ENABLED: "true"
+      CACHE_AUTO_PURGE: "true"
+      CACHE_STORE: redis
+      CACHE_TTL: 5m
+      ASSETS_CACHE_TTL: 30d
+      RATE_LIMITER_ENABLED: "true"
+      RATE_LIMITER_STORE: redis
+      IP_TRUST_PROXY: "true"
+      HSTS_ENABLED: "true"
+      REFRESH_TOKEN_COOKIE_SECURE: "true"
+      SESSION_COOKIE_SECURE: "true"
+    volumes:
+      - directus_uploads:/directus/uploads
+      - directus_extensions:/directus/extensions
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://127.0.0.1:8055/server/ping || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 12
+      start_period: 45s
+    depends_on:
+      schema-migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+
+  cms-bootstrap:
+    build:
+      context: .
+      dockerfile: Dockerfile.bootstrap
+    restart: "no"
+    exclude_from_hc: true
+    environment:
+      DIRECTUS_URL: http://directus:8055
+      DIRECTUS_ADMIN_TOKEN: ${SERVICE_BASE64_64_DIRECTUS_ADMIN}
+      DIRECTUS_ADMIN_EMAIL: ${DIRECTUS_ADMIN_EMAIL:?}
+      DIRECTUS_ADMIN_PASSWORD: ${DIRECTUS_ADMIN_PASSWORD:?}
+    depends_on:
+      directus:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:?}
+        NEXT_PUBLIC_DIRECTUS_URL: ${NEXT_PUBLIC_DIRECTUS_URL:?}
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}
+        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-}
+    restart: unless-stopped
+    init: true
+    expose:
+      - "3000"
+    environment:
+      DIRECTUS_URL: http://directus:8055
+      DIRECTUS_SERVER_TOKEN: ${DIRECTUS_SERVER_TOKEN:-}
+      AUTH_SECRET: ${SERVICE_BASE64_64_WEB_AUTH}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:?}
+      NEXT_PUBLIC_DIRECTUS_URL: ${NEXT_PUBLIC_DIRECTUS_URL:?}
+      NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      LOST_PROPERTY_TO: ${LOST_PROPERTY_TO:-info@np-coaches.co.uk}
+    depends_on:
+      cms-bootstrap:
+        condition: service_completed_successfully
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  mariadb_data:
+  redis_data:
+  directus_uploads:
+  directus_extensions:
+
+configs:
+  directus_schema:
+    file: ./directus/schema-snapshot.yaml

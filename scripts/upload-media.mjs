@@ -17,8 +17,9 @@ const MEDIA_DIR = join(HERE, "..", "directus", "seed-media");
 const BASE = process.env.DIRECTUS_URL ?? "http://localhost:8055";
 const EMAIL = process.env.DIRECTUS_ADMIN_EMAIL ?? "admin@np-coaches.co.uk";
 const PASSWORD = process.env.DIRECTUS_ADMIN_PASSWORD ?? "change-me";
+const STATIC_TOKEN = process.env.DIRECTUS_ADMIN_TOKEN;
 
-let token = null;
+let token = STATIC_TOKEN ?? null;
 
 async function api(path, options = {}) {
   // Default to JSON content-type for string bodies; never set it for FormData (undici
@@ -151,13 +152,15 @@ async function setItemImage(collection, slug, field, value) {
 
 async function run() {
   console.log(`Uploading media to ${BASE} ...`);
-  token = (
-    await api("/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: EMAIL, password: PASSWORD }),
-    })
-  ).access_token;
+  if (!token) {
+    token = (
+      await api("/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: EMAIL, password: PASSWORD }),
+      })
+    ).access_token;
+  }
 
   const files = (await readdir(MEDIA_DIR, { withFileTypes: true }))
     .filter((e) => e.isFile() && MIME[extname(e.name).toLowerCase()])

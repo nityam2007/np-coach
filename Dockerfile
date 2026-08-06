@@ -1,15 +1,15 @@
 # Production image for the Next.js app (standalone output). Multi-stage → small final image.
 # Build:  docker build -t np-coaches-web .
-# Used by docker-compose.prod.yml. Dev still uses the node:20 `web` service in docker-compose.yml.
+# Used by the production and Coolify Compose stacks. Development uses docker-compose.yml.
 
 # ---- deps: install production-ready node_modules ----
-FROM node:22-alpine AS deps
+FROM node:22.23.1-alpine3.24 AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
 # ---- builder: compile the app ----
-FROM node:22-alpine AS builder
+FROM node:22.23.1-alpine3.24 AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -23,7 +23,7 @@ ARG NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 RUN npm run build
 
 # ---- runner: minimal runtime ----
-FROM node:22-alpine AS runner
+FROM node:22.23.1-alpine3.24 AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -40,4 +40,6 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
 USER nextjs
 EXPOSE 3000
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 CMD ["node", "server.js"]

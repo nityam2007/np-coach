@@ -11,8 +11,9 @@
 const BASE = process.env.DIRECTUS_URL ?? "http://localhost:8055";
 const EMAIL = process.env.DIRECTUS_ADMIN_EMAIL ?? "admin@np-coaches.co.uk";
 const PASSWORD = process.env.DIRECTUS_ADMIN_PASSWORD ?? "change-me";
+const STATIC_TOKEN = process.env.DIRECTUS_ADMIN_TOKEN;
 
-let token = null;
+let token = STATIC_TOKEN ?? null;
 
 async function api(path, options = {}) {
   const res = await fetch(`${BASE}${path}`, {
@@ -253,7 +254,9 @@ async function ensureDashboard() {
 
 async function run() {
   console.log(`Configuring Directus admin at ${BASE} ...`);
-  token = (await api("/auth/login", { method: "POST", body: JSON.stringify({ email: EMAIL, password: PASSWORD }) })).access_token;
+  if (!token) {
+    token = (await api("/auth/login", { method: "POST", body: JSON.stringify({ email: EMAIL, password: PASSWORD }) })).access_token;
+  }
 
   for (const g of GROUPS) await ensureGroup(g);
 

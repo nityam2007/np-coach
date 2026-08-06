@@ -7,8 +7,9 @@ import content from "../src/lib/site-content.json" with { type: "json" };
 const BASE = process.env.DIRECTUS_URL ?? "http://localhost:8055";
 const EMAIL = process.env.DIRECTUS_ADMIN_EMAIL ?? "admin@np-coaches.co.uk";
 const PASSWORD = process.env.DIRECTUS_ADMIN_PASSWORD ?? "change-me";
+const STATIC_TOKEN = process.env.DIRECTUS_ADMIN_TOKEN;
 
-let token = null;
+let token = STATIC_TOKEN ?? null;
 
 async function api(path, options = {}) {
   const res = await fetch(`${BASE}${path}`, {
@@ -299,7 +300,9 @@ async function applyBranding() {
 
 async function run() {
   console.log(`Seeding Directus at ${BASE} ...`);
-  token = (await api("/auth/login", { method: "POST", body: JSON.stringify({ email: EMAIL, password: PASSWORD }) })).access_token;
+  if (!token) {
+    token = (await api("/auth/login", { method: "POST", body: JSON.stringify({ email: EMAIL, password: PASSWORD }) })).access_token;
+  }
 
   await ensureCollection("settings", { singleton: true, icon: "settings", note: "Global site content" }, SETTINGS_FIELDS);
   await ensureCollection("services", { sort_field: "sort", icon: "category", note: "Homepage service cards" }, SERVICES_FIELDS);

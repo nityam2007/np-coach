@@ -1,0 +1,11 @@
+*
+!scripts/
+!scripts/seed-directus.mjs
+!scripts/configure-directus.mjs
+!scripts/upload-media.mjs
+!src/
+!src/lib/
+!src/lib/site-content.json
+!directus/
+!directus/seed-media/
+!directus/seed-media/**

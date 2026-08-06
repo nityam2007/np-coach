@@ -1,5 +1,7 @@
 # Deploy — NP Coaches (P7)
 
+> Coolify already installed? Use [DEPLOY_COOLIFY.md](DEPLOY_COOLIFY.md) and `docker-compose.coolify.yml`. This runbook is the standalone Traefik alternative and must not be deployed alongside Coolify's proxy.
+
 Production runbook for the Hostinger **VPS KVM2 (2 vCPU / 8 GB)**, Docker + Traefik, behind **Cloudflare** (DNS · Proxy/CDN · SSL Full-strict · WAF · Turnstile). The app never touches MariaDB — only Directus does.
 
 ```

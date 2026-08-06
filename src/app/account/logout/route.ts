@@ -1,12 +1,12 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { sessionCookieName } from "@/lib/auth";
 
 /** Full-page POST logout: clears the host-only session cookie and redirects safely. */
-export async function POST(request: NextRequest) {
-  const response = NextResponse.redirect(
-    new URL("/account/login?signed_out=1", request.url),
-    303,
-  );
+export async function POST() {
+  const response = new NextResponse(null, {
+    status: 303,
+    headers: { Location: "/account/login?signed_out=1" },
+  });
   response.cookies.set({
     name: sessionCookieName(),
     value: "",

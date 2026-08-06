@@ -84,7 +84,7 @@ Deploy the resource and inspect the service logs. A healthy first run has this o
 1. `database` and `redis` become healthy.
 2. `schema-migrate` exits with code 0.
 3. `directus` becomes healthy at `/server/ping`.
-4. `cms-bootstrap` reports `Done` for seed, configuration, and media, then exits with code 0.
+4. `cms-bootstrap` reports `Done` for seed, configuration, and media, then exits with code 0. The media importer is idempotent and automatically paces/retries Directus `429` responses, so a redeploy safely resumes any interrupted first import.
 5. `web` becomes healthy and Coolify routes traffic to it.
 
 Verify:

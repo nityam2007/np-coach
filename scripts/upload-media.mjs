@@ -18,13 +18,39 @@ const BASE = process.env.DIRECTUS_URL ?? "http://localhost:8055";
 const EMAIL = process.env.DIRECTUS_ADMIN_EMAIL ?? "admin@np-coaches.co.uk";
 const PASSWORD = process.env.DIRECTUS_ADMIN_PASSWORD ?? "change-me";
 const STATIC_TOKEN = process.env.DIRECTUS_ADMIN_TOKEN;
+const REQUEST_INTERVAL_MS = 25;
+const MAX_RATE_LIMIT_RETRIES = 8;
 
 let token = STATIC_TOKEN ?? null;
+let nextRequestAt = 0;
 
-async function api(path, options = {}) {
+const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+
+async function paceRequest() {
+  const delay = nextRequestAt - Date.now();
+  if (delay > 0) await wait(delay);
+  nextRequestAt = Date.now() + REQUEST_INTERVAL_MS;
+}
+
+function retryDelay(response, message, attempt) {
+  const retryAfter = response.headers.get("retry-after");
+  let headerDelay = 0;
+  if (retryAfter) {
+    const seconds = Number(retryAfter);
+    headerDelay = Number.isFinite(seconds) ? seconds * 1_000 : Math.max(0, Date.parse(retryAfter) - Date.now());
+  }
+
+  const match = message.match(/retry after\s+([\d.]+)\s*(ms|s|seconds?)/i);
+  const messageDelay = match ? Number(match[1]) * (match[2].toLowerCase() === "ms" ? 1 : 1_000) : 0;
+  const backoff = 250 * 2 ** attempt;
+  return Math.min(60_000, Math.ceil(Math.max(headerDelay, messageDelay, backoff) + 100));
+}
+
+async function api(path, options = {}, attempt = 0) {
   // Default to JSON content-type for string bodies; never set it for FormData (undici
   // must add its own multipart boundary).
   const isForm = options.body instanceof FormData;
+  await paceRequest();
   const res = await fetch(`${BASE}${path}`, {
     ...options,
     headers: {
@@ -34,9 +60,20 @@ async function api(path, options = {}) {
     },
   });
   const txt = await res.text();
-  const json = txt ? JSON.parse(txt) : {};
+  let json = {};
+  try {
+    json = txt ? JSON.parse(txt) : {};
+  } catch {
+    // Keep the raw response available for the error below.
+  }
   if (!res.ok) {
     const message = json?.errors?.[0]?.message ?? txt;
+    if (res.status === 429 && attempt < MAX_RATE_LIMIT_RETRIES) {
+      const delay = retryDelay(res, message, attempt);
+      console.warn(`Rate limited on ${options.method ?? "GET"} ${path}; retrying in ${delay}ms (${attempt + 1}/${MAX_RATE_LIMIT_RETRIES})`);
+      await wait(delay);
+      return api(path, options, attempt + 1);
+    }
     throw Object.assign(new Error(`${options.method ?? "GET"} ${path} → ${res.status}: ${message}`), { status: res.status });
   }
   return json.data;

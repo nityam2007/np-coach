@@ -9,7 +9,7 @@ import { directusServerWrite } from "@/lib/directus-server";
 
 const DIRECTUS_URL = process.env.DIRECTUS_URL ?? "http://localhost:8055";
 const TURNSTILE_SECRET =
-  process.env.TURNSTILE_SECRET ?? process.env.TURNSTILE_SECRET_KEY;
+  process.env.TURNSTILE_SECRET || process.env.TURNSTILE_SECRET_KEY;
 
 // ---- Validation schemas ----
 // `website` is a honeypot: real users leave it blank; bots tend to fill every field.

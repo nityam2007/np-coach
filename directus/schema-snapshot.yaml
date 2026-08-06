@@ -1594,6 +1594,86 @@ fields:
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
+  - collection: bookings
+    field: confirmation_email_status
+    type: string
+    meta:
+      collection: bookings
+      conditions: null
+      display: null
+      display_options: null
+      field: confirmation_email_status
+      group: null
+      hidden: true
+      interface: null
+      note: Customer confirmation delivery state.
+      options: null
+      readonly: true
+      required: false
+      searchable: true
+      sort: 17
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: confirmation_email_status
+      table: bookings
+      data_type: varchar
+      default_value: pending
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: bookings
+    field: confirmation_email_sent_at
+    type: timestamp
+    meta:
+      collection: bookings
+      conditions: null
+      display: null
+      display_options: null
+      field: confirmation_email_sent_at
+      group: null
+      hidden: true
+      interface: datetime
+      note: When the customer confirmation was accepted by SMTP.
+      options: null
+      readonly: true
+      required: false
+      searchable: true
+      sort: 18
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: confirmation_email_sent_at
+      table: bookings
+      data_type: timestamp
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
   - collection: contact_submissions
     field: id
     type: integer
@@ -3407,6 +3487,166 @@ fields:
       width: full
     schema:
       name: created_at
+      table: pass_purchases
+      data_type: timestamp
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: pass_purchases
+    field: confirmation_email_status
+    type: string
+    meta:
+      collection: pass_purchases
+      conditions: null
+      display: null
+      display_options: null
+      field: confirmation_email_status
+      group: null
+      hidden: true
+      interface: null
+      note: Customer confirmation delivery state.
+      options: null
+      readonly: true
+      required: false
+      searchable: true
+      sort: 20
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: confirmation_email_status
+      table: pass_purchases
+      data_type: varchar
+      default_value: pending
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: pass_purchases
+    field: confirmation_email_sent_at
+    type: timestamp
+    meta:
+      collection: pass_purchases
+      conditions: null
+      display: null
+      display_options: null
+      field: confirmation_email_sent_at
+      group: null
+      hidden: true
+      interface: datetime
+      note: When the customer confirmation was accepted by SMTP.
+      options: null
+      readonly: true
+      required: false
+      searchable: true
+      sort: 21
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: confirmation_email_sent_at
+      table: pass_purchases
+      data_type: timestamp
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: pass_purchases
+    field: staff_email_status
+    type: string
+    meta:
+      collection: pass_purchases
+      conditions: null
+      display: null
+      display_options: null
+      field: staff_email_status
+      group: null
+      hidden: true
+      interface: null
+      note: Staff notification delivery state.
+      options: null
+      readonly: true
+      required: false
+      searchable: true
+      sort: 22
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: staff_email_status
+      table: pass_purchases
+      data_type: varchar
+      default_value: pending
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: pass_purchases
+    field: staff_email_sent_at
+    type: timestamp
+    meta:
+      collection: pass_purchases
+      conditions: null
+      display: null
+      display_options: null
+      field: staff_email_sent_at
+      group: null
+      hidden: true
+      interface: datetime
+      note: When the staff notification was accepted by SMTP.
+      options: null
+      readonly: true
+      required: false
+      searchable: true
+      sort: 23
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: staff_email_sent_at
       table: pass_purchases
       data_type: timestamp
       default_value: null
@@ -5960,6 +6200,48 @@ fields:
       data_type: char
       default_value: null
       max_length: 36
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: settings
+    field: email_templates
+    type: json
+    meta:
+      collection: settings
+      conditions: null
+      display: null
+      display_options: null
+      field: email_templates
+      group: null
+      hidden: false
+      interface: input-code
+      note: Customer and staff transactional email copy. Preserve {{variable}} placeholders.
+      options:
+        language: json
+      readonly: false
+      required: false
+      searchable: true
+      sort: 30
+      special:
+        - cast-json
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: email_templates
+      table: settings
+      data_type: longtext
+      default_value: null
+      max_length: 4294967295
       numeric_precision: null
       numeric_scale: null
       is_nullable: true

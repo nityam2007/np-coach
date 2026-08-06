@@ -22,6 +22,65 @@
     "general": "Info@np-coaches.co.uk",
     "bookings": "Bookings@np-coaches.co.uk"
   },
+  "emailTemplates": {
+    "otp": {
+      "subject": "Your {{siteName}} login code",
+      "eyebrow": "Secure sign in",
+      "heading": "Your one-time login code",
+      "intro": "Use the code below to sign in to your account. It expires in 10 minutes.",
+      "footer": "If you did not request this code, you can safely ignore this email."
+    },
+    "bookingConfirmation": {
+      "subject": "Your {{siteName}} ticket — {{reference}}",
+      "eyebrow": "Booking confirmed",
+      "heading": "Your Daily Express ticket is ready",
+      "intro": "Thank you, {{name}}. Your payment is confirmed and your journey details are below.",
+      "footer": "Please arrive at least 15 minutes before departure and keep your booking reference available.",
+      "ctaLabel": "View my tickets"
+    },
+    "lostPropertyCustomer": {
+      "subject": "Lost property request received — {{reference}}",
+      "eyebrow": "Request confirmed",
+      "heading": "We have received your lost property request",
+      "intro": "Thank you, {{name}}. Our depot team will check whether your item has been handed in.",
+      "footer": "Payment of the administration fee does not guarantee that an item has been found. We will contact you when we have an update."
+    },
+    "lostPropertyStaff": {
+      "subject": "New paid lost property request — {{reference}}",
+      "eyebrow": "Action required",
+      "heading": "A new lost property request is ready",
+      "intro": "The administration fee has been paid. Please review the details and contact the customer when there is an update.",
+      "footer": "Replying to this email will reply directly to the customer."
+    },
+    "contactCustomer": {
+      "subject": "We received your message — {{siteName}}",
+      "eyebrow": "Message received",
+      "heading": "Thank you for contacting us",
+      "intro": "Hello {{name}}. Your message has been saved and our team aims to reply within 24 hours.",
+      "footer": "If your enquiry is urgent, please call us using the number below."
+    },
+    "contactStaff": {
+      "subject": "New website message: {{subject}}",
+      "eyebrow": "New contact enquiry",
+      "heading": "A customer has sent a message",
+      "intro": "The complete enquiry is below and is also stored in Directus.",
+      "footer": "Replying to this email will reply directly to the customer."
+    },
+    "quoteCustomer": {
+      "subject": "We received your coach quote request — {{siteName}}",
+      "eyebrow": "Quote request received",
+      "heading": "We are reviewing your journey",
+      "intro": "Thank you, {{name}}. Our team will review the details and contact you with the next steps.",
+      "footer": "A quote is not a confirmed booking until our team confirms availability and price."
+    },
+    "quoteStaff": {
+      "subject": "New coach quote request from {{name}}",
+      "eyebrow": "New quote lead",
+      "heading": "A new journey needs pricing",
+      "intro": "The complete request is below and is also stored in Directus.",
+      "footer": "Replying to this email will reply directly to the customer."
+    }
+  },
   "address": {
     "line1": "Willow Tree Farm",
     "line2": "Love Lane",

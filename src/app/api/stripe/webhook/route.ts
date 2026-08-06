@@ -38,11 +38,18 @@ export async function POST(req: Request) {
       const kind = session.metadata?.kind;
       if (kind === "booking" || kind === "pass") {
         const collection = kind === "pass" ? "pass_purchases" : "bookings";
-        await markPaidBySession(collection, session.id, paymentIntent);
+        try {
+          await markPaidBySession(collection, session.id, paymentIntent, {
+            requireEmailDelivery: true,
+          });
+        } catch (error) {
+          console.error("[stripe] post-payment email failed", error);
+          return NextResponse.json({ error: "post-payment delivery failed" }, { status: 500 });
+        }
       }
     }
   }
 
-  // Acknowledge quickly so Stripe doesn't retry.
+  // Acknowledge only after payment state and required transactional emails succeed.
   return NextResponse.json({ received: true });
 }

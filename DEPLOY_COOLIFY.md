@@ -14,6 +14,8 @@ This is the active production path on the Hostinger VPS. The full stack complete
 | `cms-bootstrap` | No; one-shot | Writes through Directus | Idempotently seeds content, admin configuration, and media |
 
 No host ports are published. Coolify creates the isolated stack network, and containers use the service names `database`, `redis`, and `directus` internally.
+Postfix is an existing internal relay, not a service created by this Compose file. The `web` container must share a Docker network with it and `SMTP_HOST` must be a hostname that resolves on that network. Do not publish the SMTP port to the internet.
+
 
 ## Repository-backed bootstrap
 
@@ -37,7 +39,7 @@ Do not commit a live SQL dump. It can contain customers, bookings, password hash
 3. Select the `main` branch and change the build pack from Nixpacks to **Docker Compose**.
 4. Set **Base Directory** to `/`.
 5. Set **Docker Compose Location** to `/docker-compose.coolify.yml` (the extension must match exactly).
-6. Keep **Raw Compose Deployment** off and **Connect to Predefined Network** off.
+6. Keep **Raw Compose Deployment** off. Keep **Connect to Predefined Network** off only when Postfix is already attached to this stack's network; if Postfix is a separate Coolify resource, enable it and use that resource's full generated service name (for example `postfix-<uuid>`) as `SMTP_HOST`. A bare `postfix` value is valid only when that DNS name/alias exists on the shared network.
 
 The `coolify.zindad.frontend` label from the generic example is not a Coolify requirement. Standard Compose deployments are parsed by Coolify, which attaches its proxy automatically when a domain is assigned.
 
@@ -54,7 +56,7 @@ DIRECTUS_ADMIN_PASSWORD=<long unique password>
 
 Coolify creates and retains every `SERVICE_*` password/secret referenced by the Compose file. The identifier suffixes deliberately contain no underscores (`DBUSER`, `DBROOT`, `REDISPASS`, `DIRECTUSKEY`, `DIRECTUSSECRET`, `DIRECTUSADMIN`, `WEBAUTH`) for compatibility with Coolify releases that fail to generate compound identifiers. Do not rename or replace these generated values between deployments; they protect MariaDB, Redis, Directus sessions, the bootstrap admin token, and the Next.js session cookie.
 
-Keep only the `NEXT_PUBLIC_*` values enabled as **Build Variables**. The admin password, Directus token, Stripe secrets, Turnstile secret, and SMTP password should be **Runtime only**. If a secret contains `$`, enable Coolify's **Literal** option.
+Keep only the `NEXT_PUBLIC_*` values enabled as **Build Variables**. The admin password, Directus token, Stripe secrets, and Turnstile secret should be **Runtime only**. The internal Postfix setup has SMTP authentication disabled, so `SMTP_USER` and `SMTP_PASS` stay empty. If a secret contains `$`, enable Coolify's **Literal** option.
 
 `NEXT_PUBLIC_*` values are intentionally built into the browser bundle and are not secrets.
 
@@ -115,10 +117,30 @@ Never put the generated bootstrap admin token in `DIRECTUS_SERVER_TOKEN`; the we
 
 ## 7. Stripe, email, and launch
 
-- Stripe: set the live keys, then create `https://np-coaches.co.uk/api/stripe/webhook` for `checkout.session.completed` and save its signing secret.
+- Stripe: set the appropriate test/live keys and create one endpoint for `checkout.session.completed`. During acceptance use `https://demo.np-coaches.co.uk/api/stripe/webhook`; change it to `https://np-coaches.co.uk/api/stripe/webhook` at the production-domain cutover. Save the endpoint's signing secret as `STRIPE_WEBHOOK_SECRET`.
 - Turnstile: keep the existing MAIN widget in Managed mode, set `TURNSTILE_SECRET` as Runtime only, and verify contact, quote, booking, lost-property, and OTP submissions. Production fails closed if the secret is absent or Siteverify rejects the token.
-- SMTP: add the Microsoft 365/Outlook credentials and submit real contact, quote, OTP, and lost-property tests.
-- Smoke-test a booking and lost-property payment; confirm the signed webhook changes the Directus record from `pending` to `paid` exactly once.
+- SMTP: configure the internal relay exactly once in Coolify:
+
+  ```env
+  SMTP_HOST=postfix
+  SMTP_PORT=587
+  SMTP_SECURE=false
+  SMTP_AUTH=false
+  SMTP_TLS=false
+  SMTP_REQUIRE_TLS=false
+  SMTP_USER=
+  SMTP_PASS=
+  SMTP_FROM=noreply@np-coaches.co.uk
+  SMTP_FROM_NAME=NP Coaches
+  CONTACT_TO=info@np-coaches.co.uk
+  QUOTE_TO=bookings@np-coaches.co.uk
+  LOST_PROPERTY_TO=info@np-coaches.co.uk
+  ```
+
+  If Postfix is a separate Coolify resource, replace `postfix` with its generated same-network hostname. From the running `web` container, verify DNS and TCP port 587 before testing the application. Postfix must trust only the relevant private Docker subnet/container; never create an unauthenticated public relay.
+- Submit one real contact and quote form. Confirm each Directus record, staff notification, and customer acknowledgement.
+- Request an OTP to a controlled mailbox. A failed SMTP delivery must show the customer an error instead of claiming a code was sent.
+- Complete one booking and one lost-property payment. Confirm the signed webhook changes each row to `paid`, booking confirmation is sent once, and both lost-property customer/staff emails are sent once. In Directus, the corresponding email status fields must be `sent`.
 
 ## 8. Backups and updates
 

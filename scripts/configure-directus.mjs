@@ -89,7 +89,7 @@ const COLLECTION_META = {
   customers: { group: "grp_accounts", sort: 1, icon: "person", display_template: "{{name}} — {{email}}", note: "Customer accounts (created automatically at checkout / login). No passwords are stored." },
   otp_codes: { group: "grp_accounts", sort: 2, icon: "password", display_template: "{{email}}", note: "One-time login codes. Technical — you never need to open this." },
   // Settings stays top-level (singleton)
-  settings: { sort: 10, icon: "settings", note: "Global site content: contact details, nav & footer menus, homepage copy, stats, FAQs, prices and VAT." },
+  settings: { sort: 10, icon: "settings", note: "Global site content: contact details, navigation, homepage copy, prices, FAQs and transactional email copy." },
 };
 
 async function applyCollectionMeta(collection, meta) {
@@ -157,6 +157,7 @@ const FIELD_META = {
   ],
   settings: [
     { field: "pricing", meta: { note: "Fees in pence; VAT rates as whole %. dailyExpressSingle/Return are the flat corridor fares." } },
+    { field: "email_templates", meta: { interface: "input-code", options: { language: "json" }, note: "Customer and staff transactional email copy. Keep all {{variable}} placeholders intact." } },
   ],
 };
 

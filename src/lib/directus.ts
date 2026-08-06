@@ -13,6 +13,7 @@ import {
   type Faq,
   type Testimonial,
   type Pricing,
+  type EmailTemplates,
   type Stop,
   type SchoolTransport,
   type SchoolRoute,
@@ -59,6 +60,7 @@ export interface SiteSettings {
   pricing: Pricing;
   phone: { display: string; href: string; hours: string };
   email: { general: string; bookings: string };
+  emailTemplates: EmailTemplates;
   address: { line1: string; line2: string; city: string; county: string; postcode: string };
   nav: NavLink[];
   footerColumns: FooterColumn[];
@@ -94,6 +96,7 @@ interface SettingsRow {
   phone_hours: string;
   email_general: string;
   email_bookings: string;
+  email_templates: EmailTemplates | null;
   address_line1: string;
   address_line2: string;
   address_city: string;
@@ -165,6 +168,7 @@ const fallbackSettings: SiteSettings = {
   pricing: siteConfig.pricing,
   phone: siteConfig.phone,
   email: siteConfig.email,
+  emailTemplates: siteConfig.emailTemplates,
   address: siteConfig.address,
   nav: siteConfig.nav,
   footerColumns: siteConfig.footerColumns,
@@ -182,6 +186,15 @@ const fallbackSettings: SiteSettings = {
   schoolImage: null,
 };
 
+function mergeEmailTemplates(stored: EmailTemplates | null | undefined): EmailTemplates {
+  return Object.fromEntries(
+    Object.entries(siteConfig.emailTemplates).map(([key, defaults]) => [
+      key,
+      { ...defaults, ...(stored?.[key as keyof EmailTemplates] ?? {}) },
+    ]),
+  ) as unknown as EmailTemplates;
+}
+
 export async function getSettings(): Promise<SiteSettings> {
   const row = await fetchData<SettingsRow>("/items/settings", "settings");
   if (!row) return fallbackSettings;
@@ -196,6 +209,7 @@ export async function getSettings(): Promise<SiteSettings> {
     pricing: row.pricing ?? siteConfig.pricing,
     phone: { display: row.phone_display, href: row.phone_href, hours: row.phone_hours },
     email: { general: row.email_general, bookings: row.email_bookings },
+    emailTemplates: mergeEmailTemplates(row.email_templates),
     address: {
       line1: row.address_line1,
       line2: row.address_line2,

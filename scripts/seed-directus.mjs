@@ -27,6 +27,7 @@ const SETTINGS_FIELDS = [
   str("name"), str("legal_name"), str("tagline"), text("subtitle"), text("description"), str("url"), int("founded"),
   str("phone_display"), str("phone_href"), str("phone_hours"),
   str("email_general"), str("email_bookings"),
+  json("email_templates"),
   str("address_line1"), str("address_line2"), str("address_city"), str("address_county"), str("address_postcode"),
   json("nav"), json("footer_columns"), json("legal_links"),
 ];
@@ -114,6 +115,8 @@ const SCHOOL_ROUTES_FIELDS = [
 // T6 — form submissions (server-write only; public may CREATE the allowlisted fields, never READ).
 // `created_at` is filled by Directus on insert; submissions are read by staff in the admin panel.
 const datetimeCreated = { field: "created_at", type: "timestamp", meta: { interface: "datetime", readonly: true, special: ["date-created"] }, schema: {} };
+const deliveryStatus = (field) => ({ field, type: "string", meta: { hidden: true, readonly: true }, schema: { default_value: "pending" } });
+const deliverySentAt = (field) => ({ field, type: "timestamp", meta: { interface: "datetime", hidden: true, readonly: true }, schema: {} });
 
 const CONTACT_SUBMISSIONS_FIELDS = [
   pk("id"),
@@ -166,6 +169,8 @@ const BOOKINGS_FIELDS = [
   str("name"), str("email"), str("phone"),
   { field: "status", type: "string", meta: { interface: "select-dropdown", options: { choices: [{ text: "Pending", value: "pending" }, { text: "Paid", value: "paid" }, { text: "Failed", value: "failed" }] } }, schema: { default_value: "pending" } },
   { field: "stripe_session_id", type: "string", meta: { note: "Stripe Checkout Session id (unique — webhook idempotency)" }, schema: { is_unique: true } },
+  deliveryStatus("confirmation_email_status"),
+  deliverySentAt("confirmation_email_sent_at"),
   str("stripe_payment_intent"),
   datetimeCreated,
 ];
@@ -185,6 +190,10 @@ const PASS_PURCHASES_FIELDS = [
   { field: "status", type: "string", meta: { interface: "select-dropdown", options: { choices: [{ text: "Pending", value: "pending" }, { text: "Paid", value: "paid" }, { text: "Failed", value: "failed" }] } }, schema: { default_value: "pending" } },
   { field: "stripe_session_id", type: "string", meta: { note: "Stripe Checkout Session id (unique — webhook idempotency)" }, schema: { is_unique: true } },
   str("stripe_payment_intent"),
+  deliveryStatus("confirmation_email_status"),
+  deliverySentAt("confirmation_email_sent_at"),
+  deliveryStatus("staff_email_status"),
+  deliverySentAt("staff_email_sent_at"),
   datetimeCreated,
 ];
 
@@ -310,6 +319,7 @@ async function run() {
   // Fields added after a collection already exists (idempotent extension).
   await ensureField("settings", json("stats"));
   await ensureField("settings", json("accreditations"));
+  await ensureField("settings", json("email_templates"));
   await ensureField("settings", json("coverage"));
   await ensureField("settings", json("faqs"));
   await ensureField("settings", json("pricing")); // configurable fees + per-fee VAT rates
@@ -336,6 +346,12 @@ async function run() {
   await ensureField("fleet", json("gallery"));
   await ensureField("fleet", str("group_label"));
   await ensureField("fleet", json("layout_images"));
+  await ensureField("bookings", deliveryStatus("confirmation_email_status"));
+  await ensureField("bookings", deliverySentAt("confirmation_email_sent_at"));
+  await ensureField("pass_purchases", deliveryStatus("confirmation_email_status"));
+  await ensureField("pass_purchases", deliverySentAt("confirmation_email_sent_at"));
+  await ensureField("pass_purchases", deliveryStatus("staff_email_status"));
+  await ensureField("pass_purchases", deliverySentAt("staff_email_sent_at"));
   await ensureField("pages", fileField("image", "Optional hero image for the content page."));
   await ensureField("tours", fileField("image", "Destination hero photo."));
   await ensureField("settings", json("school_transport"));
@@ -361,6 +377,13 @@ async function run() {
   const pricingChanged = JSON.stringify(mergedPricing) !== JSON.stringify(currentSettings?.pricing ?? null);
   // Homepage copy: same strategy — add newly-introduced keys, keep client edits.
   const mergedHomepage = { ...content.homepage, ...(currentSettings?.homepage ?? {}) };
+  const storedEmailTemplates = currentSettings?.email_templates ?? {};
+  const mergedEmailTemplates = Object.fromEntries(
+    Object.entries(content.emailTemplates).map(([key, defaults]) => [
+      key,
+      { ...defaults, ...(storedEmailTemplates[key] ?? {}) },
+    ]),
+  );
   // Fleet listing/detail shared copy follows the same preserve-editor-edits strategy.
   const mergedFleetPage = { ...content.fleetPage, ...(currentSettings?.fleet_page ?? {}) };
 
@@ -379,6 +402,7 @@ async function run() {
       phone_href: content.phone.href,
       phone_hours: content.phone.hours,
       email_general: content.email.general,
+      email_templates: mergedEmailTemplates,
       email_bookings: content.email.bookings,
       address_line1: content.address.line1,
       address_line2: content.address.line2,

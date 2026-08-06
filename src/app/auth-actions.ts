@@ -39,7 +39,7 @@ export async function requestOtpAction(_prev: AuthState, formData: FormData): Pr
   }
 
   const settings = await getSettings();
-  const res = await createAndSendOtp(email, settings.name);
+  const res = await createAndSendOtp(email, settings);
   if (!res.ok) return { step: "email", email, message: "Couldn't send a code right now. Please try again shortly." };
 
   return {

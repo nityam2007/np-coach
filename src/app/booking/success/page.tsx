@@ -18,6 +18,7 @@ export default async function BookingSuccessPage({ searchParams }: { searchParam
   const reference = session_id ? await confirmCheckoutSession(session_id, "booking") : null;
   const booking = reference ? await getBookingByReference(reference) : null;
   const [stops, settings] = await Promise.all([getStops(), getSettings()]);
+  const emailSent = booking?.confirmation_email_status === "sent";
   const pass = booking?.status === "paid" ? await boardingPassFromBooking(booking, stops, settings.name) : null;
 
   return (
@@ -28,7 +29,11 @@ export default async function BookingSuccessPage({ searchParams }: { searchParam
         </span>
         <h1 className="mt-4 font-display text-3xl font-bold">{pass ? "Thank you — your booking is confirmed" : "We’re confirming your payment"}</h1>
         <p className="mt-3 text-navy/70">
-          {pass ? "Stripe has verified your payment and emailed your receipt. Your ticket is below." : "Your payment is being confirmed securely with Stripe. No ticket is issued until that check succeeds."}
+          {pass
+            ? emailSent
+              ? "Payment verified. We have emailed your NP Coaches confirmation and your ticket is below."
+              : "Payment verified. Your ticket is below; you can also access it from your account while email delivery retries."
+            : "Your payment is being confirmed securely with Stripe. No ticket is issued until that check succeeds."}
         </p>
       </div>
 

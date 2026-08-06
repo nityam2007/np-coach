@@ -18,6 +18,7 @@ Repository: [nityam2007/np-coach](https://github.com/nityam2007/np-coach) · Del
 - Directus admin organised (groups, field UX, display templates, status colours, Insights dashboard).
 - **P7:** cookie-consent banner (UK PECR), security headers (CSP/HSTS/etc. in `next.config.ts` — **dev-aware**: unsafe-eval/ws only in dev), production `Dockerfile` (multi-stage standalone — **build + run verified**), `docker-compose.prod.yml` (Traefik + app + Directus + MariaDB), Traefik TLS (Cloudflare Origin cert), cron backup `scripts/backup-db.sh`, runbook [../DEPLOY.md](../DEPLOY.md).
 - **Coolify production (2026-08-06):** the full root `docker-compose.coolify.yml` stack deployed successfully: MariaDB and Redis healthy, schema migration exited 0, Directus healthy, the idempotent CMS/media bootstrap completed, and Next.js started behind Coolify's proxy. Seed, admin configuration, and media import now share a paced/retrying Directus client, staying below the explicit 50-request/second limiter and safely resuming interrupted imports. See [../DEPLOY_COOLIFY.md](../DEPLOY_COOLIFY.md) and [../HANDOVER.md](../HANDOVER.md); the older Traefik stack remains the non-Coolify alternative.
+- **Transactional email (2026-08-06):** replaced deferred Microsoft 365 auth with the internal no-auth Postfix relay; added reusable NP Coaches HTML/plain-text templates with copy in Directus settings; OTP now fails visibly on delivery failure; persisted contact/quote submissions send staff + customer messages; verified payments send idempotent booking confirmations and lost-property customer + staff messages tracked per record.
 - **Hero booking search** (2026-07-04): tabbed `HeroSearch` (Daily Express tickets ↔ private-hire quote) with From/To **stop dropdowns** from the CMS `stops`, date + passengers → prefills `/daily-express-service/book?from&to&date&pax` (BookingForm accepts `defaultDate`/`defaultPassengers`). Old QuoteWidget removed.
 - **Live-site image archive** (2026-07-04): `npm run crawl` scraped **all 91 original images** from every np-coaches.co.uk page → `directus/seed-media/live/` (+ manifest.json) → uploaded to Directus in a "Live site archive" folder by `npm run media`. Real **logo** (`settings.logo`) now in the header; **hero background** (`settings.hero_image`) on the homepage — both CMS-editable, only set when unset (client edits win).
 - **SEO hardening** (2026-07-04): OpenGraph + Twitter defaults in the root layout; `alternates.canonical` on fleet/pages/routes/tours/blog detail + the book page; `public/llms.txt` served; sitemap includes `/daily-express-service/book` + `/lost-property/claim`; footer gained a **Daily Express column** (book + timetable + the 3 route pages) so no route is orphaned.
@@ -30,7 +31,7 @@ Repository: [nityam2007/np-coach](https://github.com/nityam2007/np-coach) · Del
 1. Confirm the least-privilege `DIRECTUS_SERVER_TOKEN` and its collection permissions before protected writes go live.
 2. Confirm Cloudflare proxy/Full (strict)/WAF and test the existing `MAIN` Managed Turnstile widget end to end. The public key is committed as `NEXT_PUBLIC_TURNSTILE_SITE_KEY`; the private key must remain runtime-only as `TURNSTILE_SECRET` (`TURNSTILE_SECRET_KEY` is accepted as a compatibility alias).
 3. Configure Stripe live keys and the signed webhook, then complete real low-value booking and lost-property tests.
-4. Wire and acceptance-test Microsoft 365 delivery for contact, quote, OTP, booking, and pass messages.
+4. Acceptance-test the internal Postfix network/DNS and real mailbox delivery for contact, quote, OTP, booking, and lost-property customer/staff messages.
 5. Schedule encrypted off-site MariaDB/upload backups and complete a restore test.
 6. Add required WordPress 301 redirects; complete Lighthouse/accessibility, mobile, content, fare, route, and legal approval.
 7. The Coolify images are pinned; pin the standalone `docker-compose.prod.yml` Directus/Traefik images before that alternative is ever used.
@@ -69,7 +70,7 @@ Directus collection → seed (`scripts/seed-directus.mjs`) → typed in `src/lib
 
 **Payments (P4/P5 — reuse for any new paid flow):**
 - Price **always computed server-side** from Directus (`src/lib/stripe.ts` — `priceBooking`, `priceLostPropertyPass`, `computeGross`). Client never sends an amount.
-- Persist a `pending` row **before** redirecting → **Stripe Checkout** → `/api/stripe/webhook` (raw body, `constructEvent` signature verify, **idempotent** `pending→paid` keyed by unique `stripe_session_id`, routed by `metadata.kind`).
+- Persist a `pending` row **before** redirecting → **Stripe Checkout** → `/api/stripe/webhook` (raw body, `constructEvent` signature verify, **idempotent** `pending→paid` keyed by unique `stripe_session_id`, routed by `metadata.kind`). Paid-email channels use atomic Directus delivery claims/status timestamps so webhook retries and success-page verification cooperate without intentional duplicates.
 - Order collections (`bookings`, `pass_purchases`) are **server-write only** (no public read/create); written with `DIRECTUS_SERVER_TOKEN` (dev falls back to admin login).
 - Graceful "being set up" notice when `STRIPE_SECRET_KEY` is unset.
 
@@ -89,7 +90,7 @@ Grouped (via `npm run configure`):
 - **Daily Express:** `routes` (timetable + per-route fares, now informational), `stops` (6 corridor stops → booking From/To), `school_routes` (home-to-school timetables)
 - **Bookings & Payments:** `bookings`, `pass_purchases` (server-write only)
 - **Leads:** `contact_submissions`, `quote_requests` (server-token create, no anonymous access)
-- **Settings** (singleton): site config, nav (grouped/dropdown), footer, `pricing`, `coverage`, `faqs`, `fleet_page`, `school_transport` (schools list + `logos` by slug).
+- **Settings** (singleton): site config, nav (grouped/dropdown), footer, `pricing`, `coverage`, `faqs`, `fleet_page`, `school_transport` (schools list + `logos` by slug), and `email_templates` copy.
 
 **Routes/URLs of note:** stop-to-stop booking at `/daily-express-service/book`; school pages at `/home-to-school/<slug>`; `/[slug]` resolves fleet vehicle OR content page OR Daily Express route; coded routes `/contact-us`, `/get-a-quote`, `/booking/success`, `/pass/success`, `/lost-property/claim`.
 

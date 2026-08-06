@@ -21,6 +21,7 @@ import {
 } from "@/lib/stripe";
 import { upsertCustomer } from "@/lib/account";
 import { getSettings } from "@/lib/directus";
+import { sendContactNotifications, sendQuoteNotifications } from "@/lib/notifications";
 import { clientIp, rateLimited, rateLimitKey, RATE_LIMITS } from "@/lib/security";
 
 
@@ -47,6 +48,10 @@ export async function submitContact(_prev: FormState, formData: FormData): Promi
     message: data.message,
   });
   if (!saved) return { ok: false, message: "Something went wrong saving your message. Please call us instead." };
+  const settings = await getSettings();
+  await sendContactNotifications(settings, data).catch((error) => {
+    console.error("[email] contact notifications failed", error);
+  });
 
   return { ok: true, message: "Thanks — we've received your message and aim to reply within 24 hours." };
 }
@@ -71,6 +76,10 @@ export async function submitQuote(_prev: FormState, formData: FormData): Promise
     coach_size: data.coachSize, journey_details: data.journeyDetails,
   });
   if (!saved) return { ok: false, message: "Something went wrong saving your request. Please call us instead." };
+  const settings = await getSettings();
+  await sendQuoteNotifications(settings, data).catch((error) => {
+    console.error("[email] quote notifications failed", error);
+  });
   return { ok: true, message: "Thanks — we have your quote request and will be in touch shortly." };
 }
 

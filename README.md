@@ -9,9 +9,9 @@ Rebuild of [np-coaches.co.uk](https://np-coaches.co.uk) — a UK coach-hire oper
 | Product Manager | [Rohan](https://rohanxblu.in/) |
 | Developer | [Nityam](https://nsheth.in/) |
 
-> **Status:** P0–P7 application work is complete and the full stack was deployed successfully through Coolify on 6 August 2026. MariaDB, Redis, schema migration, Directus, CMS bootstrap, and Next.js are operational. Production acceptance still requires confirmation of the scoped Directus app token, Cloudflare/Turnstile, Stripe live webhook, Microsoft 365 email, off-site backups, redirects, and final QA as applicable. Start with [HANDOVER.md](HANDOVER.md), then [AIDATA/CONTINUE.md](AIDATA/CONTINUE.md).
+> **Status:** P0–P7 application work is complete and the full stack was deployed successfully through Coolify on 6 August 2026. MariaDB, Redis, schema migration, Directus, CMS bootstrap, and Next.js are operational. Transactional email is wired to the internal Postfix relay; production acceptance still requires end-to-end delivery checks, confirmation of the scoped Directus app token, Cloudflare/Turnstile, Stripe live webhook, off-site backups, redirects, and final QA as applicable. Start with [HANDOVER.md](HANDOVER.md), then [AIDATA/CONTINUE.md](AIDATA/CONTINUE.md).
 >
-> **Payments and forms:** prices are computed server-side; Stripe Checkout receives the customer email; pending orders become paid only after a verified Checkout session or signed idempotent webhook. Tickets and claim completion are hidden while payment is pending. Contact and quote submissions pass server-side validation, honeypot, rate-limit and Turnstile checks, then use the scoped Directus server token—there is no anonymous create permission.
+> **Payments and forms:** prices are computed server-side; pending orders become paid only after a verified Checkout session or signed webhook. Payment emails use per-record delivery state so webhook retries and success-page verification do not intentionally send duplicates. Tickets and claim completion are hidden while payment is pending. Contact and quote submissions pass server-side validation, honeypot, rate-limit and Turnstile checks, then use the scoped Directus server token—there is no anonymous create permission.
 >
 > **CMS and pages:** Directus drives settings, services, fleet copy/photos/galleries/seating plans, pages and hero images, tours, routes, blog posts/thumbnails and testimonials, with `site-content.json` as the offline fallback. `/fleet` and all six vehicle pages use the archived fleet structure; `/timetable` and the archived content/legal routes are migrated; blog thumbnails render on cards, articles and Open Graph metadata. The homepage remains independently CMS-driven.
 >
@@ -23,6 +23,7 @@ Rebuild of [np-coaches.co.uk](https://np-coaches.co.uk) — a UK coach-hire oper
 - Contact, quote, booking, lost-property, and OTP requests use the existing Managed Turnstile widget. Tokens are verified server-side through Cloudflare Siteverify and production fails closed when the server secret is absent or invalid.
 - Stripe Checkout receives the customer's email for receipts. A booking, ticket, or lost-property claim is shown as complete only after Stripe verifies the Checkout session; public booking references cannot complete an order.
 - Coolify deployments apply the committed schema and run the idempotent content/admin/media bootstrap automatically. Every bootstrap API call is paced and retries temporary Directus throttling/upstream failures; the production API limiter remains enabled. Standalone deployments can still run `npm run bootstrap` manually.
+- The internal Postfix relay sends branded HTML/plain-text OTP, booking-ticket, lost-property, contact, and quote mail. OTP requests fail visibly when SMTP fails; paid booking/pass messages are tracked idempotently in Directus, and form acknowledgements/notifications run only after the submission is stored.
 
 ## Stack
 
@@ -35,7 +36,7 @@ Rebuild of [np-coaches.co.uk](https://np-coaches.co.uk) — a UK coach-hire oper
 | Cache / rate limits | Redis (private, password-protected in production) |
 | Reverse proxy | Coolify proxy (recommended) or bundled Traefik · **Cloudflare** at the edge |
 | Payments | Stripe |
-| Email    | Microsoft 365 delivery (production integration pending/confirm before launch) |
+| Email    | Internal Postfix SMTP relay; branded transactional templates managed from Directus |
 | Host     | Hostinger VPS — KVM2 (2 vCPU / 8 GB), Docker + Coolify |
 
 **Architecture:** `Cloudflare → Coolify proxy → Next.js → Directus → MariaDB`, with Redis private beside Directus. The standalone Traefik stack remains available. The app never touches MariaDB directly — only Directus does; it holds a scoped Directus token, never DB credentials.

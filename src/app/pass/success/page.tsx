@@ -16,13 +16,18 @@ export default async function PassSuccessPage({ searchParams }: { searchParams: 
   const { session_id } = await searchParams;
   const reference = session_id ? await confirmCheckoutSession(session_id, "pass") : null;
   const pass = reference ? await getPassPurchaseByReference(reference) : null;
+  const emailSent = pass?.confirmation_email_status === "sent";
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-20 sm:px-6">
       <div className="rounded-xl border border-accent/40 bg-accent/5 p-8 text-navy">
         <h1 className="font-display text-3xl font-bold">{pass?.status === "paid" ? "Thank you — your request is in" : "We’re confirming your payment"}</h1>
         <p className="mt-3 text-navy/70">
-          {pass?.status === "paid" ? "Stripe has verified your payment and emailed your receipt. Our team will check whether your item has been handed in and contact you." : "Your payment is being confirmed securely with Stripe. Your request is not sent to the team until that check succeeds."}
+          {pass?.status === "paid"
+            ? emailSent
+              ? "Payment verified. We have emailed your confirmation and notified our lost-property team."
+              : "Payment verified. Your request is saved and our email delivery will retry."
+            : "Your payment is being confirmed securely with Stripe. Your request is not sent to the team until that check succeeds."}
         </p>
 
         {reference && pass?.status === "paid" && (

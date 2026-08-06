@@ -269,6 +269,25 @@ export interface Stop {
   detail: string;
 }
 
+export interface EmailTemplateCopy {
+  subject: string;
+  eyebrow: string;
+  heading: string;
+  intro: string;
+  footer: string;
+  ctaLabel?: string;
+}
+
+export interface EmailTemplates {
+  otp: EmailTemplateCopy;
+  bookingConfirmation: EmailTemplateCopy;
+  lostPropertyCustomer: EmailTemplateCopy;
+  lostPropertyStaff: EmailTemplateCopy;
+  contactCustomer: EmailTemplateCopy;
+  contactStaff: EmailTemplateCopy;
+  quoteCustomer: EmailTemplateCopy;
+  quoteStaff: EmailTemplateCopy;
+}
 export interface SiteContent {
   name: string;
   legalName: string;
@@ -280,6 +299,7 @@ export interface SiteContent {
   pricing: Pricing;
   phone: { display: string; href: string; hours: string };
   email: { general: string; bookings: string };
+  emailTemplates: EmailTemplates;
   address: { line1: string; line2: string; city: string; county: string; postcode: string };
   nav: NavLink[];
   services: ServiceCard[];

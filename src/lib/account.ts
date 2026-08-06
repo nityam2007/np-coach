@@ -1,6 +1,8 @@
 import crypto from "node:crypto";
 import { directusServerRead, directusServerWrite } from "@/lib/directus-server";
 import { sendEmail } from "@/lib/email";
+import { otpEmail } from "@/lib/email-templates";
+import type { SiteSettings } from "@/lib/directus";
 import type { BookingRow, PassPurchaseRow } from "@/lib/stripe";
 
 /**
@@ -63,7 +65,10 @@ async function sweepOldOtps(): Promise<void> {
   if (stale?.length) await directusServerWrite("/items/otp_codes", "DELETE", stale.map((r) => r.id));
 }
 
-export async function createAndSendOtp(email: string, siteName: string): Promise<{ ok: boolean; devCode?: string }> {
+export async function createAndSendOtp(
+  email: string,
+  settings: SiteSettings,
+): Promise<{ ok: boolean; devCode?: string }> {
   const e = normalise(email);
   await upsertCustomer(e);
   await sweepOldOtps();
@@ -84,14 +89,12 @@ export async function createAndSendOtp(email: string, siteName: string): Promise
   });
   if (!row) return { ok: false };
 
-  const { delivered } = await sendEmail({
-    to: e,
-    subject: `Your ${siteName} login code`,
-    text: `Your ${siteName} login code is ${code}. It expires in 10 minutes. If you didn't request this, you can ignore this email.`,
-    html: `<p>Your ${siteName} login code is <strong style="font-size:22px;letter-spacing:3px">${code}</strong>.</p><p>It expires in 10 minutes. If you didn't request this, you can ignore this email.</p>`,
-  });
+  const result = await sendEmail(otpEmail(settings, e, code));
+  if (!result.ok || (!result.delivered && process.env.NODE_ENV === "production")) {
+    return { ok: false };
+  }
 
-  const devCode = !delivered && process.env.NODE_ENV !== "production" ? code : undefined;
+  const devCode = !result.delivered && process.env.NODE_ENV !== "production" ? code : undefined;
   return { ok: true, devCode };
 }
 

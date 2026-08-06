@@ -157,12 +157,18 @@ services:
       NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
-      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_HOST: ${SMTP_HOST:-postfix}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_AUTH: ${SMTP_AUTH:-false}
+      SMTP_TLS: ${SMTP_TLS:-false}
+      SMTP_REQUIRE_TLS: ${SMTP_REQUIRE_TLS:-false}
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
-      SMTP_FROM: ${SMTP_FROM:-}
+      SMTP_FROM: ${SMTP_FROM:-noreply@np-coaches.co.uk}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-NP Coaches}
+      CONTACT_TO: ${CONTACT_TO:-info@np-coaches.co.uk}
+      QUOTE_TO: ${QUOTE_TO:-bookings@np-coaches.co.uk}
       LOST_PROPERTY_TO: ${LOST_PROPERTY_TO:-info@np-coaches.co.uk}
     depends_on:
       cms-bootstrap:

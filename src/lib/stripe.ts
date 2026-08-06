@@ -1,6 +1,12 @@
 import Stripe from "stripe";
 import { getStops, getSettings } from "@/lib/directus";
 import { directusServerRead, directusServerWrite } from "@/lib/directus-server";
+import {
+  sendBookingConfirmation,
+  sendLostPropertyCustomerConfirmation,
+  sendLostPropertyStaffNotification,
+} from "@/lib/notifications";
+import type { EmailResult } from "@/lib/email";
 import type { Stop } from "@/lib/site-config";
 
 /**
@@ -117,6 +123,9 @@ export interface BookingRow {
   passengers: number;
   name: string;
   email: string;
+  phone: string;
+  confirmation_email_status: string | null;
+  confirmation_email_sent_at: string | null;
 }
 
 /** Create a `pending` booking before redirecting to payment. Returns the row (with id) or null. */
@@ -155,26 +164,124 @@ export async function attachSession(collection: string, id: number, sessionId: s
   await directusServerWrite(`/items/${collection}/${id}`, "PATCH", { stripe_session_id: sessionId });
 }
 
-/**
- * Mark a row paid by its Stripe session id — idempotent: only flips a `pending` row
- * to `paid`, so duplicate webhook deliveries are no-ops. Works for any collection
- * with `status` + `stripe_session_id` + `reference`. Returns the reference or null.
- */
+// Per-channel delivery state lives on the paid record. Conditional Directus updates
+// claim each channel before SMTP is called, making webhook retries and the success-page
+// fallback cooperate without intentionally sending duplicates.
+type PaymentCollection = "bookings" | "pass_purchases";
+type DeliveryStatusField = "confirmation_email_status" | "staff_email_status";
+type DeliverySentAtField = "confirmation_email_sent_at" | "staff_email_sent_at";
+
+const sentAtField: Record<DeliveryStatusField, DeliverySentAtField> = {
+  confirmation_email_status: "confirmation_email_sent_at",
+  staff_email_status: "staff_email_sent_at",
+};
+
+async function claimEmailDelivery(
+  collection: PaymentCollection,
+  id: number,
+  statusField: DeliveryStatusField,
+): Promise<boolean | null> {
+  const result = await directusServerWrite(`/items/${collection}`, "PATCH", {
+    query: {
+      filter: {
+        _and: [
+          { id: { _eq: id } },
+          { status: { _eq: "paid" } },
+          {
+            _or: [
+              { [statusField]: { _null: true } },
+              { [statusField]: { _in: ["pending", "failed"] } },
+            ],
+          },
+        ],
+      },
+    },
+    data: { [statusField]: "sending" },
+  });
+
+  if (result === null) return null;
+  return Array.isArray(result) && result.length > 0;
+}
+
+async function finishEmailDelivery(
+  collection: PaymentCollection,
+  id: number,
+  statusField: DeliveryStatusField,
+  delivered: boolean,
+): Promise<boolean> {
+  const result = await directusServerWrite(`/items/${collection}/${id}`, "PATCH", {
+    [statusField]: delivered ? "sent" : "failed",
+    [sentAtField[statusField]]: delivered ? new Date().toISOString() : null,
+  });
+  return result !== null;
+}
+
+async function deliverOnce(
+  collection: PaymentCollection,
+  id: number,
+  statusField: DeliveryStatusField,
+  send: () => Promise<EmailResult>,
+): Promise<boolean> {
+  const claimed = await claimEmailDelivery(collection, id, statusField);
+  if (claimed === null) return false;
+  if (!claimed) return true;
+
+  const result = await send();
+  const recorded = await finishEmailDelivery(collection, id, statusField, result.delivered);
+  return result.delivered && recorded;
+}
+
+async function deliverPaymentNotifications(
+  collection: PaymentCollection,
+  reference: string,
+): Promise<boolean> {
+  const settings = await getSettings();
+
+  if (collection === "bookings") {
+    const booking = await getByReference<BookingRow>(collection, reference);
+    if (!booking) return false;
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? settings.url;
+    return deliverOnce(collection, booking.id, "confirmation_email_status", () =>
+      sendBookingConfirmation(settings, booking, siteUrl),
+    );
+  }
+
+  const pass = await getByReference<PassPurchaseRow>(collection, reference);
+  if (!pass) return false;
+  const [customerDelivered, staffDelivered] = await Promise.all([
+    deliverOnce(collection, pass.id, "confirmation_email_status", () =>
+      sendLostPropertyCustomerConfirmation(settings, pass),
+    ),
+    deliverOnce(collection, pass.id, "staff_email_status", () =>
+      sendLostPropertyStaffNotification(settings, pass),
+    ),
+  ]);
+  return customerDelivered && staffDelivered;
+}
+
 export async function markPaidBySession(
-  collection: string,
+  collection: PaymentCollection,
   sessionId: string,
   paymentIntent: string | null,
+  options: { requireEmailDelivery?: boolean } = {},
 ): Promise<string | null> {
   const rows = await directusServerRead<Array<{ id: number; status: string; reference: string }>>(
     `/items/${collection}?filter[stripe_session_id][_eq]=${encodeURIComponent(sessionId)}&limit=1`,
   );
   const row = rows?.[0];
   if (!row) return null;
+
   if (row.status !== "paid") {
-    await directusServerWrite(`/items/${collection}/${row.id}`, "PATCH", {
+    const updated = await directusServerWrite(`/items/${collection}/${row.id}`, "PATCH", {
       status: "paid",
       stripe_payment_intent: paymentIntent,
     });
+    if (updated === null) return null;
+  }
+
+  const emailsDelivered = await deliverPaymentNotifications(collection, row.reference);
+  if (!emailsDelivered && options.requireEmailDelivery) {
+    throw new Error(`Transactional email delivery failed for ${collection}/${row.reference}`);
   }
   return row.reference;
 }
@@ -218,6 +325,17 @@ export interface PassPurchaseRow {
   name: string;
   email: string;
   item_description: string;
+  phone: string;
+  travel_time: string;
+  school_route: boolean;
+  school: string;
+  route: string;
+  where_left: string;
+  notes: string;
+  confirmation_email_status: string | null;
+  confirmation_email_sent_at: string | null;
+  staff_email_status: string | null;
+  staff_email_sent_at: string | null;
   travel_date: string | null;
 }
 

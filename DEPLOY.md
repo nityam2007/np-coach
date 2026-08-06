@@ -42,6 +42,8 @@ git clone https://github.com/nityam2007/np-coach.git /opt/np-coaches && cd /opt/
 cp .env.example .env.prod   # fill in: hosts, DB creds, DIRECTUS_KEY/SECRET (openssl rand -hex 32),
                             # Stripe live keys + webhook secret, Turnstile keys, NEXT_PUBLIC_* https URLs
 # place Cloudflare origin cert/key in traefik/certs/
+# configure the internal Postfix relay from .env.example; attach it to the same private Docker network
+# and set SMTP_HOST to its resolvable container hostname (no public SMTP port)
 
 docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
 # Bootstrap Directus (point the scripts at the live Directus URL):
@@ -71,10 +73,13 @@ Set `RCLONE_REMOTE` (e.g. an R2/S3 rclone remote) in `.env.prod` to also push du
 - Cookie-consent banner appears on first visit (and not after a choice).
 - A test Daily Express booking + Lost Property pass complete via Stripe → webhook flips the row to `paid`.
 - Contact + Get-a-Quote submit and appear in Directus.
+- OTP email delivery works and reports a visible failure when the relay is unavailable.
+- Contact/quote customer and staff messages arrive after their Directus records are saved.
+- Paid booking and lost-property rows show their customer/staff email status fields as `sent`.
 - Lighthouse pass (perf/SEO/a11y); confirm images load from Directus and ISR works.
 
 ## Still TODO (cross-cutting, not blocking deploy)
 
-- **M365 SMTP email** for forms/bookings/pass confirmations — deferred (Basic auth deprecating; wire OAuth2/Graph). Stripe sends its own receipt meanwhile.
+- End-to-end delivery acceptance for the internal Postfix relay remains a launch check; application transport and all transactional templates/triggers are implemented.
 - 301 `redirects` for any old WordPress URLs that changed.
 - Pin Directus + Traefik to exact patch versions before using this standalone stack.

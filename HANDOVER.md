@@ -19,6 +19,7 @@ NP Coaches remains the product and customer-facing brand. Blustdio is the delive
 | Item | Production value |
 | --- | --- |
 | Website | `https://np-coaches.co.uk` |
+| Current acceptance hostname | `https://demo.np-coaches.co.uk` |
 | CMS / admin | `https://cms.np-coaches.co.uk/admin` |
 | Platform | Hostinger VPS with Coolify |
 | Compose file | `/docker-compose.coolify.yml` |
@@ -27,8 +28,9 @@ NP Coaches remains the product and customer-facing brand. Blustdio is the delive
 | CMS / API | Directus |
 | Database | MariaDB, private Docker network only |
 | Cache / rate limiting | Redis, private Docker network only |
+| Transactional email | Internal Postfix relay, private Docker network only |
 
-Only `web:3000` and `directus:8055` receive Coolify domains. MariaDB, Redis, schema migration, and CMS bootstrap must never receive public domains or host port mappings.
+Only `web:3000` and `directus:8055` receive Coolify domains. MariaDB, Redis, Postfix, schema migration, and CMS bootstrap must never receive public domains or host port mappings.
 
 Persistent data is stored in the named volumes `mariadb_data`, `redis_data`, `directus_uploads`, and `directus_extensions`. Never delete or rename these volumes during a normal deployment.
 
@@ -65,7 +67,7 @@ Use [`.env.coolify.example`](.env.coolify.example) as the variable inventory. It
 | Scoped app token | `DIRECTUS_SERVER_TOKEN` in Coolify | Required for forms, accounts, bookings, and pass writes; never use the bootstrap admin token |
 | Stripe keys and webhook secret | Coolify runtime variables | Use live-mode values only in production |
 | Turnstile secret | `TURNSTILE_SECRET` in Coolify | Runtime only; existing MAIN widget stays in Managed mode |
-| Microsoft 365 credentials | Coolify runtime variables | Confirm the supported authentication method before enabling email |
+| Postfix SMTP settings | Coolify runtime variables | No username/password; web and Postfix must share a private network and `SMTP_HOST` must resolve there |
 
 Only `NEXT_PUBLIC_*` variables should be enabled as build variables. Treat every other credential as runtime-only and secret.
 
@@ -74,9 +76,10 @@ Only `NEXT_PUBLIC_*` variables should be enabled as build variables. Treat every
 - Website loads over HTTPS with CMS images.
 - CMS admin loads and accepts the intended human administrator account.
 - Browser console has no blocking application or asset errors.
-- Contact and quote forms pass Turnstile and create Directus records.
-- Customer OTP/account flow works after the scoped Directus token and mail delivery are enabled.
-- A Stripe test/live booking and lost-property payment reaches `paid` exactly once through the signed webhook.
+- Contact and quote forms pass Turnstile, create Directus records, notify staff, and acknowledge the customer.
+- Customer OTP/account flow delivers the code; a forced SMTP failure shows an error instead of false success.
+- A Stripe test/live booking and lost-property payment reaches `paid` through the signed webhook.
+- The booking email is sent once; lost property sends customer and staff messages once; Directus email status fields show `sent`.
 - Cookie consent, security headers, sitemap, robots.txt, and llms.txt respond correctly.
 - MariaDB and Redis have no public Coolify domain or published host port.
 
@@ -112,7 +115,7 @@ Confirm each item with the project owner; some may already have been supplied in
 - Scoped `DIRECTUS_SERVER_TOKEN` and least-privilege permissions.
 - Cloudflare proxy, Full (strict), WAF rules, and the existing Managed widget's `TURNSTILE_SECRET`.
 - Stripe live keys, signed webhook, and real low-value transaction test.
-- Microsoft 365 delivery for contact, quote, OTP, booking, and pass emails.
+- End-to-end Postfix delivery for contact, quote, OTP, booking, and lost-property customer/staff emails.
 - Encrypted off-site backup schedule and successful restore test.
 - Lighthouse/accessibility review and key-page mobile QA.
 - Required WordPress-to-Next.js 301 redirects.

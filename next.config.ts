@@ -10,17 +10,17 @@ const DIRECTUS = process.env.NEXT_PUBLIC_DIRECTUS_URL ?? "http://localhost:8055"
 const isDev = process.env.NODE_ENV !== "production";
 
 // Content-Security-Policy. Allows only what the site actually uses:
-//   - Stripe (Checkout redirect + js.stripe.com) and Cloudflare Turnstile (script + frame)
+//   - Stripe, Cloudflare Turnstile, and Cloudflare Web Analytics
 //   - Directus for images/assets · self for everything else
 // frame-ancestors 'none' + X-Frame-Options block clickjacking. Tighten/remove
 // 'unsafe-inline' once inline JSON-LD/styles are nonce'd.
 const csp = [
   `default-src 'self'`,
-  `script-src 'self' 'unsafe-inline' https://js.stripe.com https://challenges.cloudflare.com${isDev ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' 'unsafe-inline' https://js.stripe.com https://challenges.cloudflare.com https://static.cloudflareinsights.com${isDev ? " 'unsafe-eval'" : ""}`,
   `style-src 'self' 'unsafe-inline'`,
   `img-src 'self' data: blob: ${DIRECTUS}`,
   `font-src 'self' data:`,
-  `connect-src 'self' ${DIRECTUS} https://api.stripe.com https://challenges.cloudflare.com${isDev ? " ws: wss: http://localhost:*" : ""}`,
+  `connect-src 'self' ${DIRECTUS} https://api.stripe.com https://challenges.cloudflare.com https://cloudflareinsights.com${isDev ? " ws: wss: http://localhost:*" : ""}`,
   `frame-src https://js.stripe.com https://challenges.cloudflare.com`,
   `form-action 'self' https://checkout.stripe.com`,
   `frame-ancestors 'none'`,

@@ -8,15 +8,15 @@ x-directus-database: &directus-database
   DB_PORT: "3306"
   DB_DATABASE: npcoaches
   DB_USER: directus
-  DB_PASSWORD: ${SERVICE_PASSWORD_64_DATABASE}
+  DB_PASSWORD: ${SERVICE_PASSWORD_64_DBUSER}
 
 x-directus-bootstrap: &directus-bootstrap
   <<: *directus-database
-  KEY: ${SERVICE_BASE64_64_DIRECTUS_KEY}
-  SECRET: ${SERVICE_BASE64_64_DIRECTUS_SECRET}
+  KEY: ${SERVICE_BASE64_64_DIRECTUSKEY}
+  SECRET: ${SERVICE_BASE64_64_DIRECTUSSECRET}
   ADMIN_EMAIL: ${DIRECTUS_ADMIN_EMAIL:?}
   ADMIN_PASSWORD: ${DIRECTUS_ADMIN_PASSWORD:?}
-  ADMIN_TOKEN: ${SERVICE_BASE64_64_DIRECTUS_ADMIN}
+  ADMIN_TOKEN: ${SERVICE_BASE64_64_DIRECTUSADMIN}
 
 services:
   database:
@@ -25,8 +25,8 @@ services:
     environment:
       MARIADB_DATABASE: npcoaches
       MARIADB_USER: directus
-      MARIADB_PASSWORD: ${SERVICE_PASSWORD_64_DATABASE}
-      MARIADB_ROOT_PASSWORD: ${SERVICE_PASSWORD_64_DATABASE_ROOT}
+      MARIADB_PASSWORD: ${SERVICE_PASSWORD_64_DBUSER}
+      MARIADB_ROOT_PASSWORD: ${SERVICE_PASSWORD_64_DBROOT}
       MARIADB_AUTO_UPGRADE: "1"
     volumes:
       - mariadb_data:/var/lib/mysql
@@ -43,7 +43,7 @@ services:
     image: redis:7.4.10-alpine
     restart: unless-stopped
     environment:
-      REDIS_PASSWORD: ${SERVICE_PASSWORD_64_REDIS}
+      REDIS_PASSWORD: ${SERVICE_PASSWORD_64_REDISPASS}
     command: ["sh", "-c", "exec redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru --requirepass \"$${REDIS_PASSWORD}\""]
     volumes:
       - redis_data:/data
@@ -81,7 +81,7 @@ services:
       CORS_ENABLED: "true"
       CORS_ORIGIN: "array:${NEXT_PUBLIC_SITE_URL:?}"
       WEBSOCKETS_ENABLED: "true"
-      REDIS: redis://:${SERVICE_PASSWORD_64_REDIS}@redis:6379
+      REDIS: redis://:${SERVICE_PASSWORD_64_REDISPASS}@redis:6379
       CACHE_ENABLED: "true"
       CACHE_AUTO_PURGE: "true"
       CACHE_STORE: redis
@@ -118,7 +118,7 @@ services:
     exclude_from_hc: true
     environment:
       DIRECTUS_URL: http://directus:8055
-      DIRECTUS_ADMIN_TOKEN: ${SERVICE_BASE64_64_DIRECTUS_ADMIN}
+      DIRECTUS_ADMIN_TOKEN: ${SERVICE_BASE64_64_DIRECTUSADMIN}
       DIRECTUS_ADMIN_EMAIL: ${DIRECTUS_ADMIN_EMAIL:?}
       DIRECTUS_ADMIN_PASSWORD: ${DIRECTUS_ADMIN_PASSWORD:?}
     depends_on:
@@ -143,7 +143,7 @@ services:
     environment:
       DIRECTUS_URL: http://directus:8055
       DIRECTUS_SERVER_TOKEN: ${DIRECTUS_SERVER_TOKEN:-}
-      AUTH_SECRET: ${SERVICE_BASE64_64_WEB_AUTH}
+      AUTH_SECRET: ${SERVICE_BASE64_64_WEBAUTH}
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:?}
       NEXT_PUBLIC_DIRECTUS_URL: ${NEXT_PUBLIC_DIRECTUS_URL:?}
       NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}

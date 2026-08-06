@@ -50,7 +50,7 @@ DIRECTUS_ADMIN_EMAIL=admin@np-coaches.co.uk
 DIRECTUS_ADMIN_PASSWORD=<long unique password>
 ```
 
-Coolify creates and retains every `SERVICE_*` password/secret referenced by the Compose file. Do not replace those generated values between deployments; they protect MariaDB, Redis, Directus sessions, the bootstrap admin token, and the Next.js session cookie.
+Coolify creates and retains every `SERVICE_*` password/secret referenced by the Compose file. The identifier suffixes deliberately contain no underscores (`DBUSER`, `DBROOT`, `REDISPASS`, `DIRECTUSKEY`, `DIRECTUSSECRET`, `DIRECTUSADMIN`, `WEBAUTH`) for compatibility with Coolify releases that fail to generate compound identifiers. Do not rename or replace these generated values between deployments; they protect MariaDB, Redis, Directus sessions, the bootstrap admin token, and the Next.js session cookie.
 
 Keep only the `NEXT_PUBLIC_*` values enabled as **Build Variables**. The admin password, Directus token, Stripe secrets, Turnstile secret, and SMTP password should be **Runtime only**. If a secret contains `$`, enable Coolify's **Literal** option.
 

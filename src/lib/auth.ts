@@ -9,7 +9,9 @@ import crypto from "node:crypto";
  * AUTH_SECRET must be set in production — a warning is logged if it isn't.
  */
 
-const COOKIE = process.env.NODE_ENV === "production" ? "__Host-np_session" : "np_session";
+export function sessionCookieName(): string {
+  return process.env.NODE_ENV === "production" ? "__Host-np_session" : "np_session";
+}
 const MAX_AGE = 60 * 60 * 24 * 30; // 30 days (seconds)
 
 function secret(): string {
@@ -34,7 +36,7 @@ export async function createSession(email: string): Promise<void> {
   const payload = Buffer.from(JSON.stringify({ email: email.trim().toLowerCase(), exp })).toString("base64url");
   const token = `${payload}.${sign(payload)}`;
   const store = await cookies();
-  store.set(COOKIE, token, {
+  store.set(sessionCookieName(), token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -46,7 +48,7 @@ export async function createSession(email: string): Promise<void> {
 
 export async function getSession(): Promise<Session | null> {
   const store = await cookies();
-  const token = store.get(COOKIE)?.value;
+  const token = store.get(sessionCookieName())?.value;
   if (!token) return null;
 
   const dot = token.lastIndexOf(".");
@@ -70,5 +72,5 @@ export async function getSession(): Promise<Session | null> {
 
 export async function destroySession(): Promise<void> {
   const store = await cookies();
-  store.delete(COOKIE);
+  store.delete(sessionCookieName());
 }

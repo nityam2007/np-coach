@@ -10,8 +10,13 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
-export default async function LoginPage() {
-  if (await getSession()) redirect("/account");
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ signed_out?: string }>;
+}) {
+  const [session, params] = await Promise.all([getSession(), searchParams]);
+  if (session) redirect("/account");
 
   return (
     <section className="mx-auto max-w-md px-4 py-16 sm:px-6 lg:py-24">
@@ -21,6 +26,11 @@ export default async function LoginPage() {
         </span>
         <h1 className="mt-4 font-display text-2xl font-bold text-navy">Sign in to your account</h1>
         <p className="mt-1 text-sm text-navy/70">View your tickets and lost-property claims — no password required.</p>
+        {params.signed_out === "1" && (
+          <p role="status" className="mt-4 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+            You have been signed out successfully.
+          </p>
+        )}
         <div className="mt-6">
           <LoginForm />
         </div>

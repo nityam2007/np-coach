@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { requestOtpAction, verifyOtpAction, type AuthState } from "@/app/auth-actions";
@@ -67,6 +66,7 @@ export function LoginForm() {
           <span className="font-mono font-bold tracking-widest">{reqState.devCode}</span>
         </p>
       )}
+      {reqState.message && <p role="status" className="text-sm text-navy/70">{reqState.message}</p>}
       <label className="text-sm font-semibold text-navy">
         6-digit code
         <input
@@ -82,15 +82,22 @@ export function LoginForm() {
         />
       </label>
       {vfyState.message && <p className="text-sm text-red-600">{vfyState.message}</p>}
+      <Turnstile resetSignal={reqState} />
       <Submit label="Verify & sign in" />
       <div className="flex items-center justify-between text-sm">
-        <button type="submit" formAction={reqAction} className="font-medium text-accent hover:underline">
+        <button
+          type="submit"
+          formAction={reqAction}
+          formNoValidate
+          className="font-medium text-accent hover:underline"
+        >
           Resend code
         </button>
-        <Link href="/account/login" className="flex items-center gap-1 font-medium text-navy/70 hover:text-navy">
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- full reload clears OTP action state */}
+        <a href="/account/login" className="flex items-center gap-1 font-medium text-navy/70 hover:text-navy">
           <Icon name="arrowLeft" className="h-4 w-4" />
           Different email
-        </Link>
+        </a>
       </div>
     </form>
   );

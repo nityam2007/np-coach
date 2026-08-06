@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createAndSendOtp, verifyOtp } from "@/lib/account";
-import { createSession, destroySession } from "@/lib/auth";
+import { createSession } from "@/lib/auth";
 import { verifyTurnstile } from "@/lib/forms";
 import { getSettings } from "@/lib/directus";
 import { clientIp, rateLimited, rateLimitKey, RATE_LIMITS } from "@/lib/security";
@@ -69,9 +69,4 @@ export async function verifyOtpAction(_prev: AuthState, formData: FormData): Pro
 
   await createSession(email);
   redirect("/account");
-}
-
-export async function logoutAction(): Promise<void> {
-  await destroySession();
-  redirect("/");
 }

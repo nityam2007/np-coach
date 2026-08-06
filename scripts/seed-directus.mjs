@@ -291,6 +291,50 @@ async function applyBranding() {
   console.log("✓ applied admin branding");
 }
 
+// Customer and operational records are live business data, never seed data.
+// Snapshot their counts around the additive bootstrap and abort if any count falls.
+const PROTECTED_DATA_COLLECTIONS = [
+  "customers",
+  "bookings",
+  "pass_purchases",
+  "contact_submissions",
+  "quote_requests",
+];
+
+async function itemCount(collection) {
+  const rows = await api(`/items/${collection}?aggregate[count]=*`);
+  const value = rows?.[0]?.count;
+  const raw =
+    value && typeof value === "object"
+      ? value.id ?? Object.values(value)[0]
+      : value;
+  const count = Number(raw);
+  if (!Number.isSafeInteger(count) || count < 0) {
+    throw new Error(`Could not verify protected row count for "${collection}"`);
+  }
+  return count;
+}
+
+async function protectedDataCounts() {
+  const counts = {};
+  for (const collection of PROTECTED_DATA_COLLECTIONS) {
+    counts[collection] = await itemCount(collection);
+  }
+  return counts;
+}
+
+async function assertProtectedDataPreserved(before) {
+  const after = await protectedDataCounts();
+  for (const collection of PROTECTED_DATA_COLLECTIONS) {
+    if (after[collection] < before[collection]) {
+      throw new Error(
+        `Protected data loss detected in "${collection}": ${before[collection]} -> ${after[collection]}`,
+      );
+    }
+  }
+  console.log(`✓ protected data preserved: ${JSON.stringify(after)}`);
+}
+
 async function run() {
   console.log(`Seeding Directus at ${BASE} ...`);
   if (!directus.hasToken()) {
@@ -315,6 +359,8 @@ async function run() {
   await ensureCollection("pass_purchases", { icon: "luggage", note: "Lost Property pass purchases (server-write only; Stripe)" }, PASS_PURCHASES_FIELDS);
   await ensureCollection("customers", { icon: "person", note: "Customer accounts (server-write only; passwordless)" }, CUSTOMERS_FIELDS);
   await ensureCollection("otp_codes", { icon: "password", note: "Login OTP codes (server-write only; hashed, single-use)" }, OTP_FIELDS);
+
+  const protectedBefore = await protectedDataCounts();
 
   // Fields added after a collection already exists (idempotent extension).
   await ensureField("settings", json("stats"));
@@ -372,25 +418,28 @@ async function run() {
   await revokePublicCreate("quote_requests");
   // Pricing: merge in any keys missing from the live row (e.g. newly-added fares),
   // but never overwrite values the client has already tuned in Directus.
-  const currentSettings = await api("/items/settings").catch(() => ({}));
+  const currentSettings = await api("/items/settings");
   const mergedPricing = { ...content.pricing, ...(currentSettings?.pricing ?? {}) };
   const pricingChanged = JSON.stringify(mergedPricing) !== JSON.stringify(currentSettings?.pricing ?? null);
   // Homepage copy: same strategy — add newly-introduced keys, keep client edits.
   const mergedHomepage = { ...content.homepage, ...(currentSettings?.homepage ?? {}) };
   const storedEmailTemplates = currentSettings?.email_templates ?? {};
-  const mergedEmailTemplates = Object.fromEntries(
-    Object.entries(content.emailTemplates).map(([key, defaults]) => [
+  const mergedEmailTemplates = {
+    ...storedEmailTemplates,
+    ...Object.fromEntries(Object.entries(content.emailTemplates).map(([key, defaults]) => [
       key,
       { ...defaults, ...(storedEmailTemplates[key] ?? {}) },
-    ]),
-  );
+    ])),
+  };
   // Fleet listing/detail shared copy follows the same preserve-editor-edits strategy.
   const mergedFleetPage = { ...content.fleetPage, ...(currentSettings?.fleet_page ?? {}) };
+  const homepageChanged = JSON.stringify(mergedHomepage) !== JSON.stringify(currentSettings?.homepage ?? null);
+  const emailTemplatesChanged = JSON.stringify(mergedEmailTemplates) !== JSON.stringify(currentSettings?.email_templates ?? null);
+  const fleetPageChanged = JSON.stringify(mergedFleetPage) !== JSON.stringify(currentSettings?.fleet_page ?? null);
 
-  // Settings singleton (PATCH upserts the single row).
-  await api("/items/settings", {
-    method: "PATCH",
-    body: JSON.stringify({
+  // Seed the singleton only once. After that, Directus is the source of truth:
+  // routine deploys may add missing nested keys but never reset editor-managed values.
+  const settingsDefaults = {
       name: content.name,
       legal_name: content.legalName,
       tagline: content.tagline,
@@ -419,9 +468,28 @@ async function run() {
       pricing: mergedPricing,
       homepage: mergedHomepage,
       fleet_page: mergedFleetPage,
-    }),
-  });
-  console.log(`✓ seeded settings${pricingChanged ? " (pricing: added missing keys)" : " (pricing unchanged)"}`);
+  };
+  const hasLiveSettings = currentSettings?.id != null;
+  const settingsPatch = hasLiveSettings ? {} : settingsDefaults;
+
+  if (hasLiveSettings) {
+    if (pricingChanged) settingsPatch.pricing = mergedPricing;
+    if (homepageChanged) settingsPatch.homepage = mergedHomepage;
+    if (emailTemplatesChanged) settingsPatch.email_templates = mergedEmailTemplates;
+    if (fleetPageChanged) settingsPatch.fleet_page = mergedFleetPage;
+  }
+
+  if (Object.keys(settingsPatch).length) {
+    await api("/items/settings", {
+      method: "PATCH",
+      body: JSON.stringify(settingsPatch),
+    });
+    console.log(
+      hasLiveSettings ? "✓ settings: added missing nested keys; live values preserved" : "✓ settings: first-run defaults seeded",
+    );
+  } else {
+    console.log("• settings already populated — all live values preserved");
+  }
 
   // Services — only seed if empty, to preserve any edits made in Directus.
   const services = await api("/items/services?limit=1");
@@ -653,6 +721,7 @@ async function run() {
   }
 
   await applyBranding();
+  await assertProtectedDataPreserved(protectedBefore);
 
   console.log("Done.");
 }

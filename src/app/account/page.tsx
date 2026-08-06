@@ -3,7 +3,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { getCustomerBookings, getCustomerPasses } from "@/lib/account";
-import { logoutAction } from "@/app/auth-actions";
 import { Icon } from "@/components/ui/Icon";
 
 export const metadata: Metadata = {
@@ -47,7 +46,7 @@ export default async function AccountPage() {
             Signed in as <span className="font-semibold text-navy">{session.email}</span>
           </p>
         </div>
-        <form action={logoutAction}>
+        <form action="/account/logout" method="post">
           <button
             type="submit"
             className="inline-flex items-center gap-2 rounded-xl border border-navy/15 bg-white px-4 py-2.5 text-sm font-semibold text-navy transition-colors hover:bg-navy/5"

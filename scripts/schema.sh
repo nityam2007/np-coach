@@ -23,6 +23,15 @@ case "$CMD" in
   apply)
     [ -f "$FILE" ] || { echo "✗ $FILE not found — run 'scripts/schema.sh snapshot' first"; exit 1; }
     docker compose exec -T directus sh -c 'cat > /tmp/schema.yaml' < "$FILE"
+    echo "Schema dry-run (review destructive collection/field changes before continuing):"
+    docker compose exec -T directus npx directus schema apply --dry-run /tmp/schema.yaml
+    [ "${CONFIRM_SCHEMA_APPLY:-}" = "I_HAVE_A_VERIFIED_BACKUP" ] || {
+      echo "✗ Refusing schema apply without a verified backup."
+      echo "  Review the dry-run above, verify a backup, then re-run with:"
+      echo "  CONFIRM_SCHEMA_APPLY=I_HAVE_A_VERIFIED_BACKUP scripts/schema.sh apply"
+      exit 1
+    }
+    echo "Applying confirmed schema snapshot..."
     docker compose exec -T directus npx directus schema apply --yes /tmp/schema.yaml
     echo "✓ schema applied from $FILE"
     ;;

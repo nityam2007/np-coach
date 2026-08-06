@@ -10,7 +10,7 @@ This is the active production path on the Hostinger VPS. The full stack complete
 | `directus` | Yes, port 8055 through a separate Coolify domain | `directus_uploads`, `directus_extensions` | CMS, API, admin |
 | `database` | No | `mariadb_data` | MariaDB, used only by Directus |
 | `redis` | No | `redis_data` | Password-protected Directus cache/rate-limit store |
-| `schema-migrate` | No; one-shot | Snapshot packaged in its image | Applies the committed Directus schema snapshot |
+| `schema-migrate` | No; one-shot | Container image | Bootstraps/upgrades Directus system tables without reconciling app schema |
 | `cms-bootstrap` | No; one-shot | Writes through Directus | Idempotently seeds content, admin configuration, and media |
 
 No host ports are published. Coolify creates the isolated stack network, and containers use the service names `database`, `redis`, and `directus` internally.
@@ -21,12 +21,14 @@ Postfix is an existing internal relay, not a service created by this Compose fil
 
 The first deployment does not need a database dump:
 
-- `directus/schema-snapshot.yaml` is the exact CMS schema.
+- `directus/schema-snapshot.yaml` is retained for reviewed, manual, backup-first schema migrations only.
 - `src/lib/site-content.json` is the content seed and application fallback.
 - `directus/seed-media/` contains the committed starter media archive.
 - `scripts/seed-directus.mjs`, `configure-directus.mjs`, and `upload-media.mjs` are idempotent.
 
-`schema-migrate` applies the schema before Directus starts. Its tiny image packages the snapshot directly, avoiding deployment-host bind mounts. `cms-bootstrap` then fills only missing content/media and exits successfully before the web container starts. All three bootstrap phases use one paced API client with bounded retries for `429` and temporary upstream errors. Redeploying is safe and does not overwrite editor-managed values covered by the existing seed safeguards.
+`schema-migrate` runs only `directus bootstrap`, which installs/upgrades Directus's system tables. It deliberately does **not** run `schema apply` during a Git deployment. `cms-bootstrap` then creates missing app collections/fields and fills first-run content/media before the web container starts.
+
+On an existing instance, settings and dashboard panels remain client-owned. The seed only adds missing nested keys and never writes transactional rows. It records counts for `customers`, `bookings`, `pass_purchases`, `contact_submissions`, and `quote_requests` before and after bootstrap and fails the release if any count decreases. Exact snapshot apply is available only through `scripts/schema.sh apply`, which always shows a dry-run and refuses the apply without `CONFIRM_SCHEMA_APPLY=I_HAVE_A_VERIFIED_BACKUP`.
 
 Directus's Redis-backed API limiter remains enabled at an explicit 50 requests per IP per one-second window. The bootstrap deliberately stays below that burst ceiling (20 requests/second by default). A bootstrap `429` therefore means the one-shot deployment worker sent admin requests too quickly; it is not evidence that normal website traffic exhausted hourly capacity. Even 1,000 page views/hour averages only 0.28 views/second, while Next.js ISR and Cloudflare prevent every visitor from becoming an equivalent burst of Directus API calls.
 
@@ -86,7 +88,7 @@ Coolify terminates TLS at the origin, so the old `traefik/certs` Cloudflare Orig
 Deploy the resource and inspect the service logs. A healthy first run has this order:
 
 1. `database` and `redis` become healthy.
-2. `schema-migrate` exits with code 0.
+2. `schema-migrate` completes the non-destructive Directus system bootstrap and exits with code 0.
 3. `directus` becomes healthy at `/server/ping`.
 4. `cms-bootstrap` reports `Done` for seed, configuration, and media, then exits with code 0. Seed, admin configuration, and media import all pace requests and automatically retry Directus `429` plus temporary `408/425/502/503/504` responses. Retry log lines are expected during a transient burst; the service fails only after the bounded retry budget is exhausted.
 5. `web` becomes healthy and Coolify routes traffic to it.
@@ -138,6 +140,8 @@ Never put the generated bootstrap admin token in `DIRECTUS_SERVER_TOKEN`; the we
   ```
 
   If Postfix is a separate Coolify resource, replace `postfix` with its generated same-network hostname. From the running `web` container, verify DNS and TCP port 587 before testing the application. Postfix must trust only the relevant private Docker subnet/container; never create an unauthenticated public relay.
+  “Staff” here means the internal recipient mailbox, not a Directus login. Contact and lost-property notifications use `CONTACT_TO`/`LOST_PROPERTY_TO` (`info@np-coaches.co.uk`); quote notifications use `QUOTE_TO` (`bookings@np-coaches.co.uk`). These mailboxes consume no Directus Studio users.
+
 - Submit one real contact and quote form. Confirm each Directus record, staff notification, and customer acknowledgement.
 - Request an OTP to a controlled mailbox. A failed SMTP delivery must show the customer an error instead of claiming a code was sent.
 - Complete one booking and one lost-property payment. Confirm the signed webhook changes each row to `paid`, booking confirmation is sent once, and both lost-property customer/staff emails are sent once. In Directus, the corresponding email status fields must be `sent`.

@@ -42,7 +42,7 @@ Persistent data is stored in the named volumes `mariadb_data`, `redis_data`, `di
 - Production secrets live only in Coolify environment variables.
 - Live SQL dumps and production uploads must never be committed to Git.
 
-The schema and bootstrap services are idempotent. Redeployments reuse existing records and files and do not intentionally overwrite editor-managed values.
+Routine deployments are additive and idempotent: they reuse the named MariaDB/uploads volumes, preserve populated CMS settings and dashboard panels, and verify that protected business-table counts do not decrease. Exact schema reconciliation is never automatic.
 
 ## Routine deployment
 
@@ -68,6 +68,7 @@ Use [`.env.coolify.example`](.env.coolify.example) as the variable inventory. It
 | Stripe keys and webhook secret | Coolify runtime variables | Use live-mode values only in production |
 | Turnstile secret | `TURNSTILE_SECRET` in Coolify | Runtime only; existing MAIN widget stays in Managed mode |
 | Postfix SMTP settings | Coolify runtime variables | No username/password; web and Postfix must share a private network and `SMTP_HOST` must resolve there |
+The internal recipient mailboxes are not Directus users and consume no Studio seats. Contact/lost-property notifications go to `info@np-coaches.co.uk`; quote notifications go to `bookings@np-coaches.co.uk`.
 
 Only `NEXT_PUBLIC_*` variables should be enabled as build variables. Treat every other credential as runtime-only and secret.
 
@@ -97,7 +98,8 @@ For an application rollback, select the last known-good Git commit in Coolify an
 
 ## Known first-deployment protections
 
-- The schema snapshot is packaged inside `Dockerfile.schema`; it is not a deployment-host bind mount.
+- Routine Git deploys run only Directus system bootstrap plus additive app seeding; they never run exact `schema apply`.
+- Manual `scripts/schema.sh apply` prints a dry-run and requires `CONFIRM_SCHEMA_APPLY=I_HAVE_A_VERIFIED_BACKUP`.
 - Coolify-generated secret identifiers deliberately contain no underscores so all required MariaDB and Directus values are populated.
 - Every CMS bootstrap phase paces Directus requests and retries `429`/temporary upstream responses with bounded backoff. The configured 50-request/second Redis-backed limiter remains enabled; bootstrap defaults to 20 requests/second. Interrupted imports safely resume by matching existing file titles.
 - `DIRECTUS_SERVER_TOKEN` may be blank for the infrastructure bootstrap, but protected application writes remain disabled until a scoped token is configured.
@@ -106,7 +108,7 @@ For an application rollback, select the last known-good Git commit in Coolify an
 
 Use Directus for site copy, navigation, footer, fleet, routes, pricing, SEO, media, FAQs, testimonials, blog content, and operational records. Do not edit MariaDB directly.
 
-Seed and configuration scripts fill missing baseline data; they are not a substitute for production backups. Before changing schema, create a backup, test the migration, regenerate `directus/schema-snapshot.yaml`, and deploy the matching Directus version.
+Seed and configuration scripts fill missing baseline data without replacing populated settings, dashboard panels, or transactional rows; they are not a substitute for production backups. Before changing schema, create and restore-test a backup, inspect the schema dry-run, regenerate `directus/schema-snapshot.yaml`, and apply it manually during a maintenance window.
 
 ## Remaining production acceptance
 

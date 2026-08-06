@@ -191,9 +191,13 @@ async function ensureDashboard() {
     console.log("• dashboard 'NP Coaches' exists");
   }
 
-  // Recreate panels each run so layout/queries stay in sync (idempotent by wiping ours first).
+  // The dashboard is client-owned after first creation. Never delete/recreate its
+  // panels during a Git deployment, because that resets staff layout/customisation.
   const existing = await api(`/panels?filter[dashboard][_eq]=${dash.id}&limit=-1`);
-  for (const p of existing) await api(`/panels/${p.id}`, { method: "DELETE" });
+  if (existing.length) {
+    console.log(`• dashboard panels already present (${existing.length}) — preserved`);
+    return;
+  }
 
   const PAID = { status: { _eq: "paid" } };
   // Abandoned = still pending & created > 30 min ago (real payments flip to paid in seconds).

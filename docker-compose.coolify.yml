@@ -63,7 +63,10 @@ services:
     restart: "no"
     exclude_from_hc: true
     entrypoint: ["/bin/sh", "-c"]
-    command: ["npx directus bootstrap && npx directus schema apply --yes /directus/schema-snapshot.yaml"]
+    # Routine Git deployments must never reconcile the live database to an exact
+    # snapshot. bootstrap only installs/upgrades Directus system tables; the
+    # cms-bootstrap service performs additive, idempotent app migrations.
+    command: ["npx directus bootstrap"]
     environment:
       <<: *directus-bootstrap
     depends_on:

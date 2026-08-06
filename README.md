@@ -22,8 +22,9 @@ Rebuild of [np-coaches.co.uk](https://np-coaches.co.uk) — a UK coach-hire oper
 
 - Contact, quote, booking, lost-property, and OTP requests use the existing Managed Turnstile widget. Tokens are verified server-side through Cloudflare Siteverify and production fails closed when the server secret is absent or invalid.
 - Stripe Checkout receives the customer's email for receipts. A booking, ticket, or lost-property claim is shown as complete only after Stripe verifies the Checkout session; public booking references cannot complete an order.
-- Coolify deployments apply the committed schema and run the idempotent content/admin/media bootstrap automatically. Every bootstrap API call is paced and retries temporary Directus throttling/upstream failures; the production API limiter remains enabled. Standalone deployments can still run `npm run bootstrap` manually.
+- Coolify deployments run Directus system bootstrap plus additive/idempotent content, field, admin and media setup. Routine pushes never apply an exact schema snapshot, overwrite populated settings, or recreate dashboard panels; protected business-table counts are checked before and after bootstrap.
 - The internal Postfix relay sends branded HTML/plain-text OTP, booking-ticket, lost-property, contact, and quote mail. OTP requests fail visibly when SMTP fails; paid booking/pass messages are tracked idempotently in Directus, and form acknowledgements/notifications run only after the submission is stored.
+- “Staff email” means the internal recipient mailbox only: contact/lost-property use `info@np-coaches.co.uk`, while quotes use `bookings@np-coaches.co.uk`. These recipients are not Directus users and consume no Directus Studio seats.
 
 ## Stack
 
@@ -73,7 +74,7 @@ npm install && npm run dev      # Next.js app on http://localhost:3000
 
 ## Coolify production deployment
 
-Use the root-level [`docker-compose.coolify.yml`](docker-compose.coolify.yml) with Coolify's Docker Compose build pack. It deploys the Next.js app, Directus, MariaDB, Redis, an exact-schema migration, and an idempotent CMS/media bootstrap as one private stack; only the web and CMS services receive domains.
+Use the root-level [`docker-compose.coolify.yml`](docker-compose.coolify.yml) with Coolify's Docker Compose build pack. It deploys the Next.js app, Directus, MariaDB, Redis, a non-destructive Directus database bootstrap, and an additive CMS/media bootstrap as one private stack; only the web and CMS services receive domains.
 
 Copy [`.env.coolify.example`](.env.coolify.example) into Coolify's environment-variable editor and follow [`DEPLOY_COOLIFY.md`](DEPLOY_COOLIFY.md). The older [`docker-compose.prod.yml`](docker-compose.prod.yml) and [`DEPLOY.md`](DEPLOY.md) are the non-Coolify alternative.
 
@@ -101,7 +102,7 @@ directus/               Directus uploads + extensions (bind-mounted in dev)
 docker-compose.yml      dev stack: MariaDB + Directus + app
 docker-compose.coolify.yml  production stack managed by Coolify
 Dockerfile.bootstrap    one-shot committed CMS/content/media bootstrap
-Dockerfile.schema       packages the Directus snapshot for Coolify migration
+Dockerfile.schema       Directus bootstrap image; snapshot reserved for manual backup-first migrations
 HANDOVER.md              production ownership, operations, rollback, and acceptance
 AIDATA/                 active handoff/plan plus read-only brand, SEO, and Pages OLD archives
 ```

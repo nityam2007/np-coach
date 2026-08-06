@@ -41,7 +41,7 @@ export function QuoteForm() {
       <label className="text-sm font-semibold text-navy">Preferred coach size <span className="font-normal text-navy/70">(optional)</span><input name="coachSize" placeholder="e.g. 49 seats" className={inputCls} /></label>
       <label className="text-sm font-semibold text-navy">Journey details<textarea name="journeyDetails" required rows={5} placeholder="Timings, stops, accessibility or luggage requirements" className={inputCls} />{error("journeyDetails")}</label>
       <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute left-[-9999px] h-0 w-0" />
-      <Turnstile />
+      <Turnstile resetSignal={state} />
       <SubmitButton />
     </form>
   );

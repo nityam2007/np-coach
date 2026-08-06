@@ -181,7 +181,7 @@ export function BookingForm({
         <span className="font-display text-xl font-bold text-navy">{formatGBP(total)}</span>
       </div>
 
-      <Turnstile />
+      <Turnstile resetSignal={state} />
       <SubmitButton total={total} />
       <p className="text-xs text-navy/70">
         Payments are processed securely by Stripe. Online tickets are non-refundable; please book at least 1 hour before

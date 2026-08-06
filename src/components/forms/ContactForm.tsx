@@ -78,7 +78,7 @@ export function ContactForm() {
         className="absolute left-[-9999px] h-0 w-0"
       />
 
-      <Turnstile />
+      <Turnstile resetSignal={state} />
       <SubmitButton />
     </form>
   );

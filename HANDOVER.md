@@ -46,10 +46,11 @@ The schema and bootstrap services are idempotent. Redeployments reuse existing r
 
 1. Review and merge a tested change into `main`.
 2. Confirm the commit exists in the [production repository](https://github.com/nityam2007/np-coach).
-3. In Coolify, deploy the latest `main` commit.
-4. Confirm `database`, `redis`, `directus`, and `web` are healthy.
-5. Confirm `schema-migrate` and `cms-bootstrap` exited successfully with code 0.
-6. Run the smoke checks below.
+3. Push the approved commit to `main`; the configured GitHub webhook should queue Coolify automatically.
+4. If no deployment is queued, inspect GitHub's webhook delivery and use Coolify's manual Deploy button as a fallback.
+5. Confirm `database`, `redis`, `directus`, and `web` are healthy.
+6. Confirm `schema-migrate` and `cms-bootstrap` exited successfully with code 0.
+7. Run the smoke checks below.
 
 Do not run the standalone Traefik stack from `docker-compose.prod.yml` on the Coolify server. Coolify already owns the reverse proxy and ports 80/443.
 
@@ -63,7 +64,7 @@ Use [`.env.coolify.example`](.env.coolify.example) as the variable inventory. It
 | Directus human admin password | Coolify runtime variable | Change through a coordinated maintenance action |
 | Scoped app token | `DIRECTUS_SERVER_TOKEN` in Coolify | Required for forms, accounts, bookings, and pass writes; never use the bootstrap admin token |
 | Stripe keys and webhook secret | Coolify runtime variables | Use live-mode values only in production |
-| Turnstile secret | Coolify runtime variable | Public site key is intentionally a build variable |
+| Turnstile secret | `TURNSTILE_SECRET` in Coolify | Runtime only; existing MAIN widget stays in Managed mode |
 | Microsoft 365 credentials | Coolify runtime variables | Confirm the supported authentication method before enabling email |
 
 Only `NEXT_PUBLIC_*` variables should be enabled as build variables. Treat every other credential as runtime-only and secret.
@@ -109,7 +110,7 @@ Seed and configuration scripts fill missing baseline data; they are not a substi
 Confirm each item with the project owner; some may already have been supplied in Coolify:
 
 - Scoped `DIRECTUS_SERVER_TOKEN` and least-privilege permissions.
-- Cloudflare proxy, Full (strict), WAF rules, and Turnstile keys.
+- Cloudflare proxy, Full (strict), WAF rules, and the existing Managed widget's `TURNSTILE_SECRET`.
 - Stripe live keys, signed webhook, and real low-value transaction test.
 - Microsoft 365 delivery for contact, quote, OTP, booking, and pass emails.
 - Encrypted off-site backup schedule and successful restore test.

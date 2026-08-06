@@ -28,7 +28,7 @@ Repository: [nityam2007/np-coach](https://github.com/nityam2007/np-coach) · Del
 **Production acceptance and remaining work — pick up here:**
 
 1. Confirm the least-privilege `DIRECTUS_SERVER_TOKEN` and its collection permissions before protected writes go live.
-2. Confirm Cloudflare proxy/Full (strict)/WAF and both Turnstile keys.
+2. Confirm Cloudflare proxy/Full (strict)/WAF and test the existing `MAIN` Managed Turnstile widget end to end. The public key is committed as `NEXT_PUBLIC_TURNSTILE_SITE_KEY`; the private key must remain runtime-only as `TURNSTILE_SECRET` (`TURNSTILE_SECRET_KEY` is accepted as a compatibility alias).
 3. Configure Stripe live keys and the signed webhook, then complete real low-value booking and lost-property tests.
 4. Wire and acceptance-test Microsoft 365 delivery for contact, quote, OTP, booking, and pass messages.
 5. Schedule encrypted off-site MariaDB/upload backups and complete a restore test.

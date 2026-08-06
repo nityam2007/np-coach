@@ -32,7 +32,7 @@ Harden SSH (key-only, no root login) and keep Docker patched.
 1. DNS: **A** records for `np-coaches.co.uk` and `cms.np-coaches.co.uk` → VPS IP, **Proxied** (orange cloud).
 2. SSL/TLS mode: **Full (strict)**.
 3. SSL/TLS → Origin Server → **Create Certificate** → save the cert as `traefik/certs/origin.pem` and key as `traefik/certs/origin-key.pem` on the VPS (gitignored).
-4. Turnstile: create a widget; put the site key in `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and secret in `TURNSTILE_SECRET_KEY`.
+4. Turnstile: use the existing MAIN Managed widget; keep its public key in `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and its server-only secret in `TURNSTILE_SECRET`.
 5. WAF: enable the managed ruleset; optionally rate-limit `/api/*`.
 
 ## 3. Configure + first deploy

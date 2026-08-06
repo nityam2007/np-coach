@@ -173,7 +173,7 @@ export function LostPropertyForm({
         className="absolute left-[-9999px] h-0 w-0"
       />
 
-      <Turnstile />
+      <Turnstile resetSignal={state} />
       <SubmitButton fee={fee} />
       <p className="text-xs text-navy/70">
         The fee is payable to register your claim and covers handling and storage. Payments are processed securely by

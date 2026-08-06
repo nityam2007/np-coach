@@ -46,7 +46,7 @@ export function LoginForm() {
           />
         </label>
         {reqState.message && <p className="text-sm text-red-600">{reqState.message}</p>}
-        <Turnstile />
+        <Turnstile resetSignal={reqState} />
         <Submit label="Email me a code" />
         <p className="text-xs text-navy/70">
           No password needed — we&apos;ll email you a one-time code. New here? An account is created automatically.

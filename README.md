@@ -20,7 +20,7 @@ Rebuild of [np-coaches.co.uk](https://np-coaches.co.uk) — a UK coach-hire oper
 
 ## Current payment and form controls
 
-- Contact and quote records are created only by protected server actions (not by Directus' public role); each action validates input, uses a honeypot, verifies Turnstile, and is rate-limited.
+- Contact, quote, booking, lost-property, and OTP requests use the existing Managed Turnstile widget. Tokens are verified server-side through Cloudflare Siteverify and production fails closed when the server secret is absent or invalid.
 - Stripe Checkout receives the customer's email for receipts. A booking, ticket, or lost-property claim is shown as complete only after Stripe verifies the Checkout session; public booking references cannot complete an order.
 - Coolify deployments apply the committed schema and run the idempotent content/admin/media bootstrap automatically. Standalone deployments can still run `npm run bootstrap` manually.
 
@@ -78,7 +78,7 @@ Copy [`.env.coolify.example`](.env.coolify.example) into Coolify's environment-v
 
 Do not deploy the standalone Traefik service inside Coolify—Coolify already owns the VPS reverse proxy and ports 80/443.
 
-For routine deployments, secret ownership, backups, rollback, and acceptance checks, use [HANDOVER.md](HANDOVER.md).
+For routine deployments, secret ownership, backups, rollback, and acceptance checks, use [HANDOVER.md](HANDOVER.md). Coolify's native GitHub webhook should be configured once so every approved push to `main` queues a redeployment automatically.
 
 ## Principles
 

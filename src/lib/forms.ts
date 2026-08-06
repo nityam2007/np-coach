@@ -8,7 +8,8 @@ import { directusServerWrite } from "@/lib/directus-server";
  */
 
 const DIRECTUS_URL = process.env.DIRECTUS_URL ?? "http://localhost:8055";
-const TURNSTILE_SECRET = process.env.TURNSTILE_SECRET_KEY;
+const TURNSTILE_SECRET =
+  process.env.TURNSTILE_SECRET ?? process.env.TURNSTILE_SECRET_KEY;
 
 // ---- Validation schemas ----
 // `website` is a honeypot: real users leave it blank; bots tend to fill every field.
@@ -110,22 +111,28 @@ export function fieldErrors(error: z.ZodError): Record<string, string> {
 
 // ---- Cloudflare Turnstile ----
 /**
- * Verify a Turnstile token server-side. If no secret is configured (local dev),
- * verification is skipped so the form still works. Once TURNSTILE_SECRET_KEY is
- * set, a missing/invalid token is rejected.
+ * Verify a single-use Turnstile token with Cloudflare's canonical Siteverify API.
+ * Local development may omit the secret; production always fails closed.
  */
 export async function verifyTurnstile(token: string | undefined, ip?: string): Promise<boolean> {
-  if (!TURNSTILE_SECRET) return true; // not configured → skip (dev-friendly)
-  if (!token) return false;
+  if (!TURNSTILE_SECRET) return process.env.NODE_ENV !== "production";
+  if (!token || token.length > 2_048) return false;
+
   try {
     const body = new URLSearchParams({ secret: TURNSTILE_SECRET, response: token });
-    if (ip) body.set("remoteip", ip);
+    if (ip && ip !== "unknown") body.set("remoteip", ip);
+
     const res = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
       method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body,
+      cache: "no-store",
+      signal: AbortSignal.timeout(8_000),
     });
-    const json = (await res.json()) as { success: boolean };
-    return json.success === true;
+    if (!res.ok) return false;
+
+    const result = (await res.json()) as { success?: boolean; action?: string };
+    return result.success === true && result.action === "npcoaches-form";
   } catch {
     return false;
   }

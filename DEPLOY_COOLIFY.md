@@ -71,7 +71,7 @@ If `www.np-coaches.co.uk` is required, add `https://www.np-coaches.co.uk:3000` t
 
 1. Create proxied DNS records for the apex/`www` site and `cms` host pointing to the VPS. If certificate issuance has trouble, set them to DNS-only until Coolify reports valid TLS, then enable the proxy.
 2. Set SSL/TLS mode to **Full (strict)** and enable Always Use HTTPS.
-3. Create the Turnstile widget and add both keys to Coolify.
+3. Keep the existing Cloudflare Turnstile **MAIN** widget in Managed mode. Its public site key is already recorded in `.env.coolify.example`; store only its private value as the runtime-only `TURNSTILE_SECRET` in Coolify. The legacy `TURNSTILE_SECRET_KEY` name is also accepted for compatibility.
 4. Keep `/admin*`, `/auth*`, and API responses on the CMS hostname out of custom cache rules. A cache rule for public `cms.np-coaches.co.uk/assets/*` is safe when it respects Directus' cache headers.
 5. Apply Cloudflare WAF/rate limiting to public form and API routes without blocking Stripe's webhook.
 
@@ -114,7 +114,7 @@ Never put the generated bootstrap admin token in `DIRECTUS_SERVER_TOKEN`; the we
 ## 7. Stripe, email, and launch
 
 - Stripe: set the live keys, then create `https://np-coaches.co.uk/api/stripe/webhook` for `checkout.session.completed` and save its signing secret.
-- Turnstile: both public and secret keys must be set before public forms go live.
+- Turnstile: keep the existing MAIN widget in Managed mode, set `TURNSTILE_SECRET` as Runtime only, and verify contact, quote, booking, lost-property, and OTP submissions. Production fails closed if the secret is absent or Siteverify rejects the token.
 - SMTP: add the Microsoft 365/Outlook credentials and submit real contact, quote, OTP, and lost-property tests.
 - Smoke-test a booking and lost-property payment; confirm the signed webhook changes the Directus record from `pending` to `paid` exactly once.
 
@@ -130,17 +130,28 @@ Never delete or rename the named volumes during a redeploy. Test a restore befor
 
 Images are deliberately pinned in `docker-compose.coolify.yml`. Upgrade MariaDB, Directus, Redis, or Node in a separate change after a backup and staging test. When Directus changes, regenerate and commit a compatible schema snapshot.
 
-## 9. Routine releases
+## 9. Automatic deployment from GitHub
 
-Production follows the `main` branch of [nityam2007/np-coach](https://github.com/nityam2007/np-coach).
+Production follows the `main` branch of [nityam2007/np-coach](https://github.com/nityam2007/np-coach). Use Coolify's native GitHub webhook; no repository workflow or extra container registry is required.
+
+One-time connection:
+
+1. In the Coolify resource, open **Advanced** and enable **Auto Deploy**.
+2. Open the resource's **Webhooks** page, set a long random **GitHub webhook secret**, and copy Coolify's GitHub webhook URL.
+3. In GitHub, open **Settings → Webhooks → Add webhook** for the repository.
+4. Paste Coolify's URL as the payload URL, paste the same secret, keep SSL verification enabled, select **Just the push event**, and activate it.
+5. Send GitHub's test delivery and confirm Coolify accepts it. Then push a harmless commit to `main` and confirm a deployment is queued.
+
+Routine release:
 
 1. Run the repository checks and review the change.
-2. Push the approved commit to `main`.
-3. Deploy that commit in Coolify.
-4. Confirm both long-running and one-shot service states.
-5. Run the smoke checks in this runbook and [HANDOVER.md](HANDOVER.md).
+2. Push the approved commit to `main`; the webhook should queue Coolify automatically.
+3. Confirm both long-running and one-shot service states.
+4. Run the smoke checks in this runbook and [HANDOVER.md](HANDOVER.md).
 
-For an application-only rollback, redeploy the last known-good commit without deleting volumes. Review schema compatibility before rolling back any release that changed Directus collections or fields.
+Before enabling Auto Deploy, save every required Coolify environment variable—especially `TURNSTILE_SECRET`—so the first automated release cannot activate incomplete production configuration. Never commit the GitHub webhook secret or Coolify URL.
+
+If webhook delivery fails, use Coolify's manual Deploy button while inspecting GitHub's recent webhook deliveries. For an application-only rollback, redeploy the last known-good commit without deleting volumes. Review schema compatibility before rolling back a release that changed Directus collections or fields.
 
 Do not rotate generated `SERVICE_*` values as part of a routine application release.
 
@@ -149,5 +160,6 @@ Do not rotate generated `SERVICE_*` values as part of a routine application rele
 - Coolify Docker Compose: https://coolify.io/docs/knowledge-base/docker/compose
 - Coolify Compose build pack: https://coolify.io/docs/applications/build-packs/docker-compose
 - Coolify environment variables: https://coolify.io/docs/knowledge-base/environment-variables
+- Coolify GitHub auto-deploy: https://coolify.io/docs/applications/ci-cd/github/auto-deploy
 - Directus deployment: https://directus.com/docs/self-hosting/deploying
 - Directus security/limits: https://directus.com/docs/configuration/security-limits

@@ -1,6 +1,6 @@
-# Deploy NP Coaches with Coolify
+# NP Coaches — Coolify Production Runbook
 
-This is the recommended production path when Coolify is already installed on the Hostinger VPS. Coolify owns the reverse proxy and TLS; do not deploy the repository's separate Traefik service at the same time.
+This is the active production path on the Hostinger VPS. The full stack completed its first successful deployment on 6 August 2026. Coolify owns the reverse proxy and TLS; do not deploy the repository's separate Traefik service at the same time. Operational ownership, rollback, and acceptance are documented in [HANDOVER.md](HANDOVER.md).
 
 ## What the stack deploys
 
@@ -31,7 +31,7 @@ Do not commit a live SQL dump. It can contain customers, bookings, password hash
 ## 1. Create the Coolify resource
 
 1. In Coolify, open the production project and choose **New resource → Public Repository** (or GitHub App/Deploy Key if the repository becomes private).
-2. Paste the repository URL: `https://github.com/nityam2007/np-coach`.
+2. Paste the repository URL: [`https://github.com/nityam2007/np-coach`](https://github.com/nityam2007/np-coach).
 3. Select the `main` branch and change the build pack from Nixpacks to **Docker Compose**.
 4. Set **Base Directory** to `/`.
 5. Set **Docker Compose Location** to `/docker-compose.coolify.yml` (the extension must match exactly).
@@ -129,6 +129,20 @@ Coolify's own backup covers Coolify configuration, not application volumes. Befo
 Never delete or rename the named volumes during a redeploy. Test a restore before accepting live bookings.
 
 Images are deliberately pinned in `docker-compose.coolify.yml`. Upgrade MariaDB, Directus, Redis, or Node in a separate change after a backup and staging test. When Directus changes, regenerate and commit a compatible schema snapshot.
+
+## 9. Routine releases
+
+Production follows the `main` branch of [nityam2007/np-coach](https://github.com/nityam2007/np-coach).
+
+1. Run the repository checks and review the change.
+2. Push the approved commit to `main`.
+3. Deploy that commit in Coolify.
+4. Confirm both long-running and one-shot service states.
+5. Run the smoke checks in this runbook and [HANDOVER.md](HANDOVER.md).
+
+For an application-only rollback, redeploy the last known-good commit without deleting volumes. Review schema compatibility before rolling back any release that changed Directus collections or fields.
+
+Do not rotate generated `SERVICE_*` values as part of a routine application release.
 
 ## Useful official references
 

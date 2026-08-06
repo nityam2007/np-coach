@@ -1,6 +1,6 @@
-# Deploy — NP Coaches (P7)
+# NP Coaches — Standalone Traefik Deployment Alternative
 
-> Coolify already installed? Use [DEPLOY_COOLIFY.md](DEPLOY_COOLIFY.md) and `docker-compose.coolify.yml`. This runbook is the standalone Traefik alternative and must not be deployed alongside Coolify's proxy.
+> Production currently runs through Coolify. Use [DEPLOY_COOLIFY.md](DEPLOY_COOLIFY.md) and `docker-compose.coolify.yml` for normal releases. This file is retained only as the standalone Traefik alternative and must not be deployed alongside Coolify's proxy.
 
 Production runbook for the Hostinger **VPS KVM2 (2 vCPU / 8 GB)**, Docker + Traefik, behind **Cloudflare** (DNS · Proxy/CDN · SSL Full-strict · WAF · Turnstile). The app never touches MariaDB — only Directus does.
 
@@ -38,7 +38,7 @@ Harden SSH (key-only, no root login) and keep Docker patched.
 ## 3. Configure + first deploy
 
 ```bash
-git clone <repo> /opt/np-coaches && cd /opt/np-coaches
+git clone https://github.com/nityam2007/np-coach.git /opt/np-coaches && cd /opt/np-coaches
 cp .env.example .env.prod   # fill in: hosts, DB creds, DIRECTUS_KEY/SECRET (openssl rand -hex 32),
                             # Stripe live keys + webhook secret, Turnstile keys, NEXT_PUBLIC_* https URLs
 # place Cloudflare origin cert/key in traefik/certs/
@@ -77,4 +77,4 @@ Set `RCLONE_REMOTE` (e.g. an R2/S3 rclone remote) in `.env.prod` to also push du
 
 - **M365 SMTP email** for forms/bookings/pass confirmations — deferred (Basic auth deprecating; wire OAuth2/Graph). Stripe sends its own receipt meanwhile.
 - 301 `redirects` for any old WordPress URLs that changed.
-- Pin Directus + Traefik to exact patch versions before launch.
+- Pin Directus + Traefik to exact patch versions before using this standalone stack.

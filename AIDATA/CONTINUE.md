@@ -1,6 +1,6 @@
-# CONTINUE — NP Coaches build handoff
+# CONTINUE — NP Coaches development and production handoff
 
-This is the **single source of truth for picking up the build** (new chat / another agent). Read this first, then [../CLAUDE.md](../CLAUDE.md) → [PLAN.md](PLAN.md) → [TASKS.md](TASKS.md). Keep this file current as you work.
+This is the **single source of truth for picking up development**. For production ownership and operations, read [../HANDOVER.md](../HANDOVER.md) first. Then read [../CLAUDE.md](../CLAUDE.md) → [PLAN.md](PLAN.md) → [TASKS.md](TASKS.md). Keep this file current as work continues.
 
 > Convert relative dates to absolute. Today's reference when this file was last updated: **2026-08-06**.
 
@@ -10,24 +10,30 @@ This is the **single source of truth for picking up the build** (new chat / anot
 
 Branch: **`main`**. Commit as `nityam2007`, **never add AI / Co-Authored-By trailers** (CLAUDE.md rule).
 
-**Done (P0–P7 in-app):**
+Repository: [nityam2007/np-coach](https://github.com/nityam2007/np-coach) · Delivery: **Blustdio** · Product Manager: [Rohan](https://rohanxblu.in/) · Developer: [Nityam](https://nsheth.in/).
+
+**Done (P0–P7 application + first production deployment):**
 - **P0** foundation · **P1** Directus data layer · **P2** full marketing site (fleet, UK tours, Daily Express + routes, blog, content/legal pages, homepage) · **P3** Contact + Get-a-Quote forms (zod + honeypot + rate-limit + Turnstile → Directus) · **P4** Daily Express booking (Stripe Checkout, **stop-to-stop**) · **P5** Lost Property pass (Stripe, configurable VAT) · **P6** home-to-school per-school pages · **P7** compliance + deploy artifacts.
 - Real **images** uploaded to Directus and linked (fleet/tours/school logos).
 - Directus admin organised (groups, field UX, display templates, status colours, Insights dashboard).
 - **P7:** cookie-consent banner (UK PECR), security headers (CSP/HSTS/etc. in `next.config.ts` — **dev-aware**: unsafe-eval/ws only in dev), production `Dockerfile` (multi-stage standalone — **build + run verified**), `docker-compose.prod.yml` (Traefik + app + Directus + MariaDB), Traefik TLS (Cloudflare Origin cert), cron backup `scripts/backup-db.sh`, runbook [../DEPLOY.md](../DEPLOY.md).
-- **Coolify deploy path (2026-08-06):** root `docker-compose.coolify.yml` deploys Next.js + Directus 12.0.2 + MariaDB 11.8.8 + private password-protected Redis through Coolify's own proxy. Exact schema migration and the committed content/admin/~103 MB media bootstrap run automatically as health-gated one-shot services; media API calls are paced and retry `429` responses, so interrupted imports safely resume on redeploy. See [../DEPLOY_COOLIFY.md](../DEPLOY_COOLIFY.md) and `.env.coolify.example`; the older Traefik stack remains the non-Coolify alternative.
+- **Coolify production (2026-08-06):** the full root `docker-compose.coolify.yml` stack deployed successfully: MariaDB and Redis healthy, schema migration exited 0, Directus healthy, the idempotent CMS/media bootstrap completed, and Next.js started behind Coolify's proxy. The media uploader paces and retries `429` responses, so interrupted imports safely resume. See [../DEPLOY_COOLIFY.md](../DEPLOY_COOLIFY.md) and [../HANDOVER.md](../HANDOVER.md); the older Traefik stack remains the non-Coolify alternative.
 - **Hero booking search** (2026-07-04): tabbed `HeroSearch` (Daily Express tickets ↔ private-hire quote) with From/To **stop dropdowns** from the CMS `stops`, date + passengers → prefills `/daily-express-service/book?from&to&date&pax` (BookingForm accepts `defaultDate`/`defaultPassengers`). Old QuoteWidget removed.
 - **Live-site image archive** (2026-07-04): `npm run crawl` scraped **all 91 original images** from every np-coaches.co.uk page → `directus/seed-media/live/` (+ manifest.json) → uploaded to Directus in a "Live site archive" folder by `npm run media`. Real **logo** (`settings.logo`) now in the header; **hero background** (`settings.hero_image`) on the homepage — both CMS-editable, only set when unset (client edits win).
 - **SEO hardening** (2026-07-04): OpenGraph + Twitter defaults in the root layout; `alternates.canonical` on fleet/pages/routes/tours/blog detail + the book page; `public/llms.txt` served; sitemap includes `/daily-express-service/book` + `/lost-property/claim`; footer gained a **Daily Express column** (book + timetable + the 3 route pages) so no route is orphaned.
 - **UI pass (2026-07-04):** real **accreditation badge images** (CPT, UKCOA, CTA, Disability Confident, WeLoveCoaches, Transport for Bucks) via `settings.accreditation_logos`; **photo service cards** (`services.image`); header logo switched to the crisp **io.png** globe; hero background now the flagship coach (`DSC09341-3`); testimonial 5-star row; **lost-property claim page** redesigned (form + how-it-works/`Good to know` aside). Accreditations text list updated to the real set (mockup names were placeholder).
-- **Local → prod migration story** (2026-07-04): `npm run bootstrap` (= seed + configure + media) prefILLS any empty Directus from the repo; `npm run schema:snapshot` / `schema:apply` (scripts/schema.sh) move the **exact** schema via `directus/schema-snapshot.yaml` (committed). Prod bootstrap = compose up → `schema:apply` → `bootstrap` with prod env vars.
+- **Local → production migration** (2026-07-04): `npm run bootstrap` (= seed + configure + media) fills an empty Directus from the repository; `npm run schema:snapshot` / `schema:apply` move the exact committed schema. Coolify now performs schema apply and bootstrap automatically through health-gated one-shot services.
 - **Fleet/content/media pass (2026-07-24):** rebuilt `/fleet` and all six vehicle pages from the archived WordPress structure (CMS copy, facility bands, per-vehicle galleries, seating plans, charter CTA and four booking steps); added `settings.fleet_page`, `fleet.group_label`, `fleet.layout_images` and `pages.image`; migrated `/timetable`; upgraded generic content pages with optional CMS imagery. Blog thumbnails now accept UUID or expanded Directus file values, render on cards/articles/Open Graph/BlogPosting schema, and `npm run media` safely assigns starter images when empty. Verified both blog assets as public `image/jpeg`, all fleet media counts, six updated routes at HTTP 200, fresh TypeScript and lint.
 
-**Not done — pick up here:**
-1. **Actual launch** (needs the VPS — can't be done from this dev box): create the Coolify Public Repository resource with `/docker-compose.coolify.yml`, assign the web/CMS domains, set Cloudflare + live Stripe/Turnstile/M365 values, create the scoped Directus web token, deploy, and run the launch checks/Lighthouse pass in [../DEPLOY_COOLIFY.md](../DEPLOY_COOLIFY.md). Use [../DEPLOY.md](../DEPLOY.md) only for a non-Coolify VPS.
-2. **Cross-cutting — M365 SMTP email** *(next in-app task)*: forms, bookings and pass purchases persist to Directus + rely on Stripe's receipt. Our own branded confirmation emails are **not wired** (M365 Basic SMTP auth is being deprecated → use OAuth2/Graph). `nodemailer` not yet installed. SMTP env vars scaffolded in `.env.example`.
-3. **301 `redirects`** for any old WordPress URLs that changed.
-4. The Coolify images are pinned; the standalone `docker-compose.prod.yml` still needs exact Directus + Traefik patch pins before it is used.
+**Production acceptance and remaining work — pick up here:**
+
+1. Confirm the least-privilege `DIRECTUS_SERVER_TOKEN` and its collection permissions before protected writes go live.
+2. Confirm Cloudflare proxy/Full (strict)/WAF and both Turnstile keys.
+3. Configure Stripe live keys and the signed webhook, then complete real low-value booking and lost-property tests.
+4. Wire and acceptance-test Microsoft 365 delivery for contact, quote, OTP, booking, and pass messages.
+5. Schedule encrypted off-site MariaDB/upload backups and complete a restore test.
+6. Add required WordPress 301 redirects; complete Lighthouse/accessibility, mobile, content, fare, route, and legal approval.
+7. The Coolify images are pinned; pin the standalone `docker-compose.prod.yml` Directus/Traefik images before that alternative is ever used.
 
 ---
 

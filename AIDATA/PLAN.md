@@ -1,6 +1,6 @@
-# NP Coaches — Build Plan
+# NP Coaches — Implementation and Operations Plan
 
-Rebuild np-coaches.co.uk (currently WordPress) as a fast, CMS-driven Next.js site.
+The CMS-driven Next.js rebuild is implemented and deployed through Coolify; this plan records the architecture, completed phases, and remaining production acceptance.
 **Goals:** fast as fire · secure as a prison · best UX. Keep it **simple, modular, dynamic, responsive** — don't over-engineer.
 
 ---
@@ -8,21 +8,23 @@ Rebuild np-coaches.co.uk (currently WordPress) as a fast, CMS-driven Next.js sit
 ## Architecture (the one diagram that matters)
 
 ```
-Cloudflare (DNS·Proxy/CDN·SSL·WAF·Turnstile) ─Origin cert─► Hostinger VPS KVM2 (2c/8GB) · Docker + Traefik
-                                                              ├─ Next.js app ─REST/GraphQL─► Directus ─► MariaDB
-                                                              ├─ Directus (admin/API)          └─ uploads → volume
-                                                              └─ 2 other static sites
-                                       Next.js → Stripe (payments)   ·   Next.js → M365 SMTP (email)
+Cloudflare (DNS·Proxy/CDN·SSL·WAF·Turnstile) ─► Hostinger VPS · Docker + Coolify proxy
+                                                     ├─ Next.js ─REST/GraphQL─► Directus
+                                                     ├─ Directus ─► MariaDB (private)
+                                                     ├─ Redis (private)
+                                                     └─ Directus uploads → persistent volume
+
+                              Next.js → Stripe · Next.js → Microsoft 365 (when configured)
 ```
 
 **Hard rule:** the Next.js app never connects to MariaDB directly — only Directus does. The app holds scoped Directus tokens (read-only for content, server-only write token for forms/bookings), never DB creds. No Prisma. Full stack table in [../INFO.md](../INFO.md).
 
-### Hosting — self-hosted VPS (original SOW stack)
+### Hosting — active self-hosted production
 - **Host:** Hostinger **VPS KVM2 (2 vCPU / 8 GB)**, Linux + **Docker / Docker Compose**. EU/UK region.
-- **Reverse proxy:** **Traefik** routes containers by domain; origin TLS via a **Cloudflare Origin certificate** (Full-strict).
+- **Reverse proxy:** **Coolify proxy** routes production services. Traefik remains a standalone alternative only.
 - **Edge:** **Cloudflare** — DNS, Proxy/CDN, SSL, WAF, Turnstile in front of the VPS.
 - **Media:** Directus uploads on a Docker volume (Cloudflare caches; R2 optional later).
-- **Robust, not over-engineered:** Compose healthchecks + restart policies; cron MariaDB dumps offsite; firewall (80/443/22), fail2ban, unattended-upgrades. The VPS also serves the 2 other (static) sites via Traefik.
+- **Robust, not over-engineered:** healthchecks, restart policies, private database/cache networking, named volumes, pinned images, Cloudflare WAF, and encrypted off-site backups with restore tests.
 
 ### Dev environment
 - `docker compose up` → MariaDB + Directus locally.
@@ -49,9 +51,9 @@ Each is a single self-contained component module; layouts/pages compose them. **
 
 ## Phases (ship incrementally; commit + update README each phase)
 
-- **P0 — Foundation ✅ done:** git init · Next.js 16 + TS + Tailwind v4 app at repo root · `docker-compose.yml` (MariaDB + Directus + app, bind-mounted code) · brand tokens (navy `#0e0f27`, grey-blue `#a8abbc`, white `#fdfdfd`; **Geist** + **Inter** via `next/font`) · base layout with `Header`/`Hero`/`Footer` + `lib/site-config.ts` · README. *(Traefik + prod Dockerfile come at P7/deploy.)*
+- **P0 — Foundation ✅ done:** git init · Next.js 16 + TS + Tailwind v4 app at repo root · Docker dev stack · current deep-blue `#172554`/accent `#2563eb` tokens + Geist/Inter · base layout and documentation.
 - **P1 — CMS + data layer ✅ done:** Directus `settings` (singleton) + `services` collections with **public read** · typed fetch lib (`src/lib/directus.ts`, ISR 30s + graceful fallback) · idempotent seed script (`npm run seed`) · layout/Header/Footer/Hero/page now render from Directus. *(Remaining collections — pages, fleet, tours, blog, routes, forms — are added with their pages in P2. On-publish webhook revalidation lands at deploy/P7; time-based ISR for now.)*
-- **P2 — Marketing site (in progress):**
+- **P2 — Marketing site ✅ done:**
   - ✅ **Fleet:** `fleet` collection (public read) + `/fleet` listing + `/[slug]` SEO landing pages per vehicle (WP slugs preserved, e.g. `/19-seat-coaches`) with per-page metadata + Service JSON-LD.
   - ✅ **SEO infra:** `robots.ts` (AI crawlers allowed), `sitemap.ts` (home + fleet), site-wide Organization/LocalBusiness JSON-LD. Homepage enriched (accreditation strip, fleet teaser, stats band) — all CMS-driven (`settings.stats` / `settings.accreditations`).
   - ✅ **Content-page system:** generic `pages` collection (public read) + a `PageTemplate`; the `/[slug]` route now resolves a fleet vehicle **or** a content page. About + Contact seeded — most remaining marketing pages are now CMS-only (no code).
@@ -60,14 +62,14 @@ Each is a single self-contained component module; layouts/pages compose them. **
   - ✅ **Daily Express + routes (T3):** `routes` collection + `/daily-express-service` hub + 3 route pages (`/[slug]`) with timetables + BusTrip JSON-LD.
   - ✅ **Blog (T4):** `blog_posts` collection + `/blog` + `/blog/[slug]` (BlogPosting JSON-LD).
   - ✅ **Homepage polish (T7):** `testimonials` collection + TestimonialCarousel · FaqAccordion (FAQPage JSON-LD) · CoverageMap · presentational QuoteWidget in the hero.
-  - ⬜ **Remaining:** forms (T6 → P3) · 301 `redirects` · migrate remaining `schema-snippets.json` / keep `llms.txt`.
-- **P3 — Forms (storage ✅ done; email pending):** `/contact-us` + `/get-a-quote` coded routes → server actions → **zod** + honeypot + in-memory rate-limit + **Cloudflare Turnstile** (graceful if unset) → persist to Directus `contact_submissions` / `quote_requests` (**public create, no read** — staff read in admin). Email via **M365 SMTP** is deferred (Basic SMTP auth being deprecated → wire with OAuth2/Graph later).
+  - **Follow-up:** add any required legacy 301 redirects; `llms.txt`, sitemap, robots, metadata, and structured data are implemented.
+- **P3 — Forms (storage ✅ done; email pending):** `/contact-us` + `/get-a-quote` use protected server actions with zod, honeypot, rate limiting, Turnstile, and a scoped Directus server token. The public role has no create/read access. Microsoft 365 delivery remains production acceptance work.
 - **P4 — Daily Express booking ✅ (storage+payment done; our email deferred):** **stop-to-stop** like the live site — `/daily-express-service/book` → pick any From/To from a 6-stop corridor (`stops` collection) + single/return + date + passengers → server prices the leg from the flat corridor fares in `settings.pricing` (`dailyExpressSingle`/`Return`, pence + `dailyExpressVat` — **never trusts the client**) → `bookings` row (`from_stop`/`to_stop`) created `pending` → **Stripe Checkout (hosted)** → signed, **idempotent** webhook (`/api/stripe/webhook`, `checkout.session.completed`, unique `stripe_session_id`, routes by `metadata.kind`) flips `pending → paid` → `/booking/success`. `bookings` is server-write only. Confirmation relies on Stripe's receipt; M365 email later. Graceful "being set up" notice when `STRIPE_SECRET_KEY` is unset.
 - **Directus admin ✅ (`npm run configure`):** collections grouped (Content · Marketing · Daily Express · Bookings & Payments · Leads); field notes/widths/required/interfaces; display templates + status colours (pending/paid/failed); list-view sort defaults; **Insights dashboard** (paid bookings, paid passes, revenue, recent quotes/contacts). Idempotent; separate from `npm run seed`.
 - **Dev hot-reload:** `npm run dev:poll` (webpack + polling) for filesystems where the default Turbopack watcher misses saves.
 - **P5 — Lost Property pass ✅ (payment done; our email deferred):** `/lost-property/claim` form (mirrors the live-site fields: travel date/time, school-route school+route, where left, item description, two consents) → fee + VAT computed server-side from CMS `settings.pricing` (`lostPropertyFee` net + `lostPropertyVat` %, default £5 + 20% = £6.00) → `pass_purchases` row `pending` → **Stripe Checkout** → shared signed/idempotent webhook (`metadata.kind` routes to the right collection) → `paid` → `/pass/success`. **Configurable VAT** lives in `settings.pricing` with separate rates per fee (`lostPropertyVat`, `dailyExpressVat`) — re-seeding never clobbers client-edited rates. Stripe receipt for now; our M365 email later.
 - **P6 — School transport ✅:** `/home-to-school` hub → per-school pages `/home-to-school/<school>` (Pioneer Secondary Academy, Herschel Grammar School) driven by a CMS `school_routes` collection (code, name, timetable `stops`, return note) + `settings.school_transport` (slugs, intro, Trackaroo buy URL, ShuttleID waitlist, spaces flag). Each school page lists its routes with timetables + route quick-nav + breadcrumb; "Buy Tickets" → Trackaroo, waiting-list → ShuttleID, track-bus → passenger.shuttleid.uk. Old slugs preserved under `/home-to-school/*`.
-- **P7 — Compliance + launch ✅ (deploy artifacts ready; awaiting VPS):** cookie-consent banner (UK PECR; `np_consent` cookie, accept/reject) · privacy/cookie/terms pages (done in P2) · security headers (CSP/HSTS/X-Frame/etc. in `next.config.ts`) · production `Dockerfile` (multi-stage standalone, **build-verified**) · `docker-compose.prod.yml` (Traefik + app + Directus + MariaDB, healthchecks/restart) · Traefik TLS via Cloudflare Origin cert · cron MariaDB backup (`scripts/backup-db.sh`) · full runbook in [../DEPLOY.md](../DEPLOY.md). **Remaining for actual launch:** point at the VPS, Cloudflare DNS/SSL + origin cert, live Stripe keys + webhook, Lighthouse pass.
+- **P7 — Compliance + production deployment ✅:** cookie consent, legal pages, security headers, production images, Coolify Compose, MariaDB, Redis, Directus, automated schema/content/media bootstrap, and Next.js deployed successfully on 6 August 2026. Remaining production acceptance is tracked in [../HANDOVER.md](../HANDOVER.md).
 
 ---
 

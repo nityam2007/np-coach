@@ -2,7 +2,16 @@
 
 Single source of truth for stack, brand, and business facts. Build details/phases live in [AIDATA/PLAN.md](AIDATA/PLAN.md); working rules in [CLAUDE.md](CLAUDE.md).
 
-**Project:** Rebuild np-coaches.co.uk (UK coach-hire operator, currently WordPress) as a fast, CMS-driven app. Goals: **fast as fire · secure as a prison · best UX.** Simple, modular, dynamic, responsive — don't over-engineer.
+**Project:** Production rebuild of np-coaches.co.uk as a fast, CMS-driven application. The Coolify stack was deployed successfully on 6 August 2026. Goals: **fast as fire · secure as a prison · best UX.** Simple, modular, dynamic, responsive — don't over-engineer.
+
+## DELIVERY
+
+| Responsibility | Owner |
+| --- | --- |
+| Delivery brand | **Blustdio** |
+| Product Manager | [Rohan](https://rohanxblu.in/) |
+| Development | [Nityam](https://nsheth.in/) |
+| Repository | [nityam2007/np-coach](https://github.com/nityam2007/np-coach) |
 
 ---
 
@@ -14,25 +23,26 @@ Single source of truth for stack, brand, and business facts. Build details/phase
 | CMS / admin | **Directus** (Dockerized) | Headless CMS + admin panel + API. Owns content **and** transactional data; client gets one admin. |
 | Database | **MariaDB** (Dockerized) | Reached **only by Directus** — the app never connects directly. **No Prisma.** |
 | Media | **Directus uploads** → Docker volume | Cloudflare caches them. (R2 optional later if CDN-backed media is wanted.) |
-| Reverse proxy | **Traefik** (Dockerized) | Routes containers by domain; origin TLS via a Cloudflare Origin cert. |
+| Reverse proxy | **Coolify proxy** (production) · Traefik (standalone alternative) | Coolify owns production routing/TLS; never run both proxies together. |
 | Edge | **Cloudflare** — DNS · Proxy/CDN · SSL (Full-strict) · WAF · **Turnstile** | In front of the VPS. |
 | Payments | **Stripe** | Server-side only; prices computed server-side; webhook signatures verified. |
-| Email | **Microsoft 365 SMTP** (nodemailer) | Works from the VPS Node app. Booking confirmations, pass receipts, contact/quote notifications. No Resend. |
+| Email | **Microsoft 365** | Production delivery for OTP, forms, booking, and pass messages must be configured and acceptance-tested; no Resend. |
 
-**Host:** Hostinger **VPS — KVM2 (2 vCPU / 8 GB RAM)**, Linux + Docker. Fully self-hosted & owned. Hosting is paid (VPS + Cloudflare) — expected. *Directus is source-available (MSCL): free for NP Coaches under its Innovation Grant (org well under $5M revenue / 50 staff).*
+**Host:** Hostinger **VPS — KVM2 (2 vCPU / 8 GB RAM)**, Linux + Docker + Coolify. The production stack is repository-backed and deployed from `main`. *Directus is source-available (MSCL): free for NP Coaches under its Innovation Grant (org well under $5M revenue / 50 staff).*
 
 ### Architecture
 
 ```
         Cloudflare  (DNS · Proxy/CDN · SSL Full-strict · WAF · Turnstile)
-                              │  Origin cert
+                              │
                               ▼
-   Hostinger VPS — KVM2 (2 vCPU / 8 GB) · Docker + Traefik
-        ├─ Next.js app   ──REST/GraphQL──►  Directus  ──►  MariaDB
-        ├─ Directus (admin / API)               └─ uploads → volume
-        └─ 2 other static sites
+   Hostinger VPS — KVM2 (2 vCPU / 8 GB) · Docker + Coolify proxy
+        ├─ Next.js app   ──REST/GraphQL──► Directus
+        ├─ Directus (admin / API) ───────► MariaDB (private)
+        ├─ Redis (private cache / rate limits)
+        └─ Directus uploads → persistent volume
 
-   Next.js ──► Stripe (payments)    ·    Next.js ──► Microsoft 365 (email, SMTP)
+   Next.js ──► Stripe (payments) · Next.js ──► Microsoft 365 (when configured)
 ```
 
 Directus owns all data — both **content** (pages, fleet, tours, blog, FAQs, testimonials) and **transactional** collections (bookings, pass purchases, contact + quote submissions) — with role-based access, giving the client one admin panel. The **whole site is editable from Directus** — nothing user-facing is hardcoded. See the collection list in [AIDATA/PLAN.md](AIDATA/PLAN.md).
@@ -49,10 +59,10 @@ Directus owns all data — both **content** (pages, fleet, tours, blog, FAQs, te
 
 UI mockups are authoritative for layout: [WEB PAGE STYLE REF.jpeg](AIDATA/WEB%20PAGE%20STYLE%20REF.jpeg) (homepage — sticky nav, hero + instant-quote widget, accreditation strip, service cards, fleet carousel, school-transport block, coverage map, stats band) and [FOOTER REF.jpeg](AIDATA/FOOTER%20REF.jpeg) (testimonials, FAQ accordion, footer columns).
 
-- **Colours:** Dark Navy `#0e0f27` · Light Grey-Blue `#a8abbc` · White `#fdfdfd` · accent blue for highlighted words/CTAs (per mockup).
+- **Colours:** Deep primary blue `#172554` · Light Grey-Blue `#a8abbc` · White `#fdfdfd` · accent blue `#2563eb`.
 - **Fonts:** Display/headings = **Geist**; body = **Inter** — both via `next/font`. (The brand board jpeg's "Optima" is superseded — ignore it.)
 - **Tone:** Premium · Reliable · Safe · Professional. Strong navy foundations, generous white space, minimal dividers, polished fleet imagery, concise copy.
-- **Logo:** NPC globe mark on navy. Not yet supplied — use a 1:1 placeholder.
+- **Logo:** NPC globe mark from the migrated live-site media, stored and editable in Directus.
 - **Mockup data is placeholder:** the mockup footer's Tamworth address / `0121…` phone is template filler — **use the real Iver depot details below.**
 
 ---
@@ -88,6 +98,10 @@ UI mockups are authoritative for layout: [WEB PAGE STYLE REF.jpeg](AIDATA/WEB%20
 
 ## OPEN ITEMS / VERIFY
 
-1. **Logo asset:** awaiting the final NPC logo (1:1 placeholder until then).
-2. **Directus behind Cloudflare proxy:** confirm large media uploads + admin websockets work through the proxy (standard config — set sensible body-size / timeouts at Traefik).
-3. **Directus licence (MSCL):** free under the Innovation Grant today; re-check only if NP Coaches ever exceeds $5M revenue / 50 staff.
+1. Confirm the least-privilege `DIRECTUS_SERVER_TOKEN` before enabling protected writes.
+2. Confirm Cloudflare Full (strict), WAF, Turnstile, Directus admin WebSockets, and public asset delivery.
+3. Configure and test Stripe live mode plus the signed webhook.
+4. Configure and test Microsoft 365 delivery for forms, OTPs, bookings, and passes.
+5. Schedule and restore-test encrypted off-site database and upload backups.
+6. Complete redirects, Lighthouse/accessibility review, and content/legal acceptance.
+7. Re-check the Directus licence only if NP Coaches exceeds the Innovation Grant thresholds.

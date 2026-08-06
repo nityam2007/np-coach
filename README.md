@@ -2,7 +2,14 @@
 
 Rebuild of [np-coaches.co.uk](https://np-coaches.co.uk) — a UK coach-hire operator — as a fast, CMS-driven Next.js site.
 
-> **Status:** P0–P7 in-app complete — marketing, CMS content, protected forms, Stripe Daily Express booking, paid lost-property claims, home-to-school pages, compliance, and production Docker stacks for Coolify or standalone Traefik. Launch still needs the live VPS resource, Cloudflare, Stripe, scoped Directus token, and M365 credentials. Read [AIDATA/CONTINUE.md](AIDATA/CONTINUE.md) before continuing.
+| Project | Details |
+| --- | --- |
+| Repository | [nityam2007/np-coach](https://github.com/nityam2007/np-coach) |
+| Delivery brand | **Blustdio** |
+| Product Manager | [Rohan](https://rohanxblu.in/) |
+| Developer | [Nityam](https://nsheth.in/) |
+
+> **Status:** P0–P7 application work is complete and the full stack was deployed successfully through Coolify on 6 August 2026. MariaDB, Redis, schema migration, Directus, CMS bootstrap, and Next.js are operational. Production acceptance still requires confirmation of the scoped Directus app token, Cloudflare/Turnstile, Stripe live webhook, Microsoft 365 email, off-site backups, redirects, and final QA as applicable. Start with [HANDOVER.md](HANDOVER.md), then [AIDATA/CONTINUE.md](AIDATA/CONTINUE.md).
 >
 > **Payments and forms:** prices are computed server-side; Stripe Checkout receives the customer email; pending orders become paid only after a verified Checkout session or signed idempotent webhook. Tickets and claim completion are hidden while payment is pending. Contact and quote submissions pass server-side validation, honeypot, rate-limit and Turnstile checks, then use the scoped Directus server token—there is no anonymous create permission.
 >
@@ -10,6 +17,7 @@ Rebuild of [np-coaches.co.uk](https://np-coaches.co.uk) — a UK coach-hire oper
 >
 > **SEO and UI:** canonical/Open Graph/Twitter metadata, sitemap/robots/llms.txt and JSON-LD are site-wide. Interior content pages share `PageHero` and the upgraded image/prose layout; blog articles use the same light editorial treatment and remain fully CMS-managed. Bespoke fleet, route, tour and school pages retain their structured designs.
 > The header and footer navigation are CMS-managed; Contact Us remains a primary menu item. `/faqs` is a dedicated SEO-ready accordion page sourced from the same editable FAQ settings as the homepage, with the homepage showing the four priority questions only.
+
 ## Current payment and form controls
 
 - Contact and quote records are created only by protected server actions (not by Directus' public role); each action validates input, uses a honeypot, verifies Turnstile, and is rate-limited.
@@ -20,15 +28,15 @@ Rebuild of [np-coaches.co.uk](https://np-coaches.co.uk) — a UK coach-hire oper
 
 | Layer    | Choice |
 |----------|--------|
-| Frontend | **Next.js 16** · TypeScript · Tailwind · `motion` (framer-motion) for scroll/hover/parallax (Dockerized) |
+| Frontend | **Next.js 16** · TypeScript · Tailwind · `motion` for targeted transitions (Dockerized) |
 | CMS / admin | **Directus** (Dockerized) — content + transactional, one client admin |
 | Database | **MariaDB** (Dockerized) — reached only by Directus, **no Prisma** |
 | Media    | Directus uploads (Docker volume) |
 | Cache / rate limits | Redis (private, password-protected in production) |
 | Reverse proxy | Coolify proxy (recommended) or bundled Traefik · **Cloudflare** at the edge |
 | Payments | Stripe |
-| Email    | Microsoft 365 SMTP |
-| Host     | Hostinger VPS — KVM2 (2 vCPU / 8 GB), Docker |
+| Email    | Microsoft 365 delivery (production integration pending/confirm before launch) |
+| Host     | Hostinger VPS — KVM2 (2 vCPU / 8 GB), Docker + Coolify |
 
 **Architecture:** `Cloudflare → Coolify proxy → Next.js → Directus → MariaDB`, with Redis private beside Directus. The standalone Traefik stack remains available. The app never touches MariaDB directly — only Directus does; it holds a scoped Directus token, never DB credentials.
 
@@ -70,6 +78,8 @@ Copy [`.env.coolify.example`](.env.coolify.example) into Coolify's environment-v
 
 Do not deploy the standalone Traefik service inside Coolify—Coolify already owns the VPS reverse proxy and ports 80/443.
 
+For routine deployments, secret ownership, backups, rollback, and acceptance checks, use [HANDOVER.md](HANDOVER.md).
+
 ## Principles
 
 Simple · modular · dynamic (whole site editable from Directus) · responsive · fast · secure. No over-engineering; simple-yet-complete code (no stubs). **UK law governs the live site and customer data** (UK GDPR / DPA 2018 / PECR).
@@ -85,13 +95,14 @@ src/
     layout/             site chrome — Header, Footer
     sections/           page sections — Hero (service cards, carousels, … land here)
   lib/
-    site-config.ts      single source of truth for nav/footer/contact (→ Directus in P1)
+    site-config.ts      shared CMS/fallback content types
 directus/               Directus uploads + extensions (bind-mounted in dev)
 docker-compose.yml      dev stack: MariaDB + Directus + app
 docker-compose.coolify.yml  production stack managed by Coolify
 Dockerfile.bootstrap    one-shot committed CMS/content/media bootstrap
 Dockerfile.schema       packages the Directus snapshot for Coolify migration
-AIDATA/                 plan, brand, UI mockups, SEO assets, Pages OLD/ archive (read-only)
+HANDOVER.md              production ownership, operations, rollback, and acceptance
+AIDATA/                 active handoff/plan plus read-only brand, SEO, and Pages OLD archives
 ```
 
 Root config: `package.json` · `tsconfig.json` · `next.config.ts` · `postcss.config.mjs` · `eslint.config.mjs` · `.env.example` · `.env.coolify.example`.

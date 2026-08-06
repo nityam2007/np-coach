@@ -2,15 +2,15 @@
 
 This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
 
-## Project status: pre-implementation
+## Project status: production deployment active
 
-There is **no application code yet**. This directory currently holds only planning, branding, content, and SEO reference material under [AIDATA/](AIDATA/). The job is to rebuild the **NP Coaches** website (currently a WordPress site at np-coaches.co.uk) as a Next.js app backed by a Directus CMS on MariaDB, fully self-hosted on a Hostinger VPS (Docker) behind Cloudflare. When scaffolding the app, create it at the repo root (not inside `AIDATA/`), and treat `AIDATA/` as read-only source-of-truth reference.
+The application is implemented at the repository root and deployed from [`nityam2007/np-coach`](https://github.com/nityam2007/np-coach) through Coolify. P0–P7 are complete; MariaDB, Redis, schema migration, Directus, CMS bootstrap, and Next.js completed the first production deployment on 6 August 2026.
 
-This is also **not a git repository** — initialize one when starting implementation.
+Treat archived source material under `AIDATA/Pages OLD/`, `AIDATA/SEO - OLD/`, the original SOW, brand references, and legal inputs as read-only. `AIDATA/CONTINUE.md`, `AIDATA/TASKS.md`, and `AIDATA/PLAN.md` are active handover documents and must stay current.
 
 ## Mission
 
-Rebuild np-coaches.co.uk as a fast, CMS-driven Next.js site. Three non-negotiables: **fast as fire** (SSG/ISR, CDN-cached, minimal client JS), **secure as a prison** (see Security below), **best UX** (mobile-first, responsive, accessible). The CMS is live from day one — content is never hardcoded.
+Operate and improve np-coaches.co.uk as a fast, CMS-driven Next.js site. Three non-negotiables remain: **fast as fire** (SSG/ISR, CDN-cached, minimal client JS), **secure as a prison** (see Security below), **best UX** (mobile-first, responsive, accessible). User-facing content stays CMS-driven.
 
 ## Working rules (apply to every change)
 
@@ -32,7 +32,7 @@ Rebuild np-coaches.co.uk as a fast, CMS-driven Next.js site. Three non-negotiabl
 
 **Continuing the build? Read [AIDATA/CONTINUE.md](AIDATA/CONTINUE.md) FIRST** — it's the up-to-date handoff (where things are, how to run, gotchas, architecture patterns, what's next). Then [AIDATA/TASKS.md](AIDATA/TASKS.md) for the work board + extension recipe.
 
-The app is well advanced — **P0–P6 done** (full marketing site + Stripe booking/pass + forms + home-to-school + real images + organised Directus admin). **Next: P7 compliance + deploy**, and wiring M365 email. Details + status live in [AIDATA/CONTINUE.md](AIDATA/CONTINUE.md).
+The app and Coolify deployment are complete through **P7**. Remaining work is production acceptance and enhancement: scoped Directus app access, live integration checks, M365 email, off-site restore-tested backups, redirects, and final QA. Start with [HANDOVER.md](HANDOVER.md) and [AIDATA/CONTINUE.md](AIDATA/CONTINUE.md).
 
 Quick map:
 - `src/app/` — routes (incl. `[slug]` which resolves fleet vehicles **and** content pages; `fleet/`; `robots.ts`; `sitemap.ts`).
@@ -40,9 +40,9 @@ Quick map:
 - `src/lib/` — `directus.ts` (typed fetchers, ISR, fallback) · `site-config.ts` (types) · `site-content.json` (seed source + offline fallback).
 - `scripts/seed-directus.mjs` — idempotent CMS bootstrap (`npm run seed`).
 - **Pattern for any content:** Directus collection → seed → typed fetcher (with fallback) → component/route. Simple pages need **no code** — just add a `pages` entry in the CMS.
-- **Verify:** `docker compose up` · `npm run seed` · `npm run build` · `npm run lint`.
+- **Agent-safe verify:** `npx tsc --noEmit --incremental false` · `npm run lint`. Use the full Docker/bootstrap/build checks when the relevant services are available and no user-owned process will be disrupted.
 
-## Reference material (read these before building anything)
+## Reference material (read before changing the relevant area)
 
 - [AIDATA/PLAN.md](AIDATA/PLAN.md) — **the build plan: architecture, content model, modules, phases. Start here.**
 - [AIDATA/SOW.md](AIDATA/SOW.md) — original statement of work (note: some decisions superseded below).
@@ -55,31 +55,32 @@ Quick map:
 
 ## Tech stack (locked) — full details in [INFO.md](INFO.md)
 
-This is the original [SOW.md](AIDATA/SOW.md) stack, fully self-hosted.
+The implemented stack evolved from the original [SOW.md](AIDATA/SOW.md) and remains fully self-hosted.
 
 - **Frontend:** Next.js 16 + TypeScript + Tailwind (Dockerized). SSG/ISR; talks to Directus over REST/GraphQL.
 - **CMS / admin:** **Directus** (Dockerized) — headless CMS + admin panel + API. Owns content **and** transactional data; one client admin panel. *(Source-available MSCL — free for NP Coaches under the Innovation Grant.)*
 - **Database:** **MariaDB** (Dockerized) — reached only by Directus. **No Prisma.**
 - **Media:** Directus uploads → Docker volume (Cloudflare caches; R2 optional later).
-- **Reverse proxy:** **Traefik** (Dockerized) — routes containers by domain; origin TLS via a Cloudflare Origin cert.
+- **Reverse proxy:** **Coolify proxy** in production. The bundled Traefik stack is a standalone alternative and must not run beside Coolify.
 - **Edge:** **Cloudflare** — DNS, Proxy/CDN, SSL (Full-strict), WAF, Turnstile — in front of the VPS.
 - **Payments:** Stripe (server-side only; prices computed server-side; webhook signatures verified).
-- **Email:** Microsoft 365 SMTP via nodemailer (works from the VPS) — do **not** add Resend.
-- **Host:** Hostinger **VPS — KVM2 (2 vCPU / 8 GB)**, Linux + Docker.
+- **Email:** Microsoft 365 delivery is the required provider; production integration/acceptance remains open. Do **not** add Resend.
+- **Host:** Hostinger **VPS — KVM2 (2 vCPU / 8 GB)**, Linux + Docker + Coolify.
 
 ### Architecture
 
 ```
-Cloudflare (DNS·Proxy/CDN·SSL·WAF·Turnstile) ─Origin cert─► Hostinger VPS KVM2 (2c/8GB) · Docker + Traefik
-                                                              ├─ Next.js app ─REST/GraphQL─► Directus ─► MariaDB
-                                                              ├─ Directus (admin/API)          └─ uploads → volume
-                                                              └─ 2 other static sites
-                                       Next.js → Stripe (payments)   ·   Next.js → M365 SMTP (email)
+Cloudflare (DNS·Proxy/CDN·SSL·WAF·Turnstile) ─► Hostinger VPS · Docker + Coolify proxy
+                                                     ├─ Next.js ─REST/GraphQL─► Directus
+                                                     ├─ Directus ─► MariaDB (private)
+                                                     ├─ Redis (private)
+                                                     └─ uploads → persistent volume
+                              Next.js → Stripe · Next.js → Microsoft 365 (when configured)
 ```
 
 Directus owns all data — content **and** transactional collections (bookings, pass purchases, contact/quote submissions) — with role-based access (one client admin panel). The whole site is editable from Directus. See [AIDATA/PLAN.md](AIDATA/PLAN.md) for collections + modules.
 
-**Robust, not over-engineered:** Docker Compose with healthchecks + restart policies; cron MariaDB backups offsite; VPS hardening (firewall 80/443/22, fail2ban, unattended-upgrades) + Cloudflare WAF. 2c/8GB comfortably runs MariaDB + Directus + Next.js + Traefik + the 2 static sites.
+**Robust, not over-engineered:** Coolify Docker Compose with healthchecks, restart policies, private internal services, named volumes, and Cloudflare WAF. Production also requires encrypted off-site database/upload backups and a tested restore.
 
 ### Dev environment
 
@@ -90,10 +91,10 @@ Directus owns all data — content **and** transactional collections (bookings, 
 ## Brand identity & UI reference (drives all UI work)
 
 - **UI mockups (authoritative for layout):** [WEB PAGE STYLE REF.jpeg](AIDATA/WEB%20PAGE%20STYLE%20REF.jpeg) (full homepage — sticky nav, hero + instant-quote widget, accreditation strip, service cards, fleet carousel, school-transport block, coverage map, stats band) and [FOOTER REF.jpeg](AIDATA/FOOTER%20REF.jpeg) (testimonials, FAQ accordion, footer columns). Build to match these.
-- **Colours:** Dark Navy `#0e0f27`, Light Grey-Blue `#a8abbc`, White `#fdfdfd`. (Accent blue for highlighted words/CTAs as seen in the mockup.)
+- **Colours:** Deep primary blue `#172554`, Light Grey-Blue `#a8abbc`, White `#fdfdfd`, accent blue `#2563eb`.
 - **Fonts:** Headings/display = **Geist**, body = **Inter** — both via `next/font`. (The brand board jpeg's "Optima" is the old, superseded choice — ignore it.)
 - **Tone / visual direction:** Premium, reliable, safe, professional. Strong navy foundations, generous white space, minimal dividers, polished fleet imagery, concise copy.
-- Logo is not yet supplied — use a 1:1 placeholder.
+- The migrated NPC globe logo is stored in Directus and remains CMS-editable.
 - **Mockup data is placeholder:** the footer in the mockup shows a Tamworth address / `0121…` phone — **ignore it**; use the real Iver depot details (below).
 
 ## Domain model & key features (from the scope)

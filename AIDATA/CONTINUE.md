@@ -70,7 +70,7 @@ Directus collection → seed (`scripts/seed-directus.mjs`) → typed in `src/lib
 
 **Payments (P4/P5 — reuse for any new paid flow):**
 - Price **always computed server-side** from Directus (`src/lib/stripe.ts` — `priceBooking`, `priceLostPropertyPass`, `computeGross`). Client never sends an amount.
-- Persist a `pending` row **before** redirecting → **Stripe Checkout** → `/api/stripe/webhook` (raw body, `constructEvent` signature verify, **idempotent** `pending→paid` keyed by unique `stripe_session_id`, routed by `metadata.kind`). Paid-email channels use atomic Directus delivery claims/status timestamps so webhook retries and success-page verification cooperate without intentional duplicates.
+- Persist a `pending` row **before** redirecting → **Stripe Checkout** with customer-entered promotion codes → `/api/stripe/webhook` (raw body, `constructEvent` signature verify, **idempotent** `pending→paid` keyed by unique `stripe_session_id`, routed by `metadata.kind`). The verified `amount_total` replaces the pre-discount amount before emails/tickets are produced; no-payment checkouts are also accepted. Paid-email channels use atomic Directus delivery claims/status timestamps so webhook retries and success-page verification cooperate without intentional duplicates.
 - Order collections (`bookings`, `pass_purchases`) are **server-write only** (no public read/create); written with `DIRECTUS_SERVER_TOKEN` (dev falls back to admin login).
 - Graceful "being set up" notice when `STRIPE_SECRET_KEY` is unset.
 

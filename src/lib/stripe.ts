@@ -263,6 +263,7 @@ export async function markPaidBySession(
   collection: PaymentCollection,
   sessionId: string,
   paymentIntent: string | null,
+  amountTotal: number | null,
   options: { requireEmailDelivery?: boolean } = {},
 ): Promise<string | null> {
   const rows = await directusServerRead<Array<{ id: number; status: string; reference: string }>>(
@@ -271,10 +272,12 @@ export async function markPaidBySession(
   const row = rows?.[0];
   if (!row) return null;
 
-  if (row.status !== "paid") {
+  const verifiedAmount = Number.isInteger(amountTotal) && amountTotal !== null && amountTotal >= 0 ? amountTotal : null;
+  if (row.status !== "paid" || verifiedAmount !== null) {
     const updated = await directusServerWrite(`/items/${collection}/${row.id}`, "PATCH", {
       status: "paid",
       stripe_payment_intent: paymentIntent,
+      ...(verifiedAmount !== null ? { amount: verifiedAmount } : {}),
     });
     if (updated === null) return null;
   }
@@ -292,12 +295,18 @@ export async function confirmCheckoutSession(sessionId: string, kind: "booking" 
   if (!stripeConfigured() || !sessionId.startsWith("cs_")) return null;
   try {
     const session = await getStripe().checkout.sessions.retrieve(sessionId);
-    if (session.payment_status !== "paid" || session.metadata?.kind !== kind) return null;
+    if (
+      (session.payment_status !== "paid" && session.payment_status !== "no_payment_required") ||
+      session.metadata?.kind !== kind
+    ) {
+      return null;
+    }
     const collection = kind === "pass" ? "pass_purchases" : "bookings";
     return markPaidBySession(
       collection,
       session.id,
       typeof session.payment_intent === "string" ? session.payment_intent : (session.payment_intent?.id ?? null),
+      session.amount_total,
     );
   } catch {
     return null;

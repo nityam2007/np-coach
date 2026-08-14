@@ -131,6 +131,7 @@ export async function startBooking(_prev: FormState, formData: FormData): Promis
   try {
     const session = await getStripe().checkout.sessions.create({
       mode: "payment",
+      allow_promotion_codes: true,
       customer_email: data.email,
       line_items: [
         {
@@ -208,6 +209,7 @@ export async function startPassPurchase(_prev: FormState, formData: FormData): P
   try {
     const session = await getStripe().checkout.sessions.create({
       mode: "payment",
+      allow_promotion_codes: true,
       customer_email: data.email,
       line_items: [
         {

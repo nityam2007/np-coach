@@ -5,8 +5,8 @@ import { getStripe, markPaidBySession } from "@/lib/stripe";
 /**
  * Stripe webhook. Verifies the signature against the raw body (forged/replayed
  * payloads are rejected before any logic), then idempotently marks the matching
- * booking `paid` on checkout.session.completed. Stripe retries on non-2xx, and
- * markBookingPaid only flips `pending → paid`, so duplicate deliveries are no-ops.
+ * order `paid` on checkout.session.completed. Stripe retries on non-2xx, and
+ * the idempotent Directus update makes duplicate deliveries safe.
  */
 
 // Ensure the raw body is available and the handler always runs on the server at request time.
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
-    if (session.payment_status === "paid") {
+    if (session.payment_status === "paid" || session.payment_status === "no_payment_required") {
       const paymentIntent =
         typeof session.payment_intent === "string" ? session.payment_intent : (session.payment_intent?.id ?? null);
       // `kind` metadata tells us which collection this session belongs to.
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
       if (kind === "booking" || kind === "pass") {
         const collection = kind === "pass" ? "pass_purchases" : "bookings";
         try {
-          await markPaidBySession(collection, session.id, paymentIntent, {
+          await markPaidBySession(collection, session.id, paymentIntent, session.amount_total, {
             requireEmailDelivery: true,
           });
         } catch (error) {

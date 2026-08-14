@@ -21,7 +21,7 @@ Rebuild of [np-coaches.co.uk](https://np-coaches.co.uk) — a UK coach-hire oper
 ## Current payment and form controls
 
 - Contact, quote, booking, lost-property, and OTP requests use the existing Managed Turnstile widget. Tokens are verified server-side through Cloudflare Siteverify and production fails closed when the server secret is absent or invalid.
-- Stripe Checkout receives the customer's email for receipts. A booking, ticket, or lost-property claim is shown as complete only after Stripe verifies the Checkout session; public booking references cannot complete an order.
+- Stripe Checkout receives the customer's email for receipts and accepts active customer-entered promotion codes. A booking, ticket, or lost-property claim is shown as complete only after Stripe verifies the Checkout session; the verified discounted total is recorded, and public booking references cannot complete an order.
 - Coolify deployments run Directus system bootstrap plus additive/idempotent content, field, admin and media setup. Routine pushes never apply an exact schema snapshot, overwrite populated settings, or recreate dashboard panels; protected business-table counts are checked before and after bootstrap.
 - The internal Postfix relay sends branded HTML/plain-text OTP, booking-ticket, lost-property, contact, and quote mail. OTP requests fail visibly when SMTP fails; paid booking/pass messages are tracked idempotently in Directus, and form acknowledgements/notifications run only after the submission is stored.
 - “Staff email” means the internal recipient mailbox only: contact/lost-property use `info@np-coaches.co.uk`, while quotes use `bookings@np-coaches.co.uk`. These recipients are not Directus users and consume no Directus Studio seats.

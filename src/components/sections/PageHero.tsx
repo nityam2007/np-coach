@@ -5,7 +5,7 @@ import { Icon, type IconName } from "@/components/ui/Icon";
 import { Reveal } from "@/components/ui/motion";
 import { ButtonLink } from "@/components/ui/Button";
 import { StripesBackdrop, FloatingBlobs } from "@/components/ui/Backdrops";
-import { assetUrl, type DirectusFileRef } from "@/lib/directus";
+import { assetUrl, getSettings, selectPageHeroFallback, type DirectusFileRef } from "@/lib/directus";
 
 export type Crumb = { label: string; href?: string };
 
@@ -13,7 +13,7 @@ export type Crumb = { label: string; href?: string };
  * Shared page header. A CMS image becomes a full-bleed hero background with a
  * contrast overlay; pages without an image retain the lightweight brand texture.
  */
-export function PageHero({
+export async function PageHero({
   eyebrow,
   title,
   intro,
@@ -22,7 +22,9 @@ export function PageHero({
   children,
   image,
   imageAlt = "",
-  priority = false,
+  priority = true,
+  fallbackKey,
+  useFallback = true,
 }: {
   eyebrow?: string;
   title: string;
@@ -33,17 +35,24 @@ export function PageHero({
   image?: DirectusFileRef;
   imageAlt?: string;
   priority?: boolean;
+  fallbackKey?: string;
+  useFallback?: boolean;
 }) {
-  const background = assetUrl(image);
+  const explicitBackground = assetUrl(image);
+  const fallback = !explicitBackground && useFallback
+    ? selectPageHeroFallback(await getSettings(), fallbackKey ?? title)
+    : null;
+  const background = explicitBackground ?? assetUrl(fallback?.image);
+  const backgroundAlt = explicitBackground ? imageAlt : (fallback?.imageAlt ?? imageAlt);
   const hasBackground = Boolean(background);
 
   return (
     <section className={`relative isolate overflow-hidden border-b border-accent/10 ${hasBackground ? "bg-navy text-offwhite" : "bg-gradient-to-br from-white via-tint-soft to-tint text-navy"}`}>
       {background ? (
         <>
-          <Image src={background} alt={imageAlt} fill priority={priority} sizes="100vw" className="object-cover" />
-          <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-navy/95 via-navy/78 to-navy/42" />
-          <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-navy/75 via-transparent to-navy/20" />
+          <Image src={background} alt={backgroundAlt} fill priority={priority} sizes="100vw" className="z-0 object-cover" />
+          <div aria-hidden="true" className="absolute inset-0 z-[1] bg-gradient-to-r from-navy/95 via-navy/78 to-navy/42" />
+          <div aria-hidden="true" className="absolute inset-0 z-[1] bg-gradient-to-t from-navy/75 via-transparent to-navy/20" />
         </>
       ) : (
         <>

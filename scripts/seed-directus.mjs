@@ -399,6 +399,12 @@ async function run() {
   await ensureField("settings", str("home_to_school_image_alt"));
   await ensureField("settings", fileField("daily_express_image", "Daily Express page hero banner."));
   await ensureField("settings", str("daily_express_image_alt"));
+  await ensureField("settings", fileField("page_hero_fallback_image_1", "Reusable hero for pages without their own image."));
+  await ensureField("settings", str("page_hero_fallback_image_1_alt"));
+  await ensureField("settings", fileField("page_hero_fallback_image_2", "Second reusable hero for pages without their own image."));
+  await ensureField("settings", str("page_hero_fallback_image_2_alt"));
+  await ensureField("settings", fileField("page_hero_fallback_image_3", "Third reusable hero for pages without their own image."));
+  await ensureField("settings", str("page_hero_fallback_image_3_alt"));
   // Testimonials gained author org/photo/rating (mockup cards).
   await ensureField("testimonials", str("company"));
   await ensureField("testimonials", fileField("image", "Author photo (optional)."));

@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { LostPropertyForm } from "@/components/forms/LostPropertyForm";
-import { StripesBackdrop } from "@/components/ui/Backdrops";
-import { getSettings } from "@/lib/directus";
+import { PageHero } from "@/components/sections/PageHero";
+import { getSettings, selectPageHeroFallback } from "@/lib/directus";
 import { priceLostPropertyPass } from "@/lib/stripe";
 
 export const metadata: Metadata = {
@@ -27,22 +26,19 @@ export default async function LostPropertyClaimPage({
   const { cancelled } = await searchParams;
   const [settings, priced] = await Promise.all([getSettings(), priceLostPropertyPass()]);
   const fee = (priced.amount / 100).toFixed(2);
+  const heroFallback = selectPageHeroFallback(settings, "/lost-property/claim");
 
   return (
     <article>
-      <section className="relative overflow-hidden bg-gradient-to-br from-navy via-navy to-brand-deep text-offwhite">
-        <StripesBackdrop dark />
-        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
-          <Link href="/lost-property" className="text-sm text-greyblue transition-colors hover:text-offwhite">
-            ← Lost property
-          </Link>
-          <h1 className="mt-4 font-display text-4xl font-bold sm:text-5xl">Report a lost item</h1>
-          <p className="mt-4 max-w-2xl text-greyblue">
-            Tell us about your journey and the item, pay the £{fee} admin fee securely, and we&apos;ll check whether
-            your item has been handed in.
-          </p>
-        </div>
-      </section>
+      <PageHero
+        eyebrow="Lost property"
+        title="Report a lost item"
+        intro={`Tell us about your journey and the item, pay the £${fee} admin fee securely, and we'll check whether your item has been handed in.`}
+        crumbs={[{ label: "Home", href: "/" }, { label: "Lost Property", href: "/lost-property" }, { label: "Report an item" }]}
+        image={heroFallback?.image}
+        imageAlt={heroFallback?.imageAlt}
+        useFallback={false}
+      />
 
       <section className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-3">
         <div className="lg:col-span-2">

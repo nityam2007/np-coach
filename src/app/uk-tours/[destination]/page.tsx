@@ -7,7 +7,7 @@ import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Icon } from "@/components/ui/Icon";
 import { Reveal } from "@/components/ui/motion";
 import { ButtonLink, buttonCls } from "@/components/ui/Button";
-import { assetUrl, getTour, getTours, getSettings } from "@/lib/directus";
+import { assetUrl, getTour, getTours, getSettings, selectPageHeroFallback } from "@/lib/directus";
 
 export async function generateStaticParams() {
   const tours = await getTours();
@@ -26,7 +26,9 @@ export default async function TourPage({ params }: { params: Promise<{ destinati
   const tour = await getTour(destination);
   if (!tour) notFound();
   const settings = await getSettings();
-  const hero = assetUrl(tour.heroImage ?? tour.image);
+  const heroFallback = selectPageHeroFallback(settings, `uk-tours/${destination}`);
+  const hero = assetUrl(tour.heroImage ?? tour.image ?? heroFallback?.image);
+  const heroAlt = tour.heroImageAlt ?? tour.imageAlt ?? heroFallback?.imageAlt ?? "";
   const card = assetUrl(tour.cardImage ?? tour.image);
   const detail = assetUrl(tour.image ?? tour.cardImage);
   const jsonLd = {
@@ -41,9 +43,9 @@ export default async function TourPage({ params }: { params: Promise<{ destinati
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <BreadcrumbJsonLd items={[{ label: "Home", path: "/" }, { label: "UK Tours", path: "/uk-tours" }, { label: tour.destination, path: `/uk-tours/${destination}` }]} />
       <section className="relative flex min-h-[34rem] items-end overflow-hidden bg-navy text-offwhite lg:aspect-[21/9] lg:min-h-0">
-        {hero && <Image src={hero} alt={tour.heroImageAlt ?? tour.imageAlt ?? ""} fill priority sizes="100vw" className="object-cover" />}
-        <div className="absolute inset-0 bg-gradient-to-r from-navy/95 via-navy/65 to-navy/20" />
-        <div className="relative mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 lg:py-20">
+        {hero && <Image src={hero} alt={heroAlt} fill priority sizes="100vw" className="z-0 object-cover" />}
+        <div className="absolute inset-0 z-[1] bg-gradient-to-r from-navy/95 via-navy/65 to-navy/20" />
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 lg:py-20">
           <nav aria-label="Breadcrumb" className="mb-5 flex flex-wrap items-center gap-1.5 text-sm text-greyblue">
             <Link href="/" className="hover:text-white">Home</Link><span>/</span><Link href="/uk-tours" className="hover:text-white">UK Tours</Link><span>/</span><span className="text-white">{tour.destination}</span>
           </nav>

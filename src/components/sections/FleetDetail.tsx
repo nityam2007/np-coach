@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { FleetVehicle } from "@/lib/site-config";
 import type { SiteSettings } from "@/lib/directus";
-import { assetUrl } from "@/lib/directus";
+import { assetUrl, selectPageHeroFallback } from "@/lib/directus";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { ButtonLink, buttonCls } from "@/components/ui/Button";
 import { Eyebrow } from "@/components/ui/Eyebrow";
@@ -19,7 +19,9 @@ export function FleetDetail({
   vehicle: FleetVehicle;
   settings: SiteSettings;
 }) {
-  const hero = assetUrl(vehicle.image);
+  const heroFallback = selectPageHeroFallback(settings, vehicle.slug);
+  const hero = assetUrl(vehicle.image ?? heroFallback?.image);
+  const heroAlt = vehicle.image ? (vehicle.imageAlt ?? "") : (heroFallback?.imageAlt ?? vehicle.imageAlt ?? "");
   const gallery = (vehicle.gallery ?? []).map(assetUrl).filter((src): src is string => Boolean(src));
   const layouts = (vehicle.layoutImages ?? []).map(assetUrl).filter((src): src is string => Boolean(src));
 
@@ -37,15 +39,15 @@ export function FleetDetail({
         {hero && (
           <Image
             src={hero}
-            alt={vehicle.imageAlt ?? ""}
+            alt={heroAlt}
             fill
             sizes="100vw"
-            className="object-cover"
+            className="z-0 object-cover"
             priority
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-navy/90 via-navy/45 to-navy/25" />
-        <div className="relative mx-auto flex min-h-[390px] max-w-7xl flex-col justify-between px-4 py-8 sm:min-h-[470px] sm:px-6 sm:py-10">
+        <div className="absolute inset-0 z-[1] bg-gradient-to-t from-navy/90 via-navy/45 to-navy/25" />
+        <div className="relative z-10 mx-auto flex min-h-[390px] max-w-7xl flex-col justify-between px-4 py-8 sm:min-h-[470px] sm:px-6 sm:py-10">
           <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-sm text-offwhite/80">
             <Link href="/" className="hover:text-white">Home</Link>
             <span>/</span>

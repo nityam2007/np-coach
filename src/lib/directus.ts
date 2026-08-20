@@ -52,6 +52,11 @@ export function assetUrl(file: DirectusFileRef): string | null {
   return `${PUBLIC_DIRECTUS_URL}/assets/${id}`;
 }
 
+export interface PageHeroFallback {
+  image: string | null;
+  imageAlt: string;
+}
+
 /** Normalised settings shape consumed by the UI (mirrors site-content). */
 export interface SiteSettings {
   name: string;
@@ -95,6 +100,8 @@ export interface SiteSettings {
   homeToSchoolImageAlt: string;
   dailyExpressImage: string | null;
   dailyExpressImageAlt: string;
+  /** Reusable CMS-managed hero pool for pages without their own image. */
+  pageHeroFallbacks: PageHeroFallback[];
 }
 
 /** Raw `settings` singleton row as stored in Directus (flat columns + JSON fields). */
@@ -141,6 +148,12 @@ interface SettingsRow {
   home_to_school_image_alt: string | null;
   daily_express_image: string | null;
   daily_express_image_alt: string | null;
+  page_hero_fallback_image_1: string | null;
+  page_hero_fallback_image_1_alt: string | null;
+  page_hero_fallback_image_2: string | null;
+  page_hero_fallback_image_2_alt: string | null;
+  page_hero_fallback_image_3: string | null;
+  page_hero_fallback_image_3_alt: string | null;
 }
 
 interface ServiceRow {
@@ -220,6 +233,11 @@ const fallbackSettings: SiteSettings = {
   homeToSchoolImageAlt: siteConfig.mediaAlt.homeToSchoolBanner,
   dailyExpressImage: null,
   dailyExpressImageAlt: siteConfig.mediaAlt.dailyExpressBanner,
+  pageHeroFallbacks: [
+    { image: null, imageAlt: siteConfig.routes.find((route) => route.slug === "wolverhampton-to-london")?.imageAlt ?? siteConfig.mediaAlt.dailyExpressBanner },
+    { image: null, imageAlt: siteConfig.routes.find((route) => route.slug === "london-to-leicester")?.imageAlt ?? siteConfig.mediaAlt.dailyExpressBanner },
+    { image: null, imageAlt: siteConfig.mediaAlt.dailyExpressBanner },
+  ],
 };
 
 function mergeEmailTemplates(stored: EmailTemplates | null | undefined): EmailTemplates {
@@ -280,7 +298,29 @@ export async function getSettings(): Promise<SiteSettings> {
     homeToSchoolImageAlt: row.home_to_school_image_alt || siteConfig.mediaAlt.homeToSchoolBanner,
     dailyExpressImage: row.daily_express_image ?? null,
     dailyExpressImageAlt: row.daily_express_image_alt || siteConfig.mediaAlt.dailyExpressBanner,
+    pageHeroFallbacks: [
+      {
+        image: row.page_hero_fallback_image_1 ?? null,
+        imageAlt: row.page_hero_fallback_image_1_alt || siteConfig.routes.find((route) => route.slug === "wolverhampton-to-london")?.imageAlt || siteConfig.mediaAlt.dailyExpressBanner,
+      },
+      {
+        image: row.page_hero_fallback_image_2 ?? null,
+        imageAlt: row.page_hero_fallback_image_2_alt || siteConfig.routes.find((route) => route.slug === "london-to-leicester")?.imageAlt || siteConfig.mediaAlt.dailyExpressBanner,
+      },
+      {
+        image: row.page_hero_fallback_image_3 ?? null,
+        imageAlt: row.page_hero_fallback_image_3_alt || siteConfig.mediaAlt.dailyExpressBanner,
+      },
+    ],
   };
+}
+
+/** Pick a stable CMS hero for a page without hardcoding a file UUID in the UI. */
+export function selectPageHeroFallback(settings: SiteSettings, key: string): PageHeroFallback | null {
+  const available = settings.pageHeroFallbacks.filter((item) => Boolean(item.image));
+  if (available.length === 0) return null;
+  const hash = Array.from(key).reduce((total, character) => total + (character.codePointAt(0) ?? 0), 0);
+  return available[hash % available.length];
 }
 
 interface SchoolTransportBlob {

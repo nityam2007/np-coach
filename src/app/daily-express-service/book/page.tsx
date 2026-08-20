@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { BookingForm, type BookingStopOption } from "@/components/forms/BookingForm";
-import { StripesBackdrop } from "@/components/ui/Backdrops";
+import { PageHero } from "@/components/sections/PageHero";
 import { Icon } from "@/components/ui/Icon";
-import { getStops, getSettings } from "@/lib/directus";
+import { getStops, getSettings, selectPageHeroFallback } from "@/lib/directus";
 import { computeGross } from "@/lib/stripe";
 
 export const metadata: Metadata = {
@@ -25,22 +24,19 @@ export default async function BookPage({
   // Fares are VAT-inclusive, computed from the CMS pricing (same logic the server uses).
   const fareSingle = computeGross(settings.pricing.dailyExpressSingle, settings.pricing.dailyExpressVat).gross;
   const fareReturn = computeGross(settings.pricing.dailyExpressReturn, settings.pricing.dailyExpressVat).gross;
+  const heroFallback = selectPageHeroFallback(settings, "/daily-express-service/book");
 
   return (
     <article>
-      <section className="relative overflow-hidden bg-gradient-to-br from-navy via-navy to-brand-deep text-offwhite">
-        <StripesBackdrop dark />
-        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
-          <Link href="/daily-express-service" className="text-sm text-greyblue transition-colors hover:text-offwhite">
-            ← Daily Express service
-          </Link>
-          <h1 className="mt-4 font-display text-4xl font-bold sm:text-5xl">Book your seat</h1>
-          <p className="mt-4 max-w-2xl text-greyblue">
-            Choose where you&apos;re travelling from and to, your date and number of passengers, then pay securely
-            online.
-          </p>
-        </div>
-      </section>
+      <PageHero
+        eyebrow="Daily Express"
+        title="Book your seat"
+        intro="Choose where you're travelling from and to, your date and number of passengers, then pay securely online."
+        crumbs={[{ label: "Home", href: "/" }, { label: "Daily Express", href: "/daily-express-service" }, { label: "Book" }]}
+        image={heroFallback?.image}
+        imageAlt={heroFallback?.imageAlt}
+        useFallback={false}
+      />
 
       <section className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
         {/* Trust rail at the decision point — reassurance where the money changes hands. */}

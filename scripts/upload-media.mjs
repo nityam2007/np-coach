@@ -362,6 +362,48 @@ async function run() {
   } else {
     console.log(`• client media revision ${CLIENT_MEDIA_REVISION} already applied — CMS edits preserved`);
   }
+  // Three reusable route-style heroes for any page whose own CMS image is empty.
+  // Each slot is a real Directus file field; fill only empty slots so editor choices win.
+  const fallbackFolder = await ensureFolder("Client supplied — August 2026");
+  const fallbackDefinitions = [
+    {
+      imageField: "page_hero_fallback_image_1",
+      altField: "page_hero_fallback_image_1_alt",
+      file: "wolverhampton-banner.jpg",
+      alt: siteContent.routes.find((route) => route.slug === "wolverhampton-to-london")?.imageAlt ?? siteContent.mediaAlt.dailyExpressBanner,
+    },
+    {
+      imageField: "page_hero_fallback_image_2",
+      altField: "page_hero_fallback_image_2_alt",
+      file: "london-leicester-banner.jpg",
+      alt: siteContent.routes.find((route) => route.slug === "london-to-leicester")?.imageAlt ?? siteContent.mediaAlt.dailyExpressBanner,
+    },
+    {
+      imageField: "page_hero_fallback_image_3",
+      altField: "page_hero_fallback_image_3_alt",
+      file: "daily-express-banner.jpg",
+      alt: siteContent.mediaAlt.dailyExpressBanner,
+    },
+  ];
+  const fallbackFields = fallbackDefinitions.flatMap(({ imageField, altField }) => [imageField, altField]);
+  const currentFallbacks = await api(`/items/settings?fields=${fallbackFields.join(",")}`);
+  const fallbackPatch = {};
+  for (const definition of fallbackDefinitions) {
+    const fileId = await ensureFile(definition.file, CLIENT_MEDIA_DIR, fallbackFolder);
+    if (!currentFallbacks[definition.imageField]) {
+      fallbackPatch[definition.imageField] = fileId;
+      fallbackPatch[definition.altField] = definition.alt;
+    } else if (currentFallbacks[definition.imageField] === fileId && !currentFallbacks[definition.altField]) {
+      fallbackPatch[definition.altField] = definition.alt;
+    }
+  }
+  if (Object.keys(fallbackPatch).length) {
+    await api("/items/settings", { method: "PATCH", body: JSON.stringify(fallbackPatch) });
+    console.log(`✓ reusable page heroes set: ${Object.keys(fallbackPatch).join(", ")}`);
+  } else {
+    console.log("• reusable page hero slots already configured — CMS edits preserved");
+  }
+
   console.log("Done. Media uploaded and linked.");
 }
 

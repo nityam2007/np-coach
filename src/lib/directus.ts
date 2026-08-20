@@ -30,7 +30,8 @@ import {
  * so the site always renders. Uses Next ISR (revalidate + tags).
  */
 
-const DIRECTUS_URL = process.env.DIRECTUS_URL ?? "http://localhost:8055";
+const DIRECTUS_URL =
+  process.env.DIRECTUS_URL || process.env.NEXT_PUBLIC_DIRECTUS_URL || "http://localhost:8055";
 // Browser-facing Directus URL — images are loaded by the client, so they must use the
 // public host, not the internal docker hostname.
 const PUBLIC_DIRECTUS_URL = process.env.NEXT_PUBLIC_DIRECTUS_URL ?? "http://localhost:8055";

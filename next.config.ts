@@ -56,6 +56,7 @@ const nextConfig: NextConfig = {
   images: {
     loader: "custom",
     loaderFile: "./src/lib/directus-loader.ts",
+    deviceSizes: [640, 750, 828, 1080, 1200, 1600, 1920, 2560],
   },
   experimental: {
     serverActions: {

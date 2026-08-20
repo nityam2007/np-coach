@@ -17,10 +17,10 @@ export default function directusLoader({
 }): string {
   if (!src.includes("/assets/")) return src; // not a Directus asset — return as-is
   const url = new URL(src);
-  url.searchParams.set("width", String(width));
-  url.searchParams.set("quality", String(quality ?? 80));
+  url.searchParams.set("width", String(Math.min(width, 2560)));
+  url.searchParams.set("quality", String(quality ?? 78));
   url.searchParams.set("fit", "cover");
-  url.searchParams.set("format", "auto");
+  url.searchParams.set("format", "webp");
   url.searchParams.set("withoutEnlargement", "true");
   return url.toString();
 }

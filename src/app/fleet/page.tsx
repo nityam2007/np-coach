@@ -1,4 +1,4 @@
-import { FleetCard } from "@/components/sections/FleetCard";
+import { FleetShowcase } from "@/components/sections/FleetShowcase";
 import { PageHero } from "@/components/sections/PageHero";
 import { FleetExperience } from "@/components/sections/FleetExperience";
 import { BreadcrumbJsonLd, ItemListJsonLd } from "@/components/seo/JsonLd";
@@ -50,11 +50,7 @@ export default async function FleetPage() {
           <Eyebrow>{settings.fleetPage.seatingLabel}</Eyebrow>
           <h2 className="mt-3 font-display text-3xl font-bold text-navy sm:text-4xl">{settings.fleetPage.gridHeading}</h2>
         </Reveal>
-        <Reveal className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {fleet.map((vehicle) => (
-            <FleetCard key={vehicle.slug} vehicle={vehicle} />
-          ))}
-        </Reveal>
+        <FleetShowcase vehicles={fleet} />
       </section>
 
       <FleetExperience content={settings.fleetPage} image={fleet[0]?.image} />

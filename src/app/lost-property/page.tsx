@@ -64,7 +64,7 @@ export default async function LostPropertyPage() {
             <div className="overflow-hidden rounded-3xl border border-greyblue/20 bg-white shadow-md shadow-navy/5">
               {image ? (
                 <div className="relative aspect-[16/9] bg-greyblue/15">
-                  <Image src={image} alt="NP Coaches vehicle" fill sizes="(max-width: 1024px) 100vw, 480px" className="object-cover" />
+                  <Image src={image} alt="NP Coaches lost property assistance" fill sizes="(max-width: 1024px) 100vw, 480px" className="object-cover" />
                   <div className="absolute inset-0 bg-gradient-to-t from-navy/50 to-transparent" />
                 </div>
               ) : null}

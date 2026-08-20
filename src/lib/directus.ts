@@ -19,6 +19,9 @@ import {
   type SchoolRoute,
   type HomepageContent,
   type FleetPageContent,
+  type SocialLink,
+  type TourPageContent,
+  type PageAttachment,
 } from "./site-config";
 
 /**
@@ -64,12 +67,14 @@ export interface SiteSettings {
   address: { line1: string; line2: string; city: string; county: string; postcode: string };
   nav: NavLink[];
   footerColumns: FooterColumn[];
+  socialLinks: SocialLink[];
   legalLinks: NavLink[];
   stats: Stat[];
   accreditations: string[];
   coverage: string[];
   faqs: Faq[];
   homepage: HomepageContent;
+  tourPage: TourPageContent;
   fleetPage: FleetPageContent;
   schoolTransport: SchoolTransport;
   /** Accreditation name → Directus file id (badge image). */
@@ -77,8 +82,18 @@ export interface SiteSettings {
   /** Directus file ids (null until set in the CMS). */
   logo: string | null;
   heroImage: string | null;
+  /** Optional CMS-managed homepage hero video. */
+  heroVideo: string | null;
+  /** Accessible description for the homepage hero image. */
+  heroImageAlt: string;
   /** Photo for the homepage school-transport block. */
   schoolImage: string | null;
+  schoolImageAlt: string;
+  /** Hero banners for bespoke service pages. */
+  homeToSchoolImage: string | null;
+  homeToSchoolImageAlt: string;
+  dailyExpressImage: string | null;
+  dailyExpressImageAlt: string;
 }
 
 /** Raw `settings` singleton row as stored in Directus (flat columns + JSON fields). */
@@ -104,18 +119,27 @@ interface SettingsRow {
   address_postcode: string;
   nav: NavLink[];
   footer_columns: FooterColumn[];
+  social_links: SocialLink[] | null;
   legal_links: NavLink[];
   stats: Stat[];
   accreditations: string[];
   coverage: string[];
   faqs: Faq[];
   homepage: HomepageContent | null;
+  tour_page: TourPageContent | null;
   fleet_page: FleetPageContent | null;
   school_transport: { logos?: Record<string, string> } | null;
   accreditation_logos: Record<string, string> | null;
   logo: string | null;
   hero_image: string | null;
+  hero_video: string | null;
+  hero_image_alt: string | null;
   school_image: string | null;
+  school_image_alt: string | null;
+  home_to_school_image: string | null;
+  home_to_school_image_alt: string | null;
+  daily_express_image: string | null;
+  daily_express_image_alt: string | null;
 }
 
 interface ServiceRow {
@@ -126,6 +150,7 @@ interface ServiceRow {
   href: string;
   icon: string | null;
   image: string | null;
+  image_alt: string | null;
 }
 
 /** Raw `fleet` row as stored in Directus. */
@@ -138,6 +163,7 @@ interface FleetRow {
   summary: string;
   features: string[];
   image: string | null;
+  image_alt: string | null;
   gallery: string[] | null;
   layout_images: string[] | null;
   seo_title: string;
@@ -172,18 +198,27 @@ const fallbackSettings: SiteSettings = {
   address: siteConfig.address,
   nav: siteConfig.nav,
   footerColumns: siteConfig.footerColumns,
+  socialLinks: siteConfig.socialLinks,
   legalLinks: siteConfig.legalLinks,
   stats: siteConfig.stats,
   accreditations: siteConfig.accreditations,
   coverage: siteConfig.coverage,
   faqs: siteConfig.faqs,
   homepage: siteConfig.homepage,
+  tourPage: siteConfig.tourPage,
   fleetPage: siteConfig.fleetPage,
   schoolTransport: siteConfig.schoolTransport,
   accreditationLogos: {},
   logo: null,
   heroImage: null,
+  heroVideo: null,
+  heroImageAlt: siteConfig.mediaAlt.homepageHero,
   schoolImage: null,
+  schoolImageAlt: siteConfig.mediaAlt.homeSchoolBlue,
+  homeToSchoolImage: null,
+  homeToSchoolImageAlt: siteConfig.mediaAlt.homeToSchoolBanner,
+  dailyExpressImage: null,
+  dailyExpressImageAlt: siteConfig.mediaAlt.dailyExpressBanner,
 };
 
 function mergeEmailTemplates(stored: EmailTemplates | null | undefined): EmailTemplates {
@@ -219,6 +254,7 @@ export async function getSettings(): Promise<SiteSettings> {
     },
     nav: row.nav,
     footerColumns: row.footer_columns,
+    socialLinks: row.social_links ?? siteConfig.socialLinks,
     legalLinks: row.legal_links,
     stats: row.stats ?? siteConfig.stats,
     accreditations: row.accreditations ?? siteConfig.accreditations,
@@ -227,6 +263,7 @@ export async function getSettings(): Promise<SiteSettings> {
     // Merge homepage copy so newly-added keys fall back to the seed defaults even if
     // the client's stored blob predates them.
     homepage: { ...siteConfig.homepage, ...(row.homepage ?? {}) },
+    tourPage: { ...siteConfig.tourPage, ...(row.tour_page ?? {}) },
     fleetPage: { ...siteConfig.fleetPage, ...(row.fleet_page ?? {}) },
     // Schools list/config is authoritative in site-content; logos (Directus file ids)
     // are merged in from the school_transport blob, keyed by school slug.
@@ -234,7 +271,14 @@ export async function getSettings(): Promise<SiteSettings> {
     accreditationLogos: row.accreditation_logos ?? {},
     logo: row.logo ?? null,
     heroImage: row.hero_image ?? null,
+    heroVideo: row.hero_video ?? null,
+    heroImageAlt: row.hero_image_alt || siteConfig.mediaAlt.homepageHero,
     schoolImage: row.school_image ?? null,
+    schoolImageAlt: row.school_image_alt || siteConfig.mediaAlt.homeSchoolBlue,
+    homeToSchoolImage: row.home_to_school_image ?? null,
+    homeToSchoolImageAlt: row.home_to_school_image_alt || siteConfig.mediaAlt.homeToSchoolBanner,
+    dailyExpressImage: row.daily_express_image ?? null,
+    dailyExpressImageAlt: row.daily_express_image_alt || siteConfig.mediaAlt.dailyExpressBanner,
   };
 }
 
@@ -252,12 +296,13 @@ function mergeSchoolLogos(blob: SchoolTransportBlob | null | undefined): SchoolT
 export async function getServices(): Promise<ServiceCard[]> {
   const rows = await fetchData<ServiceRow[]>("/items/services?sort=sort&limit=-1", "services");
   if (!rows || rows.length === 0) return siteConfig.services;
-  return rows.map(({ title, blurb, href, icon, image }) => ({
+  return rows.map(({ title, blurb, href, icon, image, image_alt }) => ({
     title,
     blurb,
     href,
     icon: icon ?? undefined,
     image: image ?? null,
+    imageAlt: image_alt || siteConfig.services.find((service) => service.title === title)?.imageAlt,
   }));
 }
 
@@ -271,6 +316,7 @@ function toVehicle(row: FleetRow): FleetVehicle {
     features: row.features,
     layoutImages: row.layout_images ?? [],
     image: row.image ?? null,
+    imageAlt: row.image_alt || siteConfig.fleet.find((vehicle) => vehicle.slug === row.slug)?.imageAlt,
     gallery: row.gallery ?? [],
     seoTitle: row.seo_title,
     seoDescription: row.seo_description,
@@ -299,6 +345,8 @@ interface PageRow {
   subtitle: string;
   body: string;
   image: string | null;
+  image_alt: string | null;
+  attachments: PageAttachment[] | null;
   seo_title: string;
   seo_description: string;
 }
@@ -311,6 +359,8 @@ function toPage(row: PageRow): Page {
     body: row.body,
     seoTitle: row.seo_title,
     image: row.image ?? null,
+    imageAlt: row.image_alt || siteConfig.pages.find((page) => page.slug === row.slug)?.imageAlt,
+    attachments: row.attachments ?? siteConfig.pages.find((page) => page.slug === row.slug)?.attachments ?? [],
     seoDescription: row.seo_description,
   };
 }
@@ -337,6 +387,11 @@ interface TourRow {
   summary: string;
   body: string;
   image: string | null;
+  image_alt: string | null;
+  hero_image: string | null;
+  hero_image_alt: string | null;
+  card_image: string | null;
+  card_image_alt: string | null;
   seo_title: string;
   seo_description: string;
 }
@@ -348,6 +403,11 @@ function toTour(row: TourRow): Tour {
     summary: row.summary,
     body: row.body,
     image: row.image ?? null,
+    imageAlt: row.image_alt || siteConfig.tours.find((tour) => tour.slug === row.slug)?.imageAlt,
+    heroImage: row.hero_image ?? null,
+    heroImageAlt: row.hero_image_alt || siteConfig.tours.find((tour) => tour.slug === row.slug)?.heroImageAlt,
+    cardImage: row.card_image ?? null,
+    cardImageAlt: row.card_image_alt || siteConfig.tours.find((tour) => tour.slug === row.slug)?.cardImageAlt,
     seoTitle: row.seo_title,
     seoDescription: row.seo_description,
   };
@@ -377,6 +437,8 @@ interface RouteRow {
   price_single: number;
   price_return: number;
   summary: string;
+  image: string | null;
+  image_alt: string | null;
   stops: RouteStop[];
   seo_title: string;
   seo_description: string;
@@ -391,6 +453,8 @@ function toRoute(row: RouteRow): CoachRoute {
     priceSingle: row.price_single,
     priceReturn: row.price_return,
     summary: row.summary,
+    image: row.image ?? null,
+    imageAlt: row.image_alt || siteConfig.routes.find((route) => route.slug === row.slug)?.imageAlt,
     stops: row.stops,
     seoTitle: row.seo_title,
     seoDescription: row.seo_description,

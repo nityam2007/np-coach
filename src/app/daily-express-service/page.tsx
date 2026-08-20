@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { RouteTimetable } from "@/components/sections/RouteTimetable";
 import { PageHero } from "@/components/sections/PageHero";
+import { PageBanner } from "@/components/sections/PageBanner";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { buildMetadata } from "@/lib/seo";
 import { getRoutes, getSettings, getStops } from "@/lib/directus";
@@ -55,6 +56,8 @@ export default async function DailyExpressPage() {
           Wellington St, Slough, SL1 1YG.
         </div>
       </PageHero>
+
+      <PageBanner image={settings.dailyExpressImage} alt={settings.dailyExpressImageAlt} priority />
 
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
         <h2 className="font-display text-2xl font-bold text-navy">Important travel information</h2>

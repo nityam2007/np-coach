@@ -14,6 +14,9 @@ import { createDirectusApi } from "./directus-api.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const MEDIA_DIR = join(HERE, "..", "directus", "seed-media");
+const CLIENT_MEDIA_DIR = join(MEDIA_DIR, "client-2026-08");
+const CLIENT_MEDIA_REVISION = "client-review-2026-08-20";
+const siteContent = JSON.parse(await readFile(join(HERE, "..", "src", "lib", "site-content.json"), "utf8"));
 
 const BASE = process.env.DIRECTUS_URL ?? "http://localhost:8055";
 const EMAIL = process.env.DIRECTUS_ADMIN_EMAIL ?? "admin@np-coaches.co.uk";
@@ -22,7 +25,7 @@ const STATIC_TOKEN = process.env.DIRECTUS_ADMIN_TOKEN;
 const directus = createDirectusApi({ base: BASE, token: STATIC_TOKEN });
 const api = directus.request;
 
-const MIME = { ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp" };
+const MIME = { ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".mp4": "video/mp4", ".pdf": "application/pdf" };
 
 // Upload one file if a file with this title doesn't already exist. Returns the file id.
 // `dir` is the source directory; `folderId` files it under a Directus folder.
@@ -103,6 +106,17 @@ const TOUR_IMAGES = {
   "john-wesley": "tour-touring-coach.jpg",
 };
 
+const CLIENT_TOUR_IMAGES = Object.fromEntries(
+  ["london", "windsor", "hampton-court", "cornwall", "salisbury", "bath", "john-wesley"].map((slug) => [
+    slug,
+    { hero: `tour-${slug}-hero.jpg`, card: `tour-${slug}-card.png` },
+  ]),
+);
+const CLIENT_ROUTE_IMAGES = {
+  "wolverhampton-to-london": "wolverhampton-banner.jpg",
+  "london-to-leicester": "london-leicester-banner.jpg",
+  "leicester-to-london": "london-leicester-banner.jpg",
+};
 async function ensurePublicReadFiles() {
   const policies = await api("/policies?limit=-1");
   const publicPolicy = policies.find((p) => p.name === "$t:public_label");
@@ -251,6 +265,93 @@ async function run() {
     }
   }
 
+  // Client-approved August 2026 review pack. Apply each revision once, then leave all
+  // fields under Directus editor control on subsequent deploys.
+  const reviewSettings = await api("/items/settings?fields=client_media_revision");
+  if (reviewSettings.client_media_revision !== CLIENT_MEDIA_REVISION) {
+    const clientFolder = await ensureFolder("Client supplied — August 2026");
+    const clientFiles = (await readdir(CLIENT_MEDIA_DIR, { withFileTypes: true }))
+      .filter((entry) => entry.isFile() && MIME[extname(entry.name).toLowerCase()])
+      .map((entry) => entry.name);
+    const clientIds = {};
+    for (const file of clientFiles) clientIds[file] = await ensureFile(file, CLIENT_MEDIA_DIR, clientFolder);
+
+    await api("/items/settings", {
+      method: "PATCH",
+      body: JSON.stringify({
+        hero_video: clientIds["home-hero-video.mp4"],
+        school_image: clientIds["home-to-school-blue-section.jpg"],
+        school_image_alt: "NP Coaches school transport service coach",
+        home_to_school_image: clientIds["home-to-school-banner.jpg"],
+        home_to_school_image_alt: "NP Coaches home-to-school transport service",
+        daily_express_image: clientIds["daily-express-banner.jpg"],
+        daily_express_image_alt: "NP Coaches Daily Express coach service",
+      }),
+    });
+
+    const schoolService = await api(`/items/services?filter[title][_eq]=${encodeURIComponent("School Transport")}&fields=id&limit=1`);
+    if (schoolService[0]) {
+      await api(`/items/services/${schoolService[0].id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ image: clientIds["home-to-school-card.jpg"], image_alt: "NP Coaches school transport service coach" }),
+      });
+    }
+
+    const lostProperty = await api("/items/pages?filter[slug][_eq]=lost-property&fields=id&limit=1");
+    if (lostProperty[0]) {
+      await api(`/items/pages/${lostProperty[0].id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ image: clientIds["lost-property.png"], image_alt: "NP Coaches lost property assistance" }),
+      });
+    }
+
+    const downloads = await api("/items/pages?filter[slug][_eq]=downloads&fields=id&limit=1");
+    if (downloads[0]) {
+      const attachment = siteContent.pages.find((page) => page.slug === "downloads")?.attachments?.[0];
+      await api(`/items/pages/${downloads[0].id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          attachments: attachment ? [{ ...attachment, href: undefined, file: clientIds["compliance-pack-2025-2026.pdf"] }] : [],
+        }),
+      });
+    }
+
+    for (const [slug, files] of Object.entries(CLIENT_TOUR_IMAGES)) {
+      const row = await api(`/items/tours?filter[slug][_eq]=${encodeURIComponent(slug)}&fields=id&limit=1`);
+      const fallback = siteContent.tours.find((tour) => tour.slug === slug);
+      if (row[0]) {
+        await api(`/items/tours/${row[0].id}`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            hero_image: clientIds[files.hero],
+            card_image: clientIds[files.card],
+            image_alt: fallback?.imageAlt,
+            hero_image_alt: fallback?.heroImageAlt,
+            card_image_alt: fallback?.cardImageAlt,
+          }),
+        });
+      }
+    }
+
+    for (const [slug, file] of Object.entries(CLIENT_ROUTE_IMAGES)) {
+      const row = await api(`/items/routes?filter[slug][_eq]=${encodeURIComponent(slug)}&fields=id&limit=1`);
+      const fallback = siteContent.routes.find((route) => route.slug === slug);
+      if (row[0]) {
+        await api(`/items/routes/${row[0].id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ image: clientIds[file], image_alt: fallback?.imageAlt }),
+        });
+      }
+    }
+
+    await api("/items/settings", {
+      method: "PATCH",
+      body: JSON.stringify({ client_media_revision: CLIENT_MEDIA_REVISION }),
+    });
+    console.log(`✓ applied client media revision ${CLIENT_MEDIA_REVISION}`);
+  } else {
+    console.log(`• client media revision ${CLIENT_MEDIA_REVISION} already applied — CMS edits preserved`);
+  }
   console.log("Done. Media uploaded and linked.");
 }
 

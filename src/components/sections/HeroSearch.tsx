@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { Stop, SearchFeature } from "@/lib/site-config";
 import { Icon, type IconName } from "@/components/ui/Icon";
+import { RouteStopSelect } from "@/components/forms/RouteStopSelect";
 
 /**
  * Daily Express online booking widget (client-side, no reload) — mirrors the live site:
@@ -79,13 +80,7 @@ export function HeroSearch({
         className="grid divide-y divide-greyblue/15 lg:grid-cols-[1fr_auto_1fr_1fr_1fr_auto] lg:divide-x lg:divide-y-0"
       >
         <Field icon="mapPin" label="From">
-          <select value={from} onChange={(e) => setFrom(e.target.value)} className={controlCls} aria-label="Departure stop">
-            {stops.map((s) => (
-              <option key={s.code} value={s.code}>
-                {s.name}
-              </option>
-            ))}
-          </select>
+          <RouteStopSelect value={from} onChange={setFrom} options={stops.filter((stop) => stop.code !== to)} ariaLabel="Departure stop" buttonClassName={controlCls} />
         </Field>
 
         {/* Swap From/To */}
@@ -101,13 +96,7 @@ export function HeroSearch({
         </div>
 
         <Field icon="mapPin" label="To">
-          <select value={to} onChange={(e) => setTo(e.target.value)} className={controlCls} aria-label="Destination stop">
-            {stops.map((s) => (
-              <option key={s.code} value={s.code}>
-                {s.name}
-              </option>
-            ))}
-          </select>
+          <RouteStopSelect value={to} onChange={setTo} options={stops.filter((stop) => stop.code !== from)} ariaLabel="Destination stop" buttonClassName={controlCls} />
         </Field>
 
         <Field icon="calendar" label="Journey date">

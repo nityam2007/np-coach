@@ -13,7 +13,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="relative overflow-hidden bg-gradient-to-br from-navy via-navy to-brand-deep text-greyblue">
+    <footer className="relative mx-2 mt-2 overflow-hidden rounded-t-[30px] bg-gradient-to-br from-navy via-navy to-brand-deep text-greyblue sm:mx-3">
       <StripesBackdrop dark />
       <FloatingBlobs dark />
 
@@ -87,6 +87,15 @@ export function Footer({ settings }: { settings: SiteSettings }) {
               </a>
             </p>
           </address>
+          {settings.socialLinks.length > 0 && (
+            <div className="mt-6 flex gap-2" aria-label="NP Coaches social media">
+              {settings.socialLinks.map((social) => (
+                <a key={social.href} href={social.href} target="_blank" rel="noreferrer" aria-label={social.label} className="grid h-10 w-10 place-items-center rounded-full border border-white/15 bg-white/5 text-offwhite transition-colors hover:border-sky-400/50 hover:bg-sky-400 hover:text-navy">
+                  <Icon name={social.icon} className="h-4 w-4" />
+                </a>
+              ))}
+            </div>
+          )}
         </StaggerItem>
       </Stagger>
 

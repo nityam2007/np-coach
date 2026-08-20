@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { FaqAccordion } from "@/components/sections/FaqAccordion";
 import { PageHero } from "@/components/sections/PageHero";
+import { PageBanner } from "@/components/sections/PageBanner";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { buildMetadata } from "@/lib/seo";
 import { assetUrl, getSettings, getSchoolRoutes } from "@/lib/directus";
@@ -91,6 +92,8 @@ export default async function HomeToSchoolPage() {
           Parents are notified in advance and may cancel before any revised price takes effect.
         </div>
       </PageHero>
+
+      <PageBanner image={settings.homeToSchoolImage} alt={settings.homeToSchoolImageAlt} priority />
 
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
         <h2 className="font-display text-2xl font-bold text-navy">Please select your school</h2>

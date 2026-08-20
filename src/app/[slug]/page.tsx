@@ -4,6 +4,7 @@ import { FleetDetail } from "@/components/sections/FleetDetail";
 import { notFound } from "next/navigation";
 import { PageTemplate } from "@/components/sections/PageTemplate";
 import { RouteTimetable } from "@/components/sections/RouteTimetable";
+import { PageBanner } from "@/components/sections/PageBanner";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Icon } from "@/components/ui/Icon";
@@ -135,6 +136,8 @@ export default async function SlugPage({ params }: { params: Promise<{ slug: str
             </Reveal>
           </div>
         </section>
+
+        <PageBanner image={route.image ?? null} alt={route.imageAlt ?? `${route.from} to ${route.to} coach service`} priority />
 
         <section className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:py-20">
           <Reveal>

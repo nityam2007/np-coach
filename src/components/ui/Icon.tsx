@@ -48,7 +48,10 @@ export type IconName =
   | "user"
   | "download"
   | "logout"
-  | "ticket";
+  | "ticket"
+  | "facebook"
+  | "instagram"
+  | "x";
 
 const GLYPHS: Record<IconName, ReactNode> = {
   bus: (
@@ -219,7 +222,15 @@ const GLYPHS: Record<IconName, ReactNode> = {
   ),
   download: <path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" />,
   logout: <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M15 12H5" />,
-  ticket: (
+  facebook: <path d="M14 8h3V4h-3c-3.3 0-5 2-5 5v3H6v4h3v5h4v-5h3l1-4h-4V9c0-.7.3-1 1-1Z" />,
+  instagram: (
+    <>
+      <rect x="3" y="3" width="18" height="18" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+    </>
+  ),
+  x: <path d="M5 4 19 20M19 4 5 20" />,  ticket: (
     <>
       <path d="M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2 2 2 0 0 0 0 4 2 2 0 0 1-2 2H5a2 2 0 0 1-2-2 2 2 0 0 0 0-4Z" />
       <path d="M15 6v2M15 12v2M15 16v2" />

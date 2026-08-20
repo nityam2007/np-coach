@@ -19,6 +19,12 @@ export interface NavLink {
   children?: NavLink[];
 }
 
+export interface SocialLink {
+  label: string;
+  href: string;
+  icon: "facebook" | "instagram" | "x";
+}
+
 export interface FooterColumn {
   title: string;
   links: NavLink[];
@@ -32,6 +38,8 @@ export interface ServiceCard {
   icon?: string;
   /** Directus file id (optional photo). */
   image?: string | null;
+  /** Accessible description for the service-card photo. */
+  imageAlt?: string;
 }
 
 export interface Stat {
@@ -49,6 +57,8 @@ export interface FleetVehicle {
   features: string[];
   /** Directus file id for the exterior photo (rendered via /assets/<id>). */
   image?: string | null;
+  /** Accessible description for the primary fleet photo. */
+  imageAlt?: string;
   /** Directus file ids for the detail-page gallery. */
   gallery?: string[];
   /** Directus file ids for one or more seating-plan images. */
@@ -64,10 +74,22 @@ export interface Page {
   body: string;
   /** Optional Directus hero image for an interior content page. */
   image?: string | null;
+  /** Accessible description for the hero image. */
+  imageAlt?: string;
+  /** Optional CMS-managed files displayed as download cards below the page body. */
+  attachments?: PageAttachment[];
   seoTitle: string;
   seoDescription: string;
 }
 
+
+export interface PageAttachment {
+  title: string;
+  description?: string;
+  file?: string | null;
+  /** Used by the offline fallback until the file is linked in Directus. */
+  href?: string;
+}
 
 export interface FleetPageContent {
   eyebrow: string;
@@ -100,8 +122,25 @@ export interface Tour {
   body: string;
   /** Directus file id for the destination hero photo. */
   image?: string | null;
+  /** Accessible description for the destination hero photo. */
+  imageAlt?: string;
+  /** Directus file id for the full-width 21:9 destination banner. */
+  heroImage?: string | null;
+  /** Accessible description for the destination banner. */
+  heroImageAlt?: string;
+  /** Directus file id for the destination listing card. */
+  cardImage?: string | null;
+  /** Accessible description for the destination listing card. */
+  cardImageAlt?: string;
   seoTitle: string;
   seoDescription: string;
+}
+
+export interface TourPageContent {
+  amenities: string[];
+  journeyEyebrow: string;
+  journeyHeading: string;
+  journeyBody: string;
 }
 
 /** A school served by home-to-school transport (logo set via Directus media). */
@@ -149,6 +188,10 @@ export interface CoachRoute {
   priceSingle: number;
   priceReturn: number;
   summary: string;
+  /** Directus file id for the route hero banner. */
+  image?: string | null;
+  /** Accessible description for the route hero banner. */
+  imageAlt?: string;
   stops: RouteStop[];
   seoTitle: string;
   seoDescription: string;
@@ -299,8 +342,15 @@ export interface SiteContent {
   pricing: Pricing;
   phone: { display: string; href: string; hours: string };
   email: { general: string; bookings: string };
+  socialLinks: SocialLink[];
   emailTemplates: EmailTemplates;
   address: { line1: string; line2: string; city: string; county: string; postcode: string };
+  mediaAlt: {
+    homepageHero: string;
+    homeSchoolBlue: string;
+    homeToSchoolBanner: string;
+    dailyExpressBanner: string;
+  };
   nav: NavLink[];
   services: ServiceCard[];
   footerColumns: FooterColumn[];
@@ -311,6 +361,7 @@ export interface SiteContent {
   faqs: Faq[];
   testimonials: Testimonial[];
   homepage: HomepageContent;
+  tourPage: TourPageContent;
   schoolTransport: SchoolTransport;
   schoolRoutes: SchoolRoute[];
   fleet: FleetVehicle[];

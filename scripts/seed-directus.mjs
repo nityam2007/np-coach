@@ -21,6 +21,7 @@ const int = (field) => ({ field, type: "integer", meta: {}, schema: {} });
 const json = (field) => ({ field, type: "json", meta: { interface: "input-code", options: { language: "json" } }, schema: {} });
 // Single-file relation (M2O → directus_files). `special: ["file"]` makes Directus wire the relation.
 const fileField = (field, note) => ({ field, type: "uuid", meta: { interface: "file-image", special: ["file"], note }, schema: {} });
+const anyFileField = (field, note) => ({ field, type: "uuid", meta: { interface: "file", special: ["file"], note }, schema: {} });
 
 const SETTINGS_FIELDS = [
   pk("id"),
@@ -29,13 +30,15 @@ const SETTINGS_FIELDS = [
   str("email_general"), str("email_bookings"),
   json("email_templates"),
   str("address_line1"), str("address_line2"), str("address_city"), str("address_county"), str("address_postcode"),
-  json("nav"), json("footer_columns"), json("legal_links"),
+  json("nav"), json("footer_columns"), json("social_links"), json("legal_links"),
+  json("tour_page"),
 ];
 
 const SERVICES_FIELDS = [
   pk("id"),
   { field: "sort", type: "integer", meta: { interface: "input", hidden: false }, schema: {} },
   str("title"), text("blurb"), str("href"), str("icon"),
+  fileField("image", "Photo for the homepage service card."), str("image_alt"),
 ];
 
 const FLEET_FIELDS = [
@@ -43,7 +46,7 @@ const FLEET_FIELDS = [
   { field: "sort", type: "integer", meta: { interface: "input", hidden: false }, schema: {} },
   str("slug"), str("name"), int("seats"), str("group_label"), text("summary"), json("features"),
   fileField("image", "Exterior photo shown on the fleet grid + hero."),
-  json("gallery"), // array of file ids for the detail-page gallery
+  str("image_alt"),  json("gallery"), // array of file ids for the detail-page gallery
   json("layout_images"), // one or more seating-plan file ids
   str("seo_title"), text("seo_description"),
 ];
@@ -55,6 +58,8 @@ const PAGES_FIELDS = [
   { field: "sort", type: "integer", meta: { interface: "input", hidden: false }, schema: {} },
   str("slug"), str("title"), text("subtitle"), wysiwyg("body"),
   fileField("image", "Optional hero image for the content page."),
+  str("image_alt"),
+  json("attachments"),
   str("seo_title"), text("seo_description"),
 ];
 
@@ -64,6 +69,11 @@ const TOURS_FIELDS = [
   { field: "sort", type: "integer", meta: { interface: "input", hidden: false }, schema: {} },
   str("slug"), str("destination"), text("summary"), wysiwyg("body"),
   fileField("image", "Destination hero photo."),
+  str("image_alt"),
+  fileField("hero_image", "Full-width 21:9 destination banner."),
+  str("hero_image_alt"),
+  fileField("card_image", "Destination listing-card photo."),
+  str("card_image_alt"),
   str("seo_title"), text("seo_description"),
 ];
 
@@ -75,7 +85,8 @@ const ROUTES_FIELDS = [
   str("slug"), str("from"), str("to"), str("days"),
   { field: "price_single", type: "integer", meta: { interface: "input", note: "Single fare in pence (e.g. 1500 = £15.00)" }, schema: {} },
   { field: "price_return", type: "integer", meta: { interface: "input", note: "Return fare in pence (e.g. 2500 = £25.00)" }, schema: {} },
-  text("summary"), json("stops"),
+  text("summary"), fileField("image", "Route hero banner."), str("image_alt"),
+  json("stops"),
   str("seo_title"), text("seo_description"),
 ];
 
@@ -372,11 +383,22 @@ async function run() {
   await ensureField("settings", fileField("logo", "Site logo (header + footer)."));
   await ensureField("settings", json("accreditation_logos")); // { "<accreditation name>": "<file id>" }
   await ensureField("settings", json("homepage")); // bespoke homepage copy blob (see HomepageContent)
+  await ensureField("settings", json("tour_page"));
+  await ensureField("settings", json("social_links"));
   await ensureField("settings", json("fleet_page")); // fleet listing/detail shared copy and booking steps
   await ensureField("settings", fileField("school_image", "Homepage school-transport block photo."));
+  await ensureField("settings", str("school_image_alt"));
   await ensureField("services", fileField("image", "Photo for the homepage service card."));
+  await ensureField("services", str("image_alt"));
   await ensureField("services", str("icon")); // icon key for the service card
   await ensureField("settings", fileField("hero_image", "Homepage hero background photo."));
+  await ensureField("settings", anyFileField("hero_video", "Optional muted looping homepage hero video."));
+  await ensureField("settings", str("client_media_revision"));
+  await ensureField("settings", str("hero_image_alt"));
+  await ensureField("settings", fileField("home_to_school_image", "Home-to-school page hero banner."));
+  await ensureField("settings", str("home_to_school_image_alt"));
+  await ensureField("settings", fileField("daily_express_image", "Daily Express page hero banner."));
+  await ensureField("settings", str("daily_express_image_alt"));
   // Testimonials gained author org/photo/rating (mockup cards).
   await ensureField("testimonials", str("company"));
   await ensureField("testimonials", fileField("image", "Author photo (optional)."));
@@ -391,6 +413,7 @@ async function run() {
   await ensureField("fleet", fileField("image", "Exterior photo."));
   await ensureField("fleet", json("gallery"));
   await ensureField("fleet", str("group_label"));
+  await ensureField("fleet", str("image_alt"));
   await ensureField("fleet", json("layout_images"));
   await ensureField("bookings", deliveryStatus("confirmation_email_status"));
   await ensureField("bookings", deliverySentAt("confirmation_email_sent_at"));
@@ -399,7 +422,16 @@ async function run() {
   await ensureField("pass_purchases", deliveryStatus("staff_email_status"));
   await ensureField("pass_purchases", deliverySentAt("staff_email_sent_at"));
   await ensureField("pages", fileField("image", "Optional hero image for the content page."));
+  await ensureField("pages", str("image_alt"));
+  await ensureField("pages", json("attachments"));
   await ensureField("tours", fileField("image", "Destination hero photo."));
+  await ensureField("tours", str("image_alt"));
+  await ensureField("tours", fileField("hero_image", "Full-width 21:9 destination banner."));
+  await ensureField("tours", str("hero_image_alt"));
+  await ensureField("tours", fileField("card_image", "Destination listing-card photo."));
+  await ensureField("tours", str("card_image_alt"));
+  await ensureField("routes", fileField("image", "Route hero banner."));
+  await ensureField("routes", str("image_alt"));
   await ensureField("settings", json("school_transport"));
 
   await ensureField("blog_posts", fileField("thumbnail", "Blog card and article preview image."));
@@ -433,9 +465,12 @@ async function run() {
   };
   // Fleet listing/detail shared copy follows the same preserve-editor-edits strategy.
   const mergedFleetPage = { ...content.fleetPage, ...(currentSettings?.fleet_page ?? {}) };
+  const mergedTourPage = { ...content.tourPage, ...(currentSettings?.tour_page ?? {}) };
+  const socialLinksMissing = !Array.isArray(currentSettings?.social_links) || currentSettings.social_links.length === 0;
   const homepageChanged = JSON.stringify(mergedHomepage) !== JSON.stringify(currentSettings?.homepage ?? null);
   const emailTemplatesChanged = JSON.stringify(mergedEmailTemplates) !== JSON.stringify(currentSettings?.email_templates ?? null);
   const fleetPageChanged = JSON.stringify(mergedFleetPage) !== JSON.stringify(currentSettings?.fleet_page ?? null);
+  const tourPageChanged = JSON.stringify(mergedTourPage) !== JSON.stringify(currentSettings?.tour_page ?? null);
 
   // Seed the singleton only once. After that, Directus is the source of truth:
   // routine deploys may add missing nested keys but never reset editor-managed values.
@@ -468,6 +503,8 @@ async function run() {
       pricing: mergedPricing,
       homepage: mergedHomepage,
       fleet_page: mergedFleetPage,
+      tour_page: mergedTourPage,
+      social_links: content.socialLinks,
   };
   const hasLiveSettings = currentSettings?.id != null;
   const settingsPatch = hasLiveSettings ? {} : settingsDefaults;
@@ -477,6 +514,8 @@ async function run() {
     if (homepageChanged) settingsPatch.homepage = mergedHomepage;
     if (emailTemplatesChanged) settingsPatch.email_templates = mergedEmailTemplates;
     if (fleetPageChanged) settingsPatch.fleet_page = mergedFleetPage;
+    if (tourPageChanged) settingsPatch.tour_page = mergedTourPage;
+    if (socialLinksMissing) settingsPatch.social_links = content.socialLinks;
   }
 
   if (Object.keys(settingsPatch).length) {
@@ -496,7 +535,10 @@ async function run() {
   if (services.length === 0) {
     await api("/items/services", {
       method: "POST",
-      body: JSON.stringify(content.services.map((s, i) => ({ ...s, sort: i + 1 }))),
+      body: JSON.stringify(content.services.map((s, i) => ({
+        title: s.title, blurb: s.blurb, href: s.href, icon: s.icon,
+        image_alt: s.imageAlt, sort: i + 1,
+      }))),
     });
     console.log(`✓ seeded ${content.services.length} services`);
   } else {
@@ -525,6 +567,7 @@ async function run() {
           name: v.name,
           seats: v.seats,
           summary: v.summary,
+          image_alt: v.imageAlt,
           features: v.features,
           group_label: v.groupLabel,
           seo_title: v.seoTitle,
@@ -540,14 +583,17 @@ async function run() {
 
   // Backfill presentation fields added after the original fleet seed. Existing CMS
   // values always win, so rerunning the seed remains safe for editor changes.
-  const existingFleet = await api("/items/fleet?fields=id,slug,group_label&limit=-1");
+  const existingFleet = await api("/items/fleet?fields=id,slug,group_label,image_alt&limit=-1");
   for (const vehicle of existingFleet) {
-    if (vehicle.group_label) continue;
+    if (vehicle.group_label && vehicle.image_alt) continue;
     const seed = content.fleet.find((item) => item.slug === vehicle.slug);
     if (!seed) continue;
     await api(`/items/fleet/${vehicle.id}`, {
       method: "PATCH",
-      body: JSON.stringify({ group_label: seed.groupLabel }),
+      body: JSON.stringify({
+        ...(!vehicle.group_label ? { group_label: seed.groupLabel } : {}),
+        ...(!vehicle.image_alt ? { image_alt: seed.imageAlt } : {}),
+      }),
     });
     console.log(`✓ fleet/${vehicle.slug}.group_label set`);
   }
@@ -566,6 +612,8 @@ async function run() {
           title: p.title,
           subtitle: p.subtitle,
           body: p.body,
+          image_alt: p.imageAlt,
+          attachments: p.attachments,
           seo_title: p.seoTitle,
           seo_description: p.seoDescription,
           sort: havePage.size + i + 1,
@@ -588,6 +636,9 @@ async function run() {
           destination: t.destination,
           summary: t.summary,
           body: t.body,
+          image_alt: t.imageAlt,
+          hero_image_alt: t.heroImageAlt,
+          card_image_alt: t.cardImageAlt,
           seo_title: t.seoTitle,
           seo_description: t.seoDescription,
           sort: i + 1,
@@ -610,6 +661,9 @@ async function run() {
       method: "POST",
       body: JSON.stringify({
         slug: t.slug, destination: t.destination, summary: t.summary, body: t.body,
+        image_alt: t.imageAlt,
+        hero_image_alt: t.heroImageAlt,
+        card_image_alt: t.cardImageAlt,
         seo_title: t.seoTitle, seo_description: t.seoDescription, sort: tourSort,
       }),
     });
@@ -630,7 +684,7 @@ async function run() {
           price_single: r.priceSingle,
           price_return: r.priceReturn,
           summary: r.summary,
-          stops: r.stops,
+          image_alt: r.imageAlt,          stops: r.stops,
           seo_title: r.seoTitle,
           seo_description: r.seoDescription,
           sort: i + 1,

@@ -37,7 +37,7 @@ export function FleetDetail({
         {hero && (
           <Image
             src={hero}
-            alt={`${vehicle.name} coach`}
+            alt={vehicle.imageAlt ?? ""}
             fill
             sizes="100vw"
             className="object-cover"

@@ -22,6 +22,10 @@
     "general": "Info@np-coaches.co.uk",
     "bookings": "Bookings@np-coaches.co.uk"
   },
+  "socialLinks": [
+    { "label": "Facebook", "href": "https://facebook.com/npcoaches", "icon": "facebook" },
+    { "label": "Instagram", "href": "https://instagram.com/npcoaches", "icon": "instagram" }
+  ],
   "emailTemplates": {
     "otp": {
       "subject": "Your {{siteName}} login code",
@@ -115,30 +119,40 @@
       { "label": "Downloads", "href": "/downloads", "icon": "download", "description": "Useful customer information and documents" }
     ] },
     { "label": "Contact Us", "href": "/contact-us", "icon": "phone", "description": "Talk to our friendly team" }  ],
+  "mediaAlt": {
+    "homepageHero": "NP Coaches luxury coach for UK travel",
+    "homeSchoolBlue": "Safe home to school coach transportation",
+    "homeToSchoolBanner": "Students boarding a school transport coach",
+    "dailyExpressBanner": "Daily express passenger coach service"
+  },
   "services": [
     {
       "title": "School Transport",
       "blurb": "Daily home-to-school routes, school trips and sports fixtures with DBS-checked drivers and live tracking.",
       "href": "/home-to-school",
-      "icon": "school"
+      "icon": "school",
+      "imageAlt": "School coach providing safe student transportation"
     },
     {
       "title": "Corporate Travel",
       "blurb": "Conferences, staff shuttles, airport transfers and business events in executive coaches.",
       "href": "/get-a-quote",
-      "icon": "briefcase"
+      "icon": "briefcase",
+      "imageAlt": "Corporate group transportation by luxury coach"
     },
     {
       "title": "UK Tours",
       "blurb": "Multi-day tours, sightseeing and custom itineraries across the UK.",
       "href": "/uk-tours",
-      "icon": "camera"
+      "icon": "camera",
+      "imageAlt": "Luxury coach for UK group tours"
     },
     {
       "title": "Private Hire",
       "blurb": "Weddings, family events, parties and special occasions in comfort and style.",
       "href": "/get-a-quote",
-      "icon": "celebration"
+      "icon": "celebration",
+      "imageAlt": "Premium coach transportation for special events"
     }
   ],
   "footerColumns": [
@@ -352,6 +366,19 @@
     "ctaEyebrow": "Ready when you are",
     "ctaHeading": "Ready to Book Your Journey?",
     "ctaBody": "Get an instant quote in under 60 seconds."
+  },
+  "tourPage": {
+    "amenities": [
+      "Air conditioning",
+      "Reclining seats",
+      "USB & plug sockets",
+      "On-board WC",
+      "DVD players",
+      "Arm rests"
+    ],
+    "journeyEyebrow": "Travel your way",
+    "journeyHeading": "Comfortable coach travel, planned around your group",
+    "journeyBody": "Share your group size, dates, pickup points and itinerary with our team. We will match the journey to a clean, comfortable Euro-6 coach and an experienced professional driver."
   },
   "fleetPage": {
     "eyebrow": "Our modern fleet",
@@ -629,6 +656,7 @@
       "slug": "lost-property",
       "title": "Lost Property",
       "subtitle": "Left something on board? Here's how to reclaim it.",
+      "imageAlt": "NP Coaches lost property service",
       "body": "<p>Think you've lost something on one of our coaches? <a href=\"/lost-property/claim\">Report it online</a> with your travel date, time, route and a description of the item, and we'll check whether it has been handed in.</p><p>A <strong>£5 administration charge (plus VAT)</strong> applies on reclaimed items, covering handling and storage. Items must be reclaimed from our Iver depot within <strong>7 days</strong> of travel to avoid additional storage costs. Lost property is held for a maximum of <strong>14 days</strong>, after which it is disposed of.</p><p>You can also call <a href=\"tel:+442088431000\">0208 843 1000</a> or email <a href=\"mailto:Info@np-coaches.co.uk\">Info@np-coaches.co.uk</a> with your journey details. We use your contact details only to reunite you with your property and hold them for no longer than one month.</p>",
       "seoTitle": "Lost Property | NP Coaches",
       "seoDescription": "Lost something on an NP Coaches service? Report it with your travel details. A £5 admin fee applies on collection; items are held at our Iver depot for 14 days."
@@ -653,7 +681,14 @@
       "slug": "downloads",
       "title": "Downloads",
       "subtitle": "Operator compliance documentation.",
-      "body": "<p>Our annual compliance packs set out the documentation behind our operator licence, safety standards and procedures. For the current pack, or any document not listed here, please contact us on <a href=\"tel:+442088431000\">0208 843 1000</a> or email <a href=\"mailto:Info@np-coaches.co.uk\">Info@np-coaches.co.uk</a>.</p><ul><li>Compliance Pack 2025–2026</li><li>Compliance Pack 2024–2025</li></ul>",
+      "body": "<p>Our annual compliance pack sets out the documentation behind our operator licence, safety standards and procedures. Download the current pack below. For any additional document, call <a href=\"tel:+442088431000\">0208 843 1000</a> or email <a href=\"mailto:Info@np-coaches.co.uk\">Info@np-coaches.co.uk</a>.</p>",
+      "attachments": [
+        {
+          "title": "Compliance Pack 2025–2026",
+          "description": "Current operator-licence, safety and compliance documentation.",
+          "href": "https://np-coaches.co.uk/wp-content/uploads/2025/11/Compliance-Pack-2025-2026.pdf"
+        }
+      ],
       "seoTitle": "Downloads | Compliance Documents | NP Coaches",
       "seoDescription": "Download NP Coaches' operator compliance packs, or contact us for any document covering our PSV operator licence, safety standards and procedures."
     },
@@ -693,7 +728,10 @@
   "tours": [
     {
       "slug": "london",
+      "heroImageAlt": "Luxury coach for a London group tour",
       "destination": "London",
+      "imageAlt": "Luxury coach for a London group tour",
+      "cardImageAlt": "London coach tour and day trip",
       "summary": "Tour the capital — Buckingham Palace, the galleries and the landmarks of the City.",
       "body": "<p>Take in a tour of our capital city and visit some of London's historic landmarks. Watch the Changing of the Guard at Buckingham Palace, walk the South Bank, or spend the day in one of London's many world-class galleries and museums. We provide the coach and a professional driver; you set the itinerary.</p>",
       "seoTitle": "London Coach Tours & Day Trips | NP Coaches",
@@ -701,7 +739,10 @@
     },
     {
       "slug": "windsor",
+      "heroImageAlt": "Luxury coach for a Windsor group tour",
       "destination": "Windsor",
+      "imageAlt": "Luxury coach for a Windsor group tour",
+      "cardImageAlt": "Windsor coach tour and day trip",
       "summary": "Windsor Castle, the Long Walk and a cruise on the Thames — a short hop from London.",
       "body": "<p>A short journey from London takes you to Windsor, home to Windsor Castle — a royal residence dating back to the 12th century. Tour the castle and grounds, walk the Long Walk and enjoy a cruise on the River Thames. An easy, popular day trip for groups of any size.</p>",
       "seoTitle": "Windsor Coach Tours & Day Trips | NP Coaches",
@@ -709,7 +750,10 @@
     },
     {
       "slug": "hampton-court",
+      "heroImageAlt": "Luxury coach for a Hampton Court group tour",
       "destination": "Hampton Court",
+      "imageAlt": "Luxury coach for a Hampton Court group tour",
+      "cardImageAlt": "Hampton Court coach tour and day trip",
       "summary": "Henry VIII's Tudor palace in Surrey — the great hall, kitchens and world-famous gardens.",
       "body": "<p>Located in Surrey, Hampton Court is the famous Tudor palace of King Henry VIII. Explore the palace's many historic attractions, from the great hall and Tudor kitchens to the world-renowned gardens and maze. A rich, easy day out within reach of London.</p>",
       "seoTitle": "Hampton Court Coach Tours | NP Coaches",
@@ -717,7 +761,10 @@
     },
     {
       "slug": "cornwall",
+      "heroImageAlt": "Comfortable coach for a Cornwall road trip and holiday",
       "destination": "Cornwall",
+      "imageAlt": "Comfortable coach for a Cornwall road trip and holiday",
+      "cardImageAlt": "Cornwall coach tour and group holiday",
       "summary": "The south-west's Arthurian coast — Tintagel, Cadbury Castle and Glastonbury.",
       "body": "<p>Visit Cornwall in the south-west and discover the area's close association with the legend of King Arthur, including Tintagel, Cadbury Castle and Glastonbury, where Arthur is said to have been buried. Ideal as a multi-day tour with comfortable, well-equipped coaches.</p>",
       "seoTitle": "Cornwall Coach Tours | NP Coaches",
@@ -725,7 +772,10 @@
     },
     {
       "slug": "salisbury",
+      "heroImageAlt": "Luxury coach for a Salisbury and Stonehenge group tour",
       "destination": "Salisbury",
+      "imageAlt": "Luxury coach for a Salisbury and Stonehenge group tour",
+      "cardImageAlt": "Salisbury and Stonehenge coach day trip",
       "summary": "Salisbury Cathedral's record-breaking spire and the mystery of Stonehenge.",
       "body": "<p>Venture further afield to the city of Salisbury, home to a magnificent cathedral with the tallest spire in the country at 404 feet. Combine it with a visit to Stonehenge, the prehistoric monument dating back some 5,000 years — one of the UK's most extraordinary sights.</p>",
       "seoTitle": "Salisbury & Stonehenge Coach Tours | NP Coaches",
@@ -733,7 +783,10 @@
     },
     {
       "slug": "bath",
+      "heroImageAlt": "Luxury coach for a Bath group tour",
       "destination": "Bath",
+      "imageAlt": "Luxury coach for a Bath group tour",
+      "cardImageAlt": "Bath coach tour and day trip",
       "summary": "Georgian Bath — the Roman Baths, Bath Abbey and Sally Lunn's historic house.",
       "body": "<p>Bath is a beautiful Georgian city, where you'll find the famous Roman Baths and spa, Bath Abbey — known as the lantern of the west — and Sally Lunn's, a historic eating house dating back to the 15th century. A relaxed, walkable day out steeped in history.</p>",
       "seoTitle": "Bath Coach Tours & Day Trips | NP Coaches",
@@ -741,7 +794,10 @@
     },
     {
       "slug": "john-wesley",
+      "heroImageAlt": "Comfortable coach for a John Wesley heritage tour",
       "destination": "John Wesley Methodist Sites",
+      "imageAlt": "Comfortable coach for a John Wesley heritage tour",
+      "cardImageAlt": "John Wesley Methodist sites coach tour",
       "summary": "Historic Methodist sites — Epworth, where his father was rector, and Bristol, home of the first Methodist chapel.",
       "body": "<p>Visit the historic places associated with John Wesley, the founder of Methodism. The tour takes in Epworth, where John's father was rector, and Bristol, where he preached his first open-air sermon and founded the first Methodist chapel. A meaningful itinerary for church and heritage groups.</p>",
       "seoTitle": "John Wesley Methodist Tour | NP Coaches",
@@ -753,6 +809,7 @@
       "slug": "wolverhampton-to-london",
       "from": "Wolverhampton",
       "to": "London",
+      "imageAlt": "Wolverhampton to London coach service",
       "days": "7 days a week",
       "priceSingle": 1500,
       "priceReturn": 2500,
@@ -796,6 +853,7 @@
       "slug": "london-to-leicester",
       "from": "London",
       "to": "Leicester",
+      "imageAlt": "London to Leicester express coach service",
       "days": "Friday to Monday only",
       "priceSingle": 1800,
       "priceReturn": 3000,
@@ -824,6 +882,7 @@
       "slug": "leicester-to-london",
       "from": "Leicester",
       "to": "London",
+      "imageAlt": "Leicester to London express coach service",
       "days": "Friday to Monday only",
       "priceSingle": 1800,
       "priceReturn": 3000,
@@ -906,6 +965,7 @@
   "fleet": [
     {
       "slug": "19-seat-coaches",
+      "imageAlt": "NP Coaches 19-seat coach for smaller groups",
       "name": "19 Seat Mini Coach",
       "seats": 19,
       "groupLabel": "For small groups",
@@ -922,6 +982,7 @@
     },
     {
       "slug": "35-seat-coaches",
+      "imageAlt": "NP Coaches 35-seat coach for group travel",
       "name": "35 Seat Midi Coach",
       "seats": 35,
       "groupLabel": "For small and medium groups",
@@ -939,6 +1000,7 @@
     },
     {
       "slug": "53-seat-coaches",
+      "imageAlt": "NP Coaches 53-seat coach for organised tours",
       "name": "53 Seat Executive Coach",
       "seats": 53,
       "groupLabel": "For medium and large groups",
@@ -956,6 +1018,7 @@
     },
     {
       "slug": "72-seat-coaches",
+      "imageAlt": "NP Coaches 72-seat coach for large groups",
       "name": "72 Seat Coach",
       "seats": 72,
       "groupLabel": "For large groups",
@@ -972,6 +1035,7 @@
     },
     {
       "slug": "86-seat-coaches",
+      "imageAlt": "NP Coaches 86-seat coach for group transportation",
       "name": "86 Seat Double Decker",
       "seats": 86,
       "groupLabel": "For large groups",
@@ -988,6 +1052,7 @@
     },
     {
       "slug": "98-seat-coaches",
+      "imageAlt": "NP Coaches 98-seat coach for large group travel",
       "name": "98 Seat Double Decker",
       "seats": 98,
       "groupLabel": "For large groups",

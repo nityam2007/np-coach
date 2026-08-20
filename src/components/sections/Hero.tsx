@@ -28,6 +28,7 @@ function withHighlight(text: string, word: string) {
 export function Hero({ settings, stops }: { settings: SiteSettings; stops: Stop[] }) {
   const { homepage } = settings;
   const coach = assetUrl(settings.heroImage);
+  const video = assetUrl(settings.heroVideo);
   const rating = homepage.heroRating;
   const reduce = useReducedMotion();
   /** Simple fade-up entrance — calm and professional, no blur or stagger effects. */
@@ -89,16 +90,15 @@ export function Hero({ settings, stops }: { settings: SiteSettings; stops: Stop[
 
           {/* Right: coach photo */}
           <motion.div className="relative" {...entrance(0.1)}>
-            {coach ? (
-              <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-navy/5 shadow-lg shadow-navy/10 ring-1 ring-white/60">
-                <Image
-                  src={coach}
-                  alt={`${settings.name} coach`}
-                  fill
-                  priority
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  className="object-cover"
-                />
+            {video || coach ? (
+              <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-navy/5 shadow-lg shadow-navy/10 ring-1 ring-white/60" role="img" aria-label={settings.heroImageAlt}>
+                {video ? (
+                  <video autoPlay muted loop playsInline preload="metadata" poster={coach ?? undefined} className="absolute inset-0 h-full w-full object-cover" aria-hidden="true">
+                    <source src={video} type="video/mp4" />
+                  </video>
+                ) : coach ? (
+                  <Image src={coach} alt={settings.heroImageAlt} fill priority sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />
+                ) : null}
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-navy/30 via-transparent to-transparent" />
 
                 {/* Fleet trust badge */}

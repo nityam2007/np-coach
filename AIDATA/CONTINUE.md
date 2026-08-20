@@ -105,3 +105,11 @@ Production WordPress site: **np-coaches.co.uk**. When unsure about content/flow,
 ## 7. Working rules (from CLAUDE.md — non-negotiable)
 
 Don't over-engineer · simple-yet-complete (no stubs) · **read every target file and its immediate caller before editing; extend the existing source of truth rather than layering duplicate UI** · everything user-facing from Directus with a fallback · mobile-first responsive · preserve WP URLs + SEO · **UK law governs** (UK GDPR / DPA 2018 / PECR — cookie consent before non-essential cookies) · app never touches MariaDB (only Directus) · Stripe server-side + signature-verified webhooks · commit as `nityam2007`, no AI trailers · keep README + this file current.
+
+---
+
+## 8. Client review revision — 2026-08-20
+
+The six-slide client review and supplied Google Drive photos are implemented. The committed pack is `directus/seed-media/client-2026-08/` (23 files), and `npm run media` applies revision `client-review-2026-08-20` once after the additive seed creates its fields. Do not remove or change `settings.client_media_revision` casually: it is the guard that prevents later deployments from replacing media edited by the client in Directus.
+
+Post-deploy, verify the homepage video, one-pin UK tactical globe, school block, accreditation row, Daily Express/Home-to-School/route banners, `/uk-tours` and all seven destination pages, `/fleet`, `/downloads`, `/lost-property`, both From/To selectors, and Facebook/Instagram footer links. The optimized homepage MP4 is approximately 4.5 MB; the current compliance document is the 2025–2026 pack. TypeScript, ESLint, both bootstrap-script syntax checks, and diff whitespace checks passed before push.

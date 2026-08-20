@@ -7,6 +7,7 @@ import type { FormState } from "@/lib/forms";
 import { Turnstile } from "@/components/forms/Turnstile";
 import { Button } from "@/components/ui/Button";
 import { inputCls } from "@/components/ui/field";
+import { RouteStopSelect } from "@/components/forms/RouteStopSelect";
 
 export interface BookingStopOption {
   code: string;
@@ -50,8 +51,10 @@ export function BookingForm({
   cancelled?: boolean;
 }) {
   const [state, action] = useActionState(startBooking, initial);
-  const [from, setFrom] = useState(defaultFrom ?? stops[0]?.code ?? "");
-  const [to, setTo] = useState(defaultTo ?? stops[stops.length - 1]?.code ?? "");
+  const initialFrom = defaultFrom ?? stops[0]?.code ?? "";
+  const initialTo = defaultTo && defaultTo !== initialFrom ? defaultTo : (stops.find((stop) => stop.code !== initialFrom)?.code ?? "");
+  const [from, setFrom] = useState(initialFrom);
+  const [to, setTo] = useState(initialTo);
   const [tripType, setTripType] = useState<"single" | "return">(defaultTripType ?? "single");
   const [passengers, setPassengers] = useState(defaultPassengers && defaultPassengers > 0 ? defaultPassengers : 1);
 
@@ -77,26 +80,14 @@ export function BookingForm({
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="text-sm font-semibold text-navy">
           From
-          <select name="from" value={from} onChange={(e) => setFrom(e.target.value)} className={inputCls}>
-            {stops.map((s) => (
-              <option key={s.code} value={s.code}>
-                {s.name}
-              </option>
-            ))}
-          </select>
+          <RouteStopSelect name="from" value={from} onChange={setFrom} options={stops.filter((stop) => stop.code !== to)} ariaLabel="Departure stop" buttonClassName={inputCls} />
           {state.errors?.from && (
             <span className="mt-1 block text-xs font-normal text-red-600">{state.errors.from}</span>
           )}
         </label>
         <label className="text-sm font-semibold text-navy">
           To
-          <select name="to" value={to} onChange={(e) => setTo(e.target.value)} className={inputCls}>
-            {stops.map((s) => (
-              <option key={s.code} value={s.code}>
-                {s.name}
-              </option>
-            ))}
-          </select>
+          <RouteStopSelect name="to" value={to} onChange={setTo} options={stops.filter((stop) => stop.code !== from)} ariaLabel="Destination stop" buttonClassName={inputCls} />
           {(state.errors?.to || sameStop) && (
             <span className="mt-1 block text-xs font-normal text-red-600">
               {state.errors?.to ?? "From and To must be different stops"}

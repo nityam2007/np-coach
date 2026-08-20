@@ -45,7 +45,11 @@ export default async function HomePage() {
       <section className="bg-offwhite">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
           <Reveal>
-            <SchoolTransportBlock block={homepage.school} image={settings.schoolImage} />
+            <SchoolTransportBlock
+              block={homepage.school}
+              image={settings.schoolImage}
+              imageAlt={settings.schoolImageAlt}
+            />
           </Reveal>
         </div>
       </section>

@@ -102,7 +102,7 @@ export function FleetCarousel({
                         <Image
                           key={vehicle.slug}
                           src={img}
-                          alt={`${vehicle.name} coach`}
+                          alt={vehicle.imageAlt ?? ""}
                           fill
                           sizes="(max-width: 1024px) 100vw, 40vw"
                           className="object-cover motion-safe:animate-[rise-in_0.6s_both]"

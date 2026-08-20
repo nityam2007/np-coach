@@ -84,7 +84,7 @@ export function ServiceCards({
                           {img ? (
                             <Image
                               src={img}
-                              alt={service.title}
+                              alt={service.imageAlt ?? service.title}
                               fill
                               sizes="(max-width: 640px) 85vw, (max-width: 1024px) 50vw, 33vw"
                               className="object-cover transition-transform duration-500 group-hover:scale-105"

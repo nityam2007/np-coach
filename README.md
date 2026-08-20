@@ -13,7 +13,7 @@ Rebuild of [np-coaches.co.uk](https://np-coaches.co.uk) — a UK coach-hire oper
 >
 > **Payments and forms:** prices are computed server-side; pending orders become paid only after a verified Checkout session or signed webhook. Payment emails use per-record delivery state so webhook retries and success-page verification do not intentionally send duplicates. Tickets and claim completion are hidden while payment is pending. Contact and quote submissions pass server-side validation, honeypot, rate-limit and Turnstile checks, then use the scoped Directus server token—there is no anonymous create permission.
 >
-> **CMS and pages:** Directus drives settings, services, fleet copy/photos/galleries/seating plans, pages and hero images, tours, routes, blog posts/thumbnails and testimonials, with `site-content.json` as the offline fallback. `/fleet` and all six vehicle pages use the archived fleet structure; `/timetable` and the archived content/legal routes are migrated; blog thumbnails render on cards, articles and Open Graph metadata. The homepage remains independently CMS-driven.
+> **CMS and pages:** Directus drives settings, services, fleet copy/photos/galleries/seating plans, pages and hero images, tours, routes, blog posts/thumbnails and testimonials, with `site-content.json` as the offline fallback. `/fleet` and all six vehicle pages use the archived fleet structure; `/timetable` and the archived content/legal routes are migrated; blog thumbnails render on cards, articles and Open Graph metadata. The homepage remains independently CMS-driven. The August 2026 client-review media pack is committed under `directus/seed-media/client-2026-08/`; the additive bootstrap applies that revision once, then leaves subsequent Directus editor changes untouched.
 >
 > **SEO and UI:** canonical/Open Graph/Twitter metadata, sitemap/robots/llms.txt and JSON-LD are site-wide. Interior content pages share `PageHero` and the upgraded image/prose layout; blog articles use the same light editorial treatment and remain fully CMS-managed. Bespoke fleet, route, tour and school pages retain their structured designs.
 > The header and footer navigation are CMS-managed; Contact Us remains a primary menu item. `/faqs` is a dedicated SEO-ready accordion page sourced from the same editable FAQ settings as the homepage, with the homepage showing the four priority questions only.
@@ -86,7 +86,7 @@ For routine deployments, secret ownership, backups, rollback, and acceptance che
 
 Simple · modular · dynamic (whole site editable from Directus) · responsive · fast · secure. No over-engineering; simple-yet-complete code (no stubs). **UK law governs the live site and customer data** (UK GDPR / DPA 2018 / PECR).
 
-Working rules and common-error fixes live in [RULES.md](RULES.md); every change is logged in the append-only [CHANGELOG.md](CHANGELOG.md).
+Working rules and common-error fixes live in [RULES.md](RULES.md); every change is logged in the append-only [CHANGELOG.md](CHANGELOG.md). The client-ready image inventory, filenames, aspect ratios, and source dimensions are documented in [IMAGE_REQUIREMENTS.md](IMAGE_REQUIREMENTS.md).
 
 All app code lives under `src/` (the `@/*` import alias maps to `src/`); config files stay at the repo root.
 
@@ -104,6 +104,7 @@ docker-compose.coolify.yml  production stack managed by Coolify
 Dockerfile.bootstrap    one-shot committed CMS/content/media bootstrap
 Dockerfile.schema       Directus bootstrap image; snapshot reserved for manual backup-first migrations
 HANDOVER.md              production ownership, operations, rollback, and acceptance
+IMAGE_REQUIREMENTS.md    client media filenames, quantities, ratios, and source dimensions
 AIDATA/                 active handoff/plan plus read-only brand, SEO, and Pages OLD archives
 ```
 

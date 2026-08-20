@@ -387,6 +387,26 @@
     "introEyebrow": "Comfort on every journey",
     "detailHeading": "Luxury travel",
     "introBody": "We have grown a luxurious, well-equipped and comfortable fleet that is continually improved to deliver the standards our customers expect. Every coach is modern, Euro 6 and ULEZ-compliant; what sets the fleet apart is the care we put into comfort, presentation and the on-board experience.",
+    "introHighlights": [
+      {
+        "value": "Euro 6",
+        "label": "Clean, modern fleet",
+        "icon": "shield"
+      },
+      {
+        "value": "ULEZ",
+        "label": "Compliant across London",
+        "icon": "checkCircle"
+      },
+      {
+        "value": "19 to 98",
+        "label": "Passenger seating range",
+        "icon": "users"
+      }
+    ],
+    "detailSeatsLabel": "Passenger seats",
+    "detailFeaturesLabel": "On-board features",
+    "detailClassLabel": "Coach category",
     "seatingLabel": "Wide range of seating options: 19 to 98 passengers",
     "gridHeading": "Find the right coach for your group",
     "facilitiesEyebrow": "On board",

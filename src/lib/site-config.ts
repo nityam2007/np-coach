@@ -98,6 +98,10 @@ export interface FleetPageContent {
   introEyebrow: string;
   detailHeading: string;
   introBody: string;
+  introHighlights: { value: string; label: string; icon: "shield" | "checkCircle" | "users" }[];
+  detailSeatsLabel: string;
+  detailFeaturesLabel: string;
+  detailClassLabel: string;
   seatingLabel: string;
   gridHeading: string;
   charterEyebrow: string;

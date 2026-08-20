@@ -34,7 +34,7 @@ Rebuild of [np-coaches.co.uk](https://np-coaches.co.uk) — a UK coach-hire oper
 | CMS / admin | **Directus** (Dockerized) — content + transactional, one client admin |
 | Database | **MariaDB** (Dockerized) — reached only by Directus, **no Prisma** |
 | Media    | Directus uploads (Docker volume) |
-| Cache / rate limits | Redis (private, password-protected in production) |
+| Cache / rate limits | Redis (private; Directus content/schema/API cache plus shared Next.js form, checkout and OTP limits) |
 | Reverse proxy | Coolify proxy (recommended) or bundled Traefik · **Cloudflare** at the edge |
 | Payments | Stripe |
 | Email    | Internal Postfix SMTP relay; branded transactional templates managed from Directus |
@@ -59,7 +59,7 @@ npm run configure                 # one-time: organise the admin (groups, field 
 
 `npm run seed` is idempotent — re-run it any time; it only creates what's missing and won't overwrite content you've edited in Directus (it merges new `settings.pricing` keys without clobbering edited fares). `npm run media` uploads the real fleet/tour photos + school logos (from `directus/seed-media/`) into Directus and links them to the items (skips anything already set). `npm run configure` is also idempotent — it groups the collections (Content · Marketing · Daily Express · Bookings & Payments · Leads), adds field notes/widths/status colours + display templates (including clear page, route, tour, fleet, service and global-media guidance), and builds the **NP Coaches** Insights dashboard (paid bookings, pass purchases, revenue, recent leads).
 
-Saved CMS content is revalidated by the site in about 5 seconds. Images are served and resized by Directus (`/assets/<id>`); a custom `next/image` loader ([src/lib/directus-loader.ts](src/lib/directus-loader.ts)) points at it. **Note:** for host `npm run dev`, `DIRECTUS_URL` must be `http://localhost:8055` (not the Docker hostname) — otherwise the app can't reach the CMS and silently falls back to `site-content.json`.
+Saved CMS content is revalidated by the site in about 5 seconds. Images are served and resized by Directus (`/assets/<id>`); a custom `next/image` loader ([src/lib/directus-loader.ts](src/lib/directus-loader.ts)) requests responsive dimensions, automatic AVIF/WebP negotiation and no-upscale transforms. Production Redis has a 768 MB LFU budget: Directus caches auto-purge after CMS writes, while Next.js uses atomic Redis counters for form, checkout and OTP limits with a local fail-safe. **Note:** for host `npm run dev`, `DIRECTUS_URL` must be `http://localhost:8055` (not the Docker hostname) — otherwise the app can't reach the CMS and silently falls back to `site-content.json`.
 
 **App on host, services in Docker** (if you prefer running Next.js directly):
 

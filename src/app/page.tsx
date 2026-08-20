@@ -57,7 +57,7 @@ export default async function HomePage() {
       <section className="bg-tint-soft">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
           <Reveal>
-            <CoverageMap block={homepage.coverage} areas={settings.coverage} depot={`${settings.address.city}, ${settings.address.county}`} />
+            <CoverageMap block={homepage.coverage} depot={`${settings.address.city}, ${settings.address.county}`} />
           </Reveal>
         </div>
       </section>

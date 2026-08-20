@@ -26,10 +26,11 @@ export async function requestOtpAction(_prev: AuthState, formData: FormData): Pr
   const email = parsed.data;
 
   const ip = await clientIp();
-  if (
-    rateLimited(rateLimitKey("otp-request-ip", ip), RATE_LIMITS.otpRequest) ||
-    rateLimited(rateLimitKey("otp-request-email", email), RATE_LIMITS.otpRequest)
-  ) {
+  const [ipLimited, emailLimited] = await Promise.all([
+    rateLimited(rateLimitKey("otp-request-ip", ip), RATE_LIMITS.otpRequest),
+    rateLimited(rateLimitKey("otp-request-email", email), RATE_LIMITS.otpRequest),
+  ]);
+  if (ipLimited || emailLimited) {
     return { step: "email", email, message: "Too many requests — please wait 15 minutes and try again." };
   }
 
@@ -57,10 +58,11 @@ export async function verifyOtpAction(_prev: AuthState, formData: FormData): Pro
   const code = String(formData.get("code") ?? "").trim();
 
   const ip = await clientIp();
-  if (
-    rateLimited(rateLimitKey("otp-verify-ip", ip), RATE_LIMITS.otpVerify) ||
-    rateLimited(rateLimitKey("otp-verify-email", email), { ...RATE_LIMITS.otpVerify, limit: 5 })
-  ) {
+  const [ipLimited, emailLimited] = await Promise.all([
+    rateLimited(rateLimitKey("otp-verify-ip", ip), RATE_LIMITS.otpVerify),
+    rateLimited(rateLimitKey("otp-verify-email", email), { ...RATE_LIMITS.otpVerify, limit: 5 }),
+  ]);
+  if (ipLimited || emailLimited) {
     return { step: "code", email, message: "Too many attempts — please wait 15 minutes and try again." };
   }
 

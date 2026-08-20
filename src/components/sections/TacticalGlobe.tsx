@@ -87,7 +87,7 @@ function traceLine(
 }
 
 function drawGraticule(context: CanvasRenderingContext2D, rotation: number, radius: number, cx: number, cy: number) {
-  context.strokeStyle = "rgba(168,171,188,.2)";
+  context.strokeStyle = "rgba(23,37,84,.16)";
   context.lineWidth = 0.7;
   for (let latitude = -60; latitude <= 60; latitude += 30) {
     const points: Point[] = [];
@@ -104,8 +104,8 @@ function drawGraticule(context: CanvasRenderingContext2D, rotation: number, radi
 }
 
 function drawCountries(context: CanvasRenderingContext2D, countries: Country[], rotation: number, radius: number, cx: number, cy: number) {
-  context.fillStyle = "#2b3d75";
-  context.strokeStyle = "rgba(168,171,188,.48)";
+  context.fillStyle = "#fdfdfd";
+  context.strokeStyle = "rgba(37,99,235,.34)";
   context.lineWidth = 0.55;
   for (const country of countries) {
     for (const polygon of country) {
@@ -174,9 +174,9 @@ export function TacticalGlobe({ depot }: { depot: string }) {
       const radius = Math.max(48, Math.min(bounds.width, bounds.height) * 0.42);
 
       const glow = context.createRadialGradient(cx, cy, radius * 0.65, cx, cy, radius * 1.25);
-      glow.addColorStop(0, "rgba(37,99,235,0)");
-      glow.addColorStop(0.78, "rgba(37,99,235,.15)");
-      glow.addColorStop(1, "rgba(37,99,235,0)");
+      glow.addColorStop(0, "rgba(255,255,255,0)");
+      glow.addColorStop(0.78, "rgba(255,255,255,.24)");
+      glow.addColorStop(1, "rgba(255,255,255,0)");
       context.fillStyle = glow;
       context.fillRect(0, 0, bounds.width, bounds.height);
 
@@ -185,16 +185,16 @@ export function TacticalGlobe({ depot }: { depot: string }) {
       context.arc(cx, cy, radius, 0, Math.PI * 2);
       context.clip();
       const ocean = context.createRadialGradient(cx - radius * 0.3, cy - radius * 0.32, 0, cx, cy, radius);
-      ocean.addColorStop(0, "#263b7a");
-      ocean.addColorStop(0.68, "#111d43");
-      ocean.addColorStop(1, "#071023");
+      ocean.addColorStop(0, "#ffffff");
+      ocean.addColorStop(0.68, "#eef3ff");
+      ocean.addColorStop(1, "#dce7ff");
       context.fillStyle = ocean;
       context.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
       drawGraticule(context, rotation, radius, cx, cy);
       drawCountries(context, countries, rotation, radius, cx, cy);
       context.restore();
 
-      context.strokeStyle = "rgba(96,165,250,.58)";
+      context.strokeStyle = "rgba(255,255,255,.82)";
       context.lineWidth = 1.2;
       context.beginPath();
       context.arc(cx, cy, radius, 0, Math.PI * 2);

@@ -20,5 +20,7 @@ export default function directusLoader({
   url.searchParams.set("width", String(width));
   url.searchParams.set("quality", String(quality ?? 80));
   url.searchParams.set("fit", "cover");
+  url.searchParams.set("format", "auto");
+  url.searchParams.set("withoutEnlargement", "true");
   return url.toString();
 }

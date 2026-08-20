@@ -2,7 +2,7 @@
 
 This is the **single source of truth for picking up development**. For production ownership and operations, read [../HANDOVER.md](../HANDOVER.md) first. Then read [../CLAUDE.md](../CLAUDE.md) → [PLAN.md](PLAN.md) → [TASKS.md](TASKS.md). Keep this file current as work continues.
 
-> Convert relative dates to absolute. Today's reference when this file was last updated: **2026-08-06**.
+> Convert relative dates to absolute. Today's reference when this file was last updated: **2026-08-20**.
 
 ---
 
@@ -25,6 +25,7 @@ Repository: [nityam2007/np-coach](https://github.com/nityam2007/np-coach) · Del
 - **UI pass (2026-07-04):** real **accreditation badge images** (CPT, UKCOA, CTA, Disability Confident, WeLoveCoaches, Transport for Bucks) via `settings.accreditation_logos`; **photo service cards** (`services.image`); header logo switched to the crisp **io.png** globe; hero background now the flagship coach (`DSC09341-3`); testimonial 5-star row; **lost-property claim page** redesigned (form + how-it-works/`Good to know` aside). Accreditations text list updated to the real set (mockup names were placeholder).
 - **Local → production migration** (2026-07-04, hardened 2026-08-06): `npm run bootstrap` fills an empty Directus and is additive on existing instances. `npm run schema:snapshot` records the model; exact `schema:apply` is manual, dry-run-first, and requires verified-backup confirmation. Coolify never applies it automatically.
 - **Fleet/content/media pass (2026-07-24):** rebuilt `/fleet` and all six vehicle pages from the archived WordPress structure (CMS copy, facility bands, per-vehicle galleries, seating plans, charter CTA and four booking steps); added `settings.fleet_page`, `fleet.group_label`, `fleet.layout_images` and `pages.image`; migrated `/timetable`; upgraded generic content pages with optional CMS imagery. Blog thumbnails now accept UUID or expanded Directus file values, render on cards/articles/Open Graph/BlogPosting schema, and `npm run media` safely assigns starter images when empty. Verified both blog assets as public `image/jpeg`, all fleet media counts, six updated routes at HTTP 200, fresh TypeScript and lint.
+- **Fleet/coverage/Redis follow-up (2026-08-20):** removed the homepage coverage chips while retaining the Iver depot, changed the interactive globe to a white/ice treatment, upgraded the fleet landing and vehicle-detail layouts, and kept all new labels/highlights in the existing editable `settings.fleet_page` JSON. Directus media transforms now negotiate modern formats and avoid upscaling. Production Redis uses a 768 MB LFU budget for Directus content/schema caching and shared atomic Next.js rate limits; Directus cache entries still auto-purge on CMS writes.
 
 **Production acceptance and remaining work — pick up here:**
 

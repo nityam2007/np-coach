@@ -31,7 +31,7 @@ export async function submitContact(_prev: FormState, formData: FormData): Promi
   const data = parsed.data;
 
   const ip = await clientIp();
-  if (rateLimited(rateLimitKey("contact", ip), RATE_LIMITS.contact)) {
+  if (await rateLimited(rateLimitKey("contact", ip), RATE_LIMITS.contact)) {
     return { ok: false, message: "Too many submissions — please try again in 10 minutes." };
   }
 
@@ -62,7 +62,7 @@ export async function submitQuote(_prev: FormState, formData: FormData): Promise
   const data = parsed.data;
 
   const ip = await clientIp();
-  if (rateLimited(rateLimitKey("quote", ip), RATE_LIMITS.quote)) {
+  if (await rateLimited(rateLimitKey("quote", ip), RATE_LIMITS.quote)) {
     return { ok: false, message: "Too many submissions — please try again in 10 minutes." };
   }
   const token = formData.get("cf-turnstile-response");
@@ -89,7 +89,7 @@ export async function startBooking(_prev: FormState, formData: FormData): Promis
   const data = parsed.data;
 
   const ip = await clientIp();
-  if (rateLimited(rateLimitKey("booking", ip), RATE_LIMITS.checkout)) {
+  if (await rateLimited(rateLimitKey("booking", ip), RATE_LIMITS.checkout)) {
     return { ok: false, message: "Too many attempts — please try again in 10 minutes." };
   }
 
@@ -167,7 +167,7 @@ export async function startPassPurchase(_prev: FormState, formData: FormData): P
   const data = parsed.data;
 
   const ip = await clientIp();
-  if (rateLimited(rateLimitKey("pass", ip), RATE_LIMITS.checkout)) {
+  if (await rateLimited(rateLimitKey("pass", ip), RATE_LIMITS.checkout)) {
     return { ok: false, message: "Too many attempts — please try again in 10 minutes." };
   }
 

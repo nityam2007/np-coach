@@ -5,7 +5,7 @@ import { Icon } from "@/components/ui/Icon";
 import { TacticalGlobe } from "@/components/sections/TacticalGlobe";
 
 /** Nationwide coverage card with an interactive globe and one verified UK depot pin. */
-export function CoverageMap({ block, areas, depot }: { block: CoverageBlock; areas: string[]; depot: string }) {
+export function CoverageMap({ block, depot }: { block: CoverageBlock; depot: string }) {
   return (
     <div className="overflow-hidden rounded-3xl border border-greyblue/20 bg-gradient-to-br from-white via-white to-tint p-8 shadow-sm shadow-navy/5 lg:p-10">
       <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
@@ -20,11 +20,6 @@ export function CoverageMap({ block, areas, depot }: { block: CoverageBlock; are
         </div>
         <div className="rounded-2xl border border-greyblue/15 bg-navy p-4 shadow-inner sm:p-6">
           <TacticalGlobe depot={depot} />
-          {areas.length > 0 && (
-            <ul className="mt-2 flex flex-wrap justify-center gap-2">
-              {areas.map((area) => <li key={area} className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-greyblue">{area}</li>)}
-            </ul>
-          )}
         </div>
       </div>
     </div>

@@ -42,7 +42,7 @@ export function Hero({ settings, stops }: { settings: SiteSettings; stops: Stop[
         } as const);
 
   return (
-    <section className="relative overflow-hidden">
+    <section className="relative overflow-visible">
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-tint via-tint-soft to-offwhite" aria-hidden="true" />
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
@@ -121,7 +121,7 @@ export function Hero({ settings, stops }: { settings: SiteSettings; stops: Stop[
         </div>
 
         {/* Search bar (overlaps the hero / next section) */}
-        <motion.div className="relative z-10 pb-14" {...entrance(0.2)}>
+        <motion.div className="relative z-50 pb-14" {...entrance(0.2)}>
           <HeroSearch stops={stops} features={homepage.searchFeatures} />
         </motion.div>
       </div>

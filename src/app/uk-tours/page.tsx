@@ -21,7 +21,7 @@ export default async function UkToursPage() {
     <>
       <BreadcrumbJsonLd items={[{ label: "Home", path: "/" }, { label: "UK Tours", path: "/uk-tours" }]} />
       <ItemListJsonLd name="UK coach tour destinations" items={tours.map((tour) => ({ name: tour.destination, path: `/uk-tours/${tour.slug}` }))} />
-      <PageHero eyebrow="Explore the UK" title="UK Tours" intro="First-class coach tours and day trips across the British Isles. Tell us your itinerary and we'll provide prompt, reliable transport in clean, comfortable luxury coaches." crumbs={[{ label: "Home", href: "/" }, { label: "UK Tours" }]} ctas={[{ label: "Get a Quote", href: "/get-a-quote", primary: true }]}>
+      <PageHero eyebrow="Explore the UK" title="UK Tours" intro="First-class coach tours and day trips across the British Isles. Tell us your itinerary and we'll provide prompt, reliable transport in clean, comfortable luxury coaches." crumbs={[{ label: "Home", href: "/" }, { label: "UK Tours" }]} ctas={[{ label: "Get a Quote", href: "/get-a-quote", primary: true }]} image={tours[0]?.heroImage ?? tours[0]?.image} imageAlt={tours[0]?.heroImageAlt ?? tours[0]?.imageAlt} priority>
         <ul className="mt-6 flex flex-wrap gap-2">
           {amenities.map((amenity) => (
             <li key={amenity} className="inline-flex items-center gap-2 rounded-full border border-accent/15 bg-white/80 px-3 py-1.5 text-sm text-navy/70 shadow-sm">

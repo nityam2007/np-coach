@@ -66,7 +66,7 @@ App → http://localhost:3000 · Directus → http://localhost:8055 (`admin@np-c
 ## 4. Architecture (what to copy when adding things)
 
 **Data flow (one pattern for everything):**
-Directus collection → seed (`scripts/seed-directus.mjs`) → typed in `src/lib/site-config.ts` → fetched in `src/lib/directus.ts` (raw `fetch`, `next:{revalidate:30, tags}`, **fallback to `siteConfig`**) → rendered. `site-content.json` is the single seed source **and** offline fallback.
+Directus collection → seed (`scripts/seed-directus.mjs`) → typed in `src/lib/site-config.ts` → fetched in `src/lib/directus.ts` (raw `fetch`, `next:{revalidate:5, tags}`, **fallback to `siteConfig`**) → rendered. `site-content.json` is the single seed source **and** offline fallback.
 
 **Payments (P4/P5 — reuse for any new paid flow):**
 - Price **always computed server-side** from Directus (`src/lib/stripe.ts` — `priceBooking`, `priceLostPropertyPass`, `computeGross`). Client never sends an amount.
@@ -110,6 +110,8 @@ Don't over-engineer · simple-yet-complete (no stubs) · **read every target fil
 
 ## 8. Client review revision — 2026-08-20
 
-The six-slide client review and supplied Google Drive photos are implemented. The committed pack is `directus/seed-media/client-2026-08/` (23 files), and `npm run media` applies revision `client-review-2026-08-20` once after the additive seed creates its fields. Do not remove or change `settings.client_media_revision` casually: it is the guard that prevents later deployments from replacing media edited by the client in Directus.
+The six-slide client review and supplied Google Drive photos are implemented. The committed pack is `directus/seed-media/client-2026-08/` (23 files), and `npm run media` applies revision `client-review-2026-08-20-v2` once after the additive seed creates its fields. Do not remove or change `settings.client_media_revision` casually: it is the guard that prevents later deployments from replacing media edited by the client in Directus.
+
+The review correction makes CMS banner photos the full hero background (with a navy contrast overlay) rather than a separate card, reduces content ISR to about 5 seconds, and documents the editable media/copy fields in Directus Studio.
 
 Post-deploy, verify the homepage video, one-pin UK tactical globe, school block, accreditation row, Daily Express/Home-to-School/route banners, `/uk-tours` and all seven destination pages, `/fleet`, `/downloads`, `/lost-property`, both From/To selectors, and Facebook/Instagram footer links. The optimized homepage MP4 is approximately 4.5 MB; the current compliance document is the 2025–2026 pack. TypeScript, ESLint, both bootstrap-script syntax checks, and diff whitespace checks passed before push.

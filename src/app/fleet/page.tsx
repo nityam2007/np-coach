@@ -29,6 +29,9 @@ export default async function FleetPage() {
         intro={settings.fleetPage.introHeading}
         crumbs={[{ label: "Home", href: "/" }, { label: "Fleet" }]}
         ctas={[{ ...settings.fleetPage.charterCta, primary: true }]}
+        image={fleet[0]?.image}
+        imageAlt={fleet[0]?.imageAlt}
+        priority
       >
         <p className="mt-6 font-display text-sm font-semibold uppercase tracking-wide text-greyblue">
           {settings.fleetPage.seatingLabel}

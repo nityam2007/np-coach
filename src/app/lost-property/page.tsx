@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { getPage, getSettings } from "@/lib/directus";
 import { priceLostPropertyPass } from "@/lib/stripe";
 import { PageHero } from "@/components/sections/PageHero";
 import { ButtonLink } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { Reveal } from "@/components/ui/motion";
-import { assetUrl } from "@/lib/directus";
 
 export const metadata: Metadata = {
   title: "Lost & Found | NP Coaches",
@@ -28,7 +26,6 @@ const steps = [
 
 export default async function LostPropertyPage() {
   const [page, settings, priced] = await Promise.all([getPage("lost-property"), getSettings(), priceLostPropertyPass()]);
-  const image = assetUrl(page?.image);
 
   return (
     <article>
@@ -41,6 +38,9 @@ export default async function LostPropertyPage() {
           { label: "Report a lost item", href: "/lost-property/claim", primary: true, icon: "arrowRight" },
           { label: `Call ${settings.phone.display}`, href: settings.phone.href, icon: "phone" },
         ]}
+        image={page?.image}
+        imageAlt={page?.imageAlt}
+        priority
       />
 
       <section className="bg-offwhite">
@@ -62,12 +62,6 @@ export default async function LostPropertyPage() {
 
           <Reveal delay={0.08}>
             <div className="overflow-hidden rounded-3xl border border-greyblue/20 bg-white shadow-md shadow-navy/5">
-              {image ? (
-                <div className="relative aspect-[16/9] bg-greyblue/15">
-                  <Image src={image} alt="NP Coaches lost property assistance" fill sizes="(max-width: 1024px) 100vw, 480px" className="object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-navy/50 to-transparent" />
-                </div>
-              ) : null}
               <div className="p-6 sm:p-7">
                 <p className="text-sm font-semibold uppercase tracking-[0.16em] text-accent">Lost & found ticket</p>
                 <h2 className="mt-2 font-display text-2xl font-bold text-navy">{formatGBP(priced.net)} + VAT</h2>

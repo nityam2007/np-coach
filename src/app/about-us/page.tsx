@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import Image from "next/image";
-import { getFleet, getPage, getSettings, assetUrl } from "@/lib/directus";
+import { getFleet, getPage, getSettings } from "@/lib/directus";
 import { PageHero } from "@/components/sections/PageHero";
 import { ButtonLink } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
@@ -21,7 +20,6 @@ const principles = [
 
 export default async function AboutPage() {
   const [page, settings, fleet] = await Promise.all([getPage("about-us"), getSettings(), getFleet()]);
-  const image = assetUrl(page?.image);
   const seats = fleet.map((vehicle) => vehicle.seats).filter(Number.isFinite);
   const minSeats = seats.length ? Math.min(...seats) : 19;
   const maxSeats = seats.length ? Math.max(...seats) : 98;
@@ -38,10 +36,13 @@ export default async function AboutPage() {
           { label: "Explore our fleet", href: "/fleet", primary: true, icon: "arrowRight" },
           { label: "Get a quote", href: "/get-a-quote", icon: "briefcase" },
         ]}
+        image={page?.image}
+        imageAlt={page?.imageAlt}
+        priority
       />
 
       <section className="bg-offwhite">
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:items-center lg:py-20">
+        <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:py-20">
           <Reveal>
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-accent">Our story</p>
             <h2 className="mt-3 font-display text-3xl font-bold text-navy sm:text-4xl">Local roots. Nationwide journeys.</h2>
@@ -51,15 +52,7 @@ export default async function AboutPage() {
               <a href={settings.phone.href} className="inline-flex items-center gap-2 rounded-xl border border-navy/15 bg-white px-6 py-3 font-semibold text-navy shadow-sm transition-colors hover:border-accent/40 hover:bg-navy hover:text-white"><Icon name="phone" className="h-4 w-4" /> {settings.phone.display}</a>
             </div>
           </Reveal>
-          <Reveal delay={0.08}>
-            <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-greyblue/15 shadow-lg shadow-navy/10">
-              {image ? <Image src={image} alt="NP Coaches team and fleet" fill sizes="(max-width: 1024px) 100vw, 560px" className="object-cover" /> : <div className="absolute inset-0 bg-gradient-to-br from-tint to-greyblue/30" />}
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-navy/80 via-navy/35 to-transparent p-6 text-offwhite sm:p-8">
-                <p className="font-display text-3xl font-bold">{settings.founded}</p>
-                <p className="mt-1 text-sm text-greyblue">Serving passengers with care from West London.</p>
-              </div>
-            </div>
-          </Reveal>
+
         </div>
       </section>
 

@@ -15,7 +15,7 @@ import { createDirectusApi } from "./directus-api.mjs";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const MEDIA_DIR = join(HERE, "..", "directus", "seed-media");
 const CLIENT_MEDIA_DIR = join(MEDIA_DIR, "client-2026-08");
-const CLIENT_MEDIA_REVISION = "client-review-2026-08-20";
+const CLIENT_MEDIA_REVISION = "client-review-2026-08-20-v2";
 const siteContent = JSON.parse(await readFile(join(HERE, "..", "src", "lib", "site-content.json"), "utf8"));
 
 const BASE = process.env.DIRECTUS_URL ?? "http://localhost:8055";
@@ -289,14 +289,24 @@ async function run() {
       }),
     });
 
-    const schoolService = await api(`/items/services?filter[title][_eq]=${encodeURIComponent("School Transport")}&fields=id&limit=1`);
-    if (schoolService[0]) {
-      await api(`/items/services/${schoolService[0].id}`, {
+    const clientServiceImages = {
+      "School Transport": {
+        file: "home-to-school-card.jpg",
+        alt: "NP Coaches school transport service coach",
+      },
+      "UK Tours": {
+        file: "tour-london-card.png",
+        alt: siteContent.services.find((service) => service.title === "UK Tours")?.imageAlt ?? "NP Coaches UK coach tours",
+      },
+    };
+    for (const [title, media] of Object.entries(clientServiceImages)) {
+      const service = await api(`/items/services?filter[title][_eq]=${encodeURIComponent(title)}&fields=id&limit=1`);
+      if (!service[0] || !clientIds[media.file]) continue;
+      await api(`/items/services/${service[0].id}`, {
         method: "PATCH",
-        body: JSON.stringify({ image: clientIds["home-to-school-card.jpg"], image_alt: "NP Coaches school transport service coach" }),
+        body: JSON.stringify({ image: clientIds[media.file], image_alt: media.alt }),
       });
     }
-
     const lostProperty = await api("/items/pages?filter[slug][_eq]=lost-property&fields=id&limit=1");
     if (lostProperty[0]) {
       await api(`/items/pages/${lostProperty[0].id}`, {

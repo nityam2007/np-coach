@@ -27,6 +27,9 @@ export default async function FaqPage() {
         title={page.title}
         intro={page.subtitle}
         crumbs={[{ label: "Home", href: "/" }, { label: page.title }]}
+        image={page.image}
+        imageAlt={page.imageAlt}
+        priority
       />
       <FaqAccordion faqs={settings.faqs} />
     </article>

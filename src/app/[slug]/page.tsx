@@ -1,17 +1,16 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { FleetDetail } from "@/components/sections/FleetDetail";
 import { notFound } from "next/navigation";
 import { PageTemplate } from "@/components/sections/PageTemplate";
 import { RouteTimetable } from "@/components/sections/RouteTimetable";
-import { PageBanner } from "@/components/sections/PageBanner";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Icon } from "@/components/ui/Icon";
 import { Reveal } from "@/components/ui/motion";
 import { ButtonLink, buttonCls } from "@/components/ui/Button";
-import { StripesBackdrop, FloatingBlobs } from "@/components/ui/Backdrops";
-import { getFleet, getFleetVehicle, getPage, getPages, getRoute, getRoutes, getSettings, getStops } from "@/lib/directus";
+import { assetUrl, getFleet, getFleetVehicle, getPage, getPages, getRoute, getRoutes, getSettings, getStops } from "@/lib/directus";
 
 // Root-level slugs resolve to a fleet vehicle, an editable content page, or a Daily Express route.
 export async function generateStaticParams() {
@@ -76,6 +75,7 @@ export default async function SlugPage({ params }: { params: Promise<{ slug: str
       fromCode && toCode
         ? `/daily-express-service/book?from=${fromCode}&to=${toCode}`
         : "/daily-express-service/book";
+    const routeHero = assetUrl(route.image);
     const jsonLd = {
       "@context": "https://schema.org",
       "@type": "BusTrip",
@@ -99,10 +99,11 @@ export default async function SlugPage({ params }: { params: Promise<{ slug: str
           ]}
         />
 
-        <section className="relative overflow-hidden bg-gradient-to-br from-navy via-navy to-brand-deep text-offwhite">
-          <StripesBackdrop dark />
-          <FloatingBlobs dark />
-          <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
+        <section className="relative isolate overflow-hidden bg-gradient-to-br from-navy via-navy to-brand-deep text-offwhite">
+          {routeHero && <Image src={routeHero} alt={route.imageAlt ?? `${route.from} to ${route.to} coach service`} fill priority sizes="100vw" className="object-cover" />}
+          {routeHero && <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-navy/95 via-navy/78 to-navy/42" />}
+          {routeHero && <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-navy/75 via-transparent to-navy/20" />}
+          <div className="mx-auto flex min-h-[clamp(28rem,42.85vw,42rem)] max-w-7xl items-center px-4 py-16 sm:px-6 lg:py-20">
             <Reveal>
               <nav aria-label="Breadcrumb" className="mb-5 flex flex-wrap items-center gap-1.5 text-sm text-greyblue">
                 <Link href="/" className="transition-colors hover:text-offwhite">Home</Link>
@@ -137,7 +138,6 @@ export default async function SlugPage({ params }: { params: Promise<{ slug: str
           </div>
         </section>
 
-        <PageBanner image={route.image ?? null} alt={route.imageAlt ?? `${route.from} to ${route.to} coach service`} priority />
 
         <section className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:py-20">
           <Reveal>

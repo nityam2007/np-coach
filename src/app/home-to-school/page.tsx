@@ -2,7 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { FaqAccordion } from "@/components/sections/FaqAccordion";
 import { PageHero } from "@/components/sections/PageHero";
-import { PageBanner } from "@/components/sections/PageBanner";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { buildMetadata } from "@/lib/seo";
 import { assetUrl, getSettings, getSchoolRoutes } from "@/lib/directus";
@@ -86,6 +85,9 @@ export default async function HomeToSchoolPage() {
         title="Home to School Transport"
         intro="Safe, tracked daily coach travel with DBS-checked drivers, QR-code boarding and live tracking via ShuttleID. Select your school below to buy passes and manage tickets."
         crumbs={[{ label: "Home", href: "/" }, { label: "Home to School" }]}
+        image={settings.homeToSchoolImage}
+        imageAlt={settings.homeToSchoolImageAlt}
+        priority
       >
         <div className="mt-6 max-w-2xl rounded-xl border border-accent/15 bg-white/85 px-4 py-3 text-sm text-navy/80 shadow-sm">
           <strong>Notice:</strong> due to fuel and operating costs, fares may be reviewed during the academic year.
@@ -93,7 +95,6 @@ export default async function HomeToSchoolPage() {
         </div>
       </PageHero>
 
-      <PageBanner image={settings.homeToSchoolImage} alt={settings.homeToSchoolImageAlt} priority />
 
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
         <h2 className="font-display text-2xl font-bold text-navy">Please select your school</h2>

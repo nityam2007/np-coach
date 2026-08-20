@@ -1,16 +1,14 @@
 import type { Page } from "@/lib/site-config";
 import { PageHero } from "@/components/sections/PageHero";
-import { PageBanner } from "@/components/sections/PageBanner";
 import { Reveal } from "@/components/ui/motion";
 import { Icon } from "@/components/ui/Icon";
 import { assetUrl } from "@/lib/directus";
 
-/** Shared CMS page renderer: consistent 21:9 banner, body and downloadable files. */
+/** Shared CMS page renderer: image-backed hero, body and downloadable files. */
 export function PageTemplate({ page }: { page: Page }) {
   return (
     <article>
-      <PageHero title={page.title} intro={page.subtitle} crumbs={[{ label: "Home", href: "/" }, { label: page.title }]} />
-      <PageBanner image={page.image ?? null} alt={page.imageAlt ?? ""} priority />
+      <PageHero title={page.title} intro={page.subtitle} crumbs={[{ label: "Home", href: "/" }, { label: page.title }]} image={page.image} imageAlt={page.imageAlt} priority />
       <section className="bg-gradient-to-b from-offwhite via-tint-soft/70 to-offwhite">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
           <Reveal>

@@ -6,7 +6,6 @@ import { SchoolRouteTimetable } from "@/components/sections/SchoolRouteTimetable
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Reveal } from "@/components/ui/motion";
-import { StripesBackdrop, FloatingBlobs } from "@/components/ui/Backdrops";
 import { buildMetadata } from "@/lib/seo";
 import { assetUrl, getSettings, getSchoolRoutes } from "@/lib/directus";
 
@@ -41,6 +40,7 @@ export default async function SchoolPage({ params }: { params: Promise<{ school:
   if (!info) notFound();
 
   const logo = assetUrl(info.logo);
+  const hero = assetUrl(settings.homeToSchoolImage);
 
   return (
     <article>
@@ -51,10 +51,11 @@ export default async function SchoolPage({ params }: { params: Promise<{ school:
           { label: info.name, path: `/home-to-school/${school}` },
         ]}
       />
-      <section className="relative overflow-hidden bg-gradient-to-br from-navy via-navy to-brand-deep text-offwhite">
-        <StripesBackdrop dark />
-        <FloatingBlobs dark />
-        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
+      <section className="relative isolate overflow-hidden bg-gradient-to-br from-navy via-navy to-brand-deep text-offwhite">
+        {hero && <Image src={hero} alt={settings.homeToSchoolImageAlt} fill priority sizes="100vw" className="object-cover" />}
+        {hero && <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-navy/95 via-navy/78 to-navy/42" />}
+        {hero && <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-navy/75 via-transparent to-navy/20" />}
+        <div className="mx-auto flex min-h-[clamp(28rem,42.85vw,42rem)] max-w-7xl items-center px-4 py-16 sm:px-6 lg:py-20">
          <Reveal>
           {/* Breadcrumb */}
           <nav className="flex flex-wrap items-center gap-1.5 text-sm text-greyblue" aria-label="Breadcrumb">

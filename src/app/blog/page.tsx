@@ -30,6 +30,9 @@ export default async function BlogPage() {
         title="Blog"
         intro="Guides, tips and news from the NP Coaches team."
         crumbs={[{ label: "Home", href: "/" }, { label: "Blog" }]}
+        image={posts[0]?.thumbnail}
+        imageAlt={posts[0]?.title}
+        priority
       />
 
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6">

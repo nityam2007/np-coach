@@ -34,7 +34,8 @@ const DIRECTUS_URL = process.env.DIRECTUS_URL ?? "http://localhost:8055";
 // Browser-facing Directus URL — images are loaded by the client, so they must use the
 // public host, not the internal docker hostname.
 const PUBLIC_DIRECTUS_URL = process.env.NEXT_PUBLIC_DIRECTUS_URL ?? "http://localhost:8055";
-const REVALIDATE_SECONDS = 30;
+// Keep the speed benefits of ISR while making saved CMS edits visible promptly.
+const REVALIDATE_SECONDS = 5;
 
 /**
  * Build a public asset URL for a Directus file id. Returns null when there's no image.
@@ -43,7 +44,7 @@ const REVALIDATE_SECONDS = 30;
  * don't pass sizes here. Directus does the resizing; Next's optimizer is bypassed (which
  * also avoids Next 16's private-IP block in local dev).
  */
-type DirectusFileRef = string | { id?: string | null } | null | undefined;
+export type DirectusFileRef = string | { id?: string | null } | null | undefined;
 
 export function assetUrl(file: DirectusFileRef): string | null {
   const id = typeof file === "string" ? file : file?.id;

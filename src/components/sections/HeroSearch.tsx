@@ -68,7 +68,7 @@ export function HeroSearch({
   }
 
   return (
-    <div className="w-full overflow-hidden rounded-2xl border border-greyblue/25 bg-white shadow-md shadow-navy/5">
+    <div className="relative z-50 w-full overflow-visible rounded-2xl border border-greyblue/25 bg-white shadow-md shadow-navy/5">
       {/* Header — hairline-separated from the form row below. */}
       <div className="flex items-center gap-2 border-b border-greyblue/15 px-5 py-3 text-sm font-semibold text-navy/70">
         <Icon name="route" className="h-4 w-4 text-accent" />

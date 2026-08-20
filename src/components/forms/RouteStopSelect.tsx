@@ -20,7 +20,7 @@ export function RouteStopSelect({ name, value, onChange, options, ariaLabel, but
   }, []);
 
   return (
-    <div ref={root} className="relative min-w-0">
+    <div ref={root} className={`relative min-w-0 ${open ? "z-[80]" : ""}`}>
       {name && <input type="hidden" name={name} value={value} />}
       <button type="button" aria-label={ariaLabel} aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen((current) => !current)} onKeyDown={(event) => { if (event.key === "Escape") setOpen(false); }} className={`flex w-full items-center justify-between gap-2 text-left ${buttonClassName}`}>
         <span className="truncate">{selected?.name ?? "Choose a stop"}</span><Icon name="chevronDown" className={`h-4 w-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />

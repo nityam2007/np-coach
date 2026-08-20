@@ -102,7 +102,7 @@ For an application rollback, select the last known-good Git commit in Coolify an
 - Manual `scripts/schema.sh apply` prints a dry-run and requires `CONFIRM_SCHEMA_APPLY=I_HAVE_A_VERIFIED_BACKUP`.
 - Coolify-generated secret identifiers deliberately contain no underscores so all required MariaDB and Directus values are populated.
 - Every CMS bootstrap phase paces Directus requests and retries `429`/temporary upstream responses with bounded backoff. The configured 50-request/second Redis-backed limiter remains enabled; bootstrap defaults to 20 requests/second. Interrupted imports safely resume by matching existing file titles.
-- The August client media revision is guarded by settings.client_media_revision = client-review-2026-08-20: its 23 committed assets are assigned once, and subsequent deploys preserve client-edited Directus media.
+- The August client media revision is guarded by settings.client_media_revision = client-review-2026-08-20-v2: its 23 committed assets are assigned once, and subsequent deploys preserve client-edited Directus media.
 - `DIRECTUS_SERVER_TOKEN` may be blank for the infrastructure bootstrap, but protected application writes remain disabled until a scoped token is configured.
 
 ## CMS operations

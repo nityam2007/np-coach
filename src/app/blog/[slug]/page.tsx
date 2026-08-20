@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { PageHero } from "@/components/sections/PageHero";
@@ -62,18 +61,15 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         title={post.title}
         intro={post.excerpt}
         crumbs={[{ label: "Home", href: "/" }, { label: "Blog", href: "/blog" }, { label: post.title }]}
+        image={post.thumbnail}
+        imageAlt={post.title}
+        priority
       />
 
       <section className="bg-gradient-to-b from-offwhite via-tint-soft/70 to-offwhite">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-14 sm:px-6 lg:grid-cols-[minmax(0,1fr)_17rem] lg:gap-12 lg:py-20">
           <div>
-            {thumbnail && (
-              <Reveal>
-                <div className="relative mb-8 aspect-[16/8] overflow-hidden rounded-3xl border border-accent/10 bg-greyblue/15 shadow-xl shadow-navy/10">
-                  <Image src={thumbnail} alt={post.title} fill sizes="(max-width: 1024px) 100vw, 900px" className="object-cover" priority />
-                </div>
-              </Reveal>
-            )}
+
             <Reveal>
               <div className="relative overflow-hidden rounded-3xl border border-greyblue/15 bg-white px-6 py-8 shadow-sm sm:px-10 sm:py-12">
                 <div aria-hidden="true" className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-400 via-accent to-sky-300" />

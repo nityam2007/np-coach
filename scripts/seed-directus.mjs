@@ -544,16 +544,21 @@ async function run() {
   } else {
     // Backfill icons on any pre-existing service row that predates the `icon` field,
     // matched by title. Never overwrites an icon the client has already set.
-    const iconByTitle = new Map(content.services.map((s) => [s.title, s.icon]));
-    const existing = await api("/items/services?fields=id,title,icon&limit=-1");
+    const defaultsByTitle = new Map(content.services.map((s) => [s.title, s]));
+    const existing = await api("/items/services?fields=id,title,icon,image_alt&limit=-1");
     for (const row of existing) {
-      const icon = iconByTitle.get(row.title);
-      if (icon && !row.icon) {
-        await api(`/items/services/${row.id}`, { method: "PATCH", body: JSON.stringify({ icon }) });
-        console.log(`✓ services/${row.title}.icon set`);
+      const defaults = defaultsByTitle.get(row.title);
+      if (!defaults) continue;
+      const patch = {
+        ...(!row.icon && defaults.icon ? { icon: defaults.icon } : {}),
+        ...(!row.image_alt && defaults.imageAlt ? { image_alt: defaults.imageAlt } : {}),
+      };
+      if (Object.keys(patch).length) {
+        await api(`/items/services/${row.id}`, { method: "PATCH", body: JSON.stringify(patch) });
+        console.log(`✓ services/${row.title}: missing presentation fields set`);
       }
     }
-    console.log("• services already populated — skipped seed (icons backfilled where missing)");
+    console.log("• services already populated — skipped seed (missing icons/image descriptions backfilled)");
   }
 
   // Fleet — only seed if empty.

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { RouteTimetable } from "@/components/sections/RouteTimetable";
 import { PageHero } from "@/components/sections/PageHero";
-import { PageBanner } from "@/components/sections/PageBanner";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { buildMetadata } from "@/lib/seo";
 import { getRoutes, getSettings, getStops } from "@/lib/directus";
@@ -50,6 +49,9 @@ export default async function DailyExpressPage() {
         intro="Our scheduled passenger coach service runs every day between London and the Midlands — with a Friday-to-Monday service to Leicester. Book online or buy on the day of travel; please check the timetable on your day of travel as times can change."
         crumbs={[{ label: "Home", href: "/" }, { label: "Daily Express" }]}
         ctas={[{ label: "Book online", href: "/daily-express-service/book", primary: true }]}
+        image={settings.dailyExpressImage}
+        imageAlt={settings.dailyExpressImageAlt}
+        priority
       >
         <div className="mt-6 max-w-2xl rounded-xl border border-accent/15 bg-white/85 px-4 py-3 text-sm text-navy/80 shadow-sm">
           <strong>Slough stop update:</strong> pickup / drop-off is now Library (Stop W), opposite the Moxy Hotel,
@@ -57,7 +59,6 @@ export default async function DailyExpressPage() {
         </div>
       </PageHero>
 
-      <PageBanner image={settings.dailyExpressImage} alt={settings.dailyExpressImageAlt} priority />
 
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
         <h2 className="font-display text-2xl font-bold text-navy">Important travel information</h2>

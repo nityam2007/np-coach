@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useReducedMotion } from "motion/react";
 import Link from "next/link";
 import Image from "next/image";
 import type { FleetVehicle, Cta } from "@/lib/site-config";
@@ -29,15 +30,17 @@ export function FleetCarousel({
 }) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [userPaused, setUserPaused] = useState(false);
+  const reduce = useReducedMotion();
   const count = fleet.length;
 
   // Auto-advance so the showcase feels alive; pauses on hover/focus. ponytail: plain
   // interval — no carousel lib for a single-item cross-fade.
   useEffect(() => {
-    if (count < 2 || paused) return;
+    if (count < 2 || paused || userPaused || reduce) return;
     const id = setInterval(() => setIndex((i) => (i + 1) % count), 5000);
     return () => clearInterval(id);
-  }, [count, paused]);
+  }, [count, paused, reduce, userPaused]);
 
   if (fleet.length === 0) return null;
 
@@ -163,6 +166,14 @@ export function FleetCarousel({
 
                   <div className="ml-auto flex items-center gap-3">
                     <span className="text-xs font-medium tabular-nums text-navy/60">
+                    <button
+                      type="button"
+                      onClick={() => setUserPaused((value) => !value)}
+                      aria-pressed={userPaused}
+                      className="rounded-full border border-navy/10 bg-white px-3 py-2 text-xs font-semibold text-navy hover:border-accent"
+                    >
+                      {userPaused ? "Resume rotation" : "Pause rotation"}
+                    </button>
                       {pad(index + 1)} / {pad(count)}
                     </span>
                     <button

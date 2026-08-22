@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
+import { BreadcrumbJsonLd, JsonLdScript } from "@/components/seo/JsonLd";
 import { PageHero } from "@/components/sections/PageHero";
 import { Icon } from "@/components/ui/Icon";
 import { Reveal } from "@/components/ui/motion";
+import { CmsHtml } from "@/components/ui/CmsHtml";
 import { assetUrl, getBlogPost, getBlogPosts, getSettings } from "@/lib/directus";
 
 export async function generateStaticParams() {
@@ -36,6 +37,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
   const settings = await getSettings();
   const thumbnail = assetUrl(post.thumbnail);
+  const logo = assetUrl(settings.logo);
   const articleDate = formatDate(post.date);
   const jsonLd = {
     "@context": "https://schema.org",
@@ -44,14 +46,19 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     description: post.excerpt,
     datePublished: post.date,
     author: { "@type": "Organization", name: post.author },
-    publisher: { "@type": "Organization", name: settings.name },
-    mainEntityOfPage: `${settings.url}/blog/${post.slug}`,
+    publisher: {
+      "@type": "Organization",
+      "@id": `${settings.url}/#organization`,
+      name: settings.name,
+      logo: logo ? { "@type": "ImageObject", url: logo } : undefined,
+    },
+    mainEntityOfPage: { "@type": "WebPage", "@id": `${settings.url}/blog/${post.slug}` },
     image: thumbnail ?? undefined,
   };
 
   return (
     <article>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <JsonLdScript data={jsonLd} />
       <BreadcrumbJsonLd
         items={[{ label: "Home", path: "/" }, { label: "Blog", path: "/blog" }, { label: post.title, path: `/blog/${slug}` }]}
       />
@@ -73,7 +80,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             <Reveal>
               <div className="relative overflow-hidden rounded-3xl border border-greyblue/15 bg-white px-6 py-8 shadow-sm sm:px-10 sm:py-12">
                 <div aria-hidden="true" className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-400 via-accent to-sky-300" />
-                <div className="prose" dangerouslySetInnerHTML={{ __html: post.body }} />
+                <CmsHtml className="prose" html={post.body} />
                 <Link
                   href="/blog"
                   className="group mt-12 inline-flex items-center gap-2 text-sm font-semibold text-accent hover:underline"

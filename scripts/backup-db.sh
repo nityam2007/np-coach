@@ -12,27 +12,30 @@ set -euo pipefail
 
 BACKUP_DIR="${BACKUP_DIR:-./backups}"
 RETENTION_DAYS="${RETENTION_DAYS:-14}"
-COMPOSE="${COMPOSE:-docker compose -f docker-compose.prod.yml}"
+COMPOSE="${COMPOSE:-docker compose -f docker-compose.coolify.yml}"
 
 # Load deploy env if present (DB creds live here).
 [ -f .env.prod ] && set -a && . ./.env.prod && set +a
 
+command -v age >/dev/null || { echo "age is required" >&2; exit 1; }
+command -v rclone >/dev/null || { echo "rclone is required" >&2; exit 1; }
+: "${BACKUP_AGE_RECIPIENT:?set an age recipient for encrypted backups}"
+: "${RCLONE_REMOTE:?set an encrypted off-site backup destination}"
 mkdir -p "$BACKUP_DIR"
 STAMP="$(date +%Y%m%d-%H%M%S)"
-OUT="$BACKUP_DIR/npcoaches-$STAMP.sql.gz"
-
-echo "[$(date -Is)] dumping ${DB_DATABASE:-npcoaches} → $OUT"
-$COMPOSE exec -T db sh -c \
-  "exec mariadb-dump --single-transaction --quick --routines --triggers -uroot -p\"\$MARIADB_ROOT_PASSWORD\" \"${DB_DATABASE:-npcoaches}\"" \
-  | gzip > "$OUT"
-
-# Prune old local dumps.
-find "$BACKUP_DIR" -name 'npcoaches-*.sql.gz' -mtime "+$RETENTION_DAYS" -delete
-
-# Optional offsite copy (requires rclone configured).
-if [ -n "${RCLONE_REMOTE:-}" ]; then
-  echo "[$(date -Is)] copying offsite → $RCLONE_REMOTE"
-  rclone copy "$OUT" "$RCLONE_REMOTE"
-fi
-
-echo "[$(date -Is)] backup complete: $OUT"
+SQL="$BACKUP_DIR/npcoaches-db-$STAMP.sql.gz"
+UPLOADS="$BACKUP_DIR/npcoaches-uploads-$STAMP.tar.gz"
+echo "[$(date -Is)] dumping MariaDB"
+$COMPOSE exec -T database sh -c \
+  "exec mariadb-dump --single-transaction --quick --routines --triggers -uroot -p\"\$MARIADB_ROOT_PASSWORD\" npcoaches" \
+  | gzip > "$SQL"
+echo "[$(date -Is)] archiving Directus uploads"
+$COMPOSE exec -T directus sh -c 'tar -C /directus/uploads -czf - .' > "$UPLOADS"
+age -r "$BACKUP_AGE_RECIPIENT" -o "$SQL.age" "$SQL"
+age -r "$BACKUP_AGE_RECIPIENT" -o "$UPLOADS.age" "$UPLOADS"
+rm -f -- "$SQL" "$UPLOADS"
+find "$BACKUP_DIR" -name 'npcoaches-*.age' -mtime "+$RETENTION_DAYS" -delete
+echo "[$(date -Is)] copying encrypted backups off-site"
+rclone copy "$SQL.age" "$RCLONE_REMOTE"
+rclone copy "$UPLOADS.age" "$RCLONE_REMOTE"
+echo "[$(date -Is)] backup complete: $SQL.age and $UPLOADS.age"

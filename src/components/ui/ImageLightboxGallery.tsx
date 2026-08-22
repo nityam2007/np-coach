@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
 
 export type GalleryImage = {
@@ -25,21 +25,22 @@ export function ImageLightboxGallery({
   fit?: "cover" | "contain";
 }) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const active = activeIndex === null ? null : images[activeIndex];
   const hasMultiple = images.length > 1;
 
   useEffect(() => {
     if (activeIndex === null) return;
-    const previousOverflow = document.body.style.overflow;
+    const dialog = dialogRef.current;
+    if (dialog && !dialog.open) dialog.showModal();
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setActiveIndex(null);
       if (event.key === "ArrowLeft" && hasMultiple) setActiveIndex((current) => (current === null ? null : (current - 1 + images.length) % images.length));
       if (event.key === "ArrowRight" && hasMultiple) setActiveIndex((current) => (current === null ? null : (current + 1) % images.length));
     };
-    document.body.style.overflow = "hidden";
     window.addEventListener("keydown", onKeyDown);
     return () => {
-      document.body.style.overflow = previousOverflow;
+      if (dialog?.open) dialog.close();
       window.removeEventListener("keydown", onKeyDown);
     };
   }, [activeIndex, hasMultiple, images.length]);
@@ -74,14 +75,14 @@ export function ImageLightboxGallery({
       </div>
 
       {active && activeIndex !== null && (
-        <div
-          className="fixed inset-0 z-[100] grid place-items-center bg-navy/95 p-4 sm:p-8"
-          role="dialog"
-          aria-modal="true"
+        <dialog
+          ref={dialogRef}
+          className="fixed inset-0 z-[100] m-0 grid h-dvh w-full max-w-none place-items-center border-0 bg-navy/95 p-4 sm:p-8"
           aria-label={`${active.alt} preview`}
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) setActiveIndex(null);
           }}
+          onCancel={() => setActiveIndex(null)}
         >
           <div className="relative h-full w-full max-w-6xl">
             <div className="absolute right-0 top-0 z-10 flex items-center gap-2">
@@ -98,7 +99,7 @@ export function ImageLightboxGallery({
               </>
             )}
           </div>
-        </div>
+        </dialog>
       )}
     </>
   );

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
-import { getStripe, markPaidBySession } from "@/lib/stripe";
+import { failPendingBySession, getStripe, markPaidBySession } from "@/lib/stripe";
+import { markPaymentReversed } from "@/lib/payment-events";
 
 /**
  * Stripe webhook. Verifies the signature against the raw body (forged/replayed
@@ -29,7 +30,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "invalid signature" }, { status: 400 });
   }
 
-  if (event.type === "checkout.session.completed") {
+  if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
     const session = event.data.object as Stripe.Checkout.Session;
     if (session.payment_status === "paid" || session.payment_status === "no_payment_required") {
       const paymentIntent =
@@ -39,14 +40,47 @@ export async function POST(req: Request) {
       if (kind === "booking" || kind === "pass") {
         const collection = kind === "pass" ? "pass_purchases" : "bookings";
         try {
-          await markPaidBySession(collection, session.id, paymentIntent, session.amount_total, {
+          const reference = await markPaidBySession(collection, session.id, paymentIntent, session.amount_total, {
             requireEmailDelivery: true,
+            reference: session.metadata?.reference,
           });
+          if (!reference) throw new Error(`No unique order found for Checkout Session ${session.id}`);
         } catch (error) {
-          console.error("[stripe] post-payment email failed", error);
-          return NextResponse.json({ error: "post-payment delivery failed" }, { status: 500 });
+          console.error("[stripe] post-payment processing failed", error);
+          return NextResponse.json({ error: "post-payment processing failed" }, { status: 500 });
         }
       }
+    }
+  }
+
+  if (event.type === "checkout.session.expired" || event.type === "checkout.session.async_payment_failed") {
+    const session = event.data.object as Stripe.Checkout.Session;
+    const kind = session.metadata?.kind;
+    if (kind === "booking" || kind === "pass") {
+      const collection = kind === "pass" ? "pass_purchases" : "bookings";
+      const failed = await failPendingBySession(collection, session.id, session.metadata?.reference);
+      if (!failed) {
+        console.error(`[stripe] no unique pending order found for expired session ${session.id}`);
+        return NextResponse.json({ error: "order reconciliation failed" }, { status: 500 });
+      }
+    }
+  }
+
+  if (event.type === "charge.refunded") {
+    const charge = event.data.object as Stripe.Charge;
+    if (charge.refunded) {
+      const paymentIntent = typeof charge.payment_intent === "string" ? charge.payment_intent : charge.payment_intent?.id;
+      if (!paymentIntent || !(await markPaymentReversed(paymentIntent, "refunded"))) {
+        return NextResponse.json({ error: "refund reconciliation failed" }, { status: 500 });
+      }
+    }
+  }
+
+  if (event.type === "charge.dispute.created") {
+    const dispute = event.data.object as Stripe.Dispute;
+    const paymentIntent = typeof dispute.payment_intent === "string" ? dispute.payment_intent : dispute.payment_intent?.id;
+    if (!paymentIntent || !(await markPaymentReversed(paymentIntent, "disputed"))) {
+      return NextResponse.json({ error: "dispute reconciliation failed" }, { status: 500 });
     }
   }
 

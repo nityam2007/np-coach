@@ -124,13 +124,15 @@ async function ensurePublicReadFiles() {
   const existing = await api(
     `/permissions?filter[policy][_eq]=${publicPolicy.id}&filter[collection][_eq]=directus_files&filter[action][_eq]=read&limit=1`,
   );
+  const permission = { fields: ["id", "title", "type", "width", "height", "description", "modified_on"], permissions: {}, validation: {} };
   if (existing.length) {
-    console.log("• public read on files already granted");
+    await api(`/permissions/${existing[0].id}`, { method: "PATCH", body: JSON.stringify(permission) });
+    console.log("✓ public file metadata restricted to display-safe fields");
     return;
   }
   await api("/permissions", {
     method: "POST",
-    body: JSON.stringify({ policy: publicPolicy.id, collection: "directus_files", action: "read", fields: ["*"], permissions: {}, validation: {} }),
+    body: JSON.stringify({ policy: publicPolicy.id, collection: "directus_files", action: "read", ...permission }),
   });
   console.log("✓ granted public read on files (/assets/<id> now works)");
 }

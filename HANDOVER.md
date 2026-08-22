@@ -125,3 +125,14 @@ Confirm each item with the project owner; some may already have been supplied in
 - Final content, legal, fare, route, and contact-detail approval.
 
 Detailed deployment instructions are in [DEPLOY_COOLIFY.md](DEPLOY_COOLIFY.md). Development architecture and open work are in [AIDATA/CONTINUE.md](AIDATA/CONTINUE.md).
+
+## 20 August 2026 audit release
+
+The code-level production-readiness remediation is complete; the authoritative control and acceptance list is [SECURITY_AND_OPERATIONS.md](SECURITY_AND_OPERATIONS.md).
+
+Release sequence:
+
+1. Keep `DAILY_EXPRESS_BOOKINGS_ENABLED=false`; deploy the read-only-mounted Directus extension and let the additive bootstrap add sessions, delivery leases, `service_runs`, unique constraints, and booking inventory fields.
+2. Configure all six independent audit secrets, including `INTERNAL_API_SECRET` on both Directus and web, and optionally the revalidation Flow. Confirm the app token remains scoped, the internal endpoint rejects unauthorised calls, and public file metadata is restricted.
+3. Enter approved route capacities, schedule `POST /api/maintenance` hourly, run `npm run check`, parse `docker-compose.coolify.yml`, and concurrency-test single/return last-seat cases before deliberately enabling bookings.
+4. Configure and run encrypted off-site backup plus disposable restore, then complete live Stripe (including refund/dispute), Postfix relay!� M365 mailbox delivery, Cloudflare, legal/ICO, access-control, accessibility/mobile, SEO/redirect, and content/fare/timetable acceptance.

@@ -179,6 +179,8 @@ export interface SchoolRoute {
 
 export interface RouteStop {
   time: string;
+  /** Stable CMS stop code used by booking validation. */
+  code?: string;
   place: string;
   detail: string;
 }
@@ -191,6 +193,8 @@ export interface CoachRoute {
   /** Fares in pence (GBP), computed server-side — never trust client-sent prices. */
   priceSingle: number;
   priceReturn: number;
+  /** Seats available on each departure; zero/missing keeps online sales closed. */
+  capacity?: number;
   summary: string;
   /** Directus file id for the route hero banner. */
   image?: string | null;
@@ -338,6 +342,8 @@ export interface EmailTemplates {
 export interface SiteContent {
   name: string;
   legalName: string;
+  companyNumber: string;
+  registeredIn: string;
   tagline: string;
   subtitle: string;
   description: string;

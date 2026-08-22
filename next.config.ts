@@ -63,6 +63,20 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "256kb",
     },
   },
+  async redirects() {
+    return [
+      { source: "/blogs/", destination: "/blog", permanent: true },
+      { source: "/76-seat-coaches/", destination: "/72-seat-coaches", permanent: true },
+      { source: "/pioneer-secondary-academy/", destination: "/home-to-school/pioneer-secondary-academy", permanent: true },
+      { source: "/herschel-grammar-school/", destination: "/home-to-school/herschel-grammar-school", permanent: true },
+      { source: "/header/", destination: "/", permanent: true },
+      { source: "/cart/", destination: "/daily-express-service/book", permanent: true },
+      { source: "/checkout/", destination: "/daily-express-service/book", permanent: true },
+      { source: "/shop/", destination: "/daily-express-service/book", permanent: true },
+      { source: "/home-to-school-terms-and-conditions/", destination: "/terms", permanent: true },
+    ];
+  },
+
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

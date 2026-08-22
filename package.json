@@ -8,6 +8,9 @@
     "build": "next build",
     "start": "next start -H 0.0.0.0 -p 3000",
     "lint": "eslint .",
+    "test": "node --experimental-strip-types --test tests/*.test.*",
+    "verify:scripts": "node --check scripts/seed-directus.mjs && node --check extensions/directus-extension-np-internal/dist/index.js",
+    "check": "npm run test && npm run verify:scripts && npx tsc --noEmit --incremental false && npm run lint && npm run build",
     "seed": "node scripts/seed-directus.mjs",
     "configure": "node scripts/configure-directus.mjs",
     "media": "node scripts/upload-media.mjs",
@@ -17,7 +20,6 @@
     "schema:apply": "sh scripts/schema.sh apply"
   },
   "dependencies": {
-    "dompurify": "^3.4.14",
     "geist": "^1.3.1",
     "html-to-image": "^1.11.13",
     "jspdf": "^4.2.1",
@@ -28,6 +30,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "redis": "^6.2.1",
+    "sanitize-html": "^2.17.7",
     "stripe": "^22.3.0",
     "zod": "^4.4.3"
   },
@@ -38,6 +41,7 @@
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@types/sanitize-html": "^2.16.1",
     "eslint": "^9.0.0",
     "eslint-config-next": "^16.3.1",
     "tailwindcss": "^4.0.0",

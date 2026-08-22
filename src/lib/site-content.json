@@ -1,6 +1,8 @@
 {
   "name": "NP Coaches",
   "legalName": "New Punjab Coaches Ltd",
+  "companyNumber": "03839492",
+  "registeredIn": "England and Wales",
   "tagline": "Premium Coach Transport Across the UK",
   "subtitle": "Safe, reliable and comfortable transport for schools, businesses, tours and private groups.",
   "description": "Family-run coach hire since 1999. Charter & private hire, UK tours, the Daily Express inter-city service and home-to-school transport — operated from Iver with a 15+ strong Euro-6, ULEZ-compliant fleet (19–98 seats).",
@@ -870,6 +872,26 @@
       "seoDescription": "Daily coach service from Wolverhampton, Birmingham and Coventry to Slough and London with NP Coaches. Afternoon and evening departures, 7 days a week."
     },
     {
+      "slug": "london-to-wolverhampton",
+      "from": "London",
+      "to": "Wolverhampton",
+      "imageAlt": "London to Coventry, Birmingham and Wolverhampton coach service",
+      "days": "7 days a week",
+      "priceSingle": 1500,
+      "priceReturn": 2500,
+      "summary": "Daily morning coach service from Southall and Slough to Coventry, Birmingham and Wolverhampton.",
+      "stops": [
+        { "time": "9:45 AM", "place": "Southall (London)", "detail": "1A Priory Way, Southall" },
+        { "time": "10:15 AM", "place": "Slough (London)", "detail": "Library (Stop W), Wellington St, SL1 1YG" },
+        { "time": "12:15 PM", "place": "Coventry", "detail": "Pool Meadow Bus Stand C" },
+        { "time": "12:50 PM", "place": "Birmingham", "detail": "Guru Nanak Nishkam Sewak Jatha, Soho Road, Handsworth" },
+        { "time": "1:00 PM", "place": "Birmingham", "detail": "Smethwick Sikh Temple" },
+        { "time": "1:30 PM", "place": "Wolverhampton", "detail": "Faulkland Crescent Coach Park" }
+      ],
+      "seoTitle": "London to Wolverhampton Coach | Daily Express | NP Coaches",
+      "seoDescription": "Daily coach service from Southall and Slough to Coventry, Birmingham and Wolverhampton with NP Coaches."
+    },
+    {
       "slug": "london-to-leicester",
       "from": "London",
       "to": "Leicester",
@@ -958,6 +980,11 @@
       "code": "wolverhampton",
       "name": "Wolverhampton",
       "detail": "Faulkland Crescent Coach Park, WV1 1JN"
+    },
+    {
+      "code": "leicester",
+      "name": "Leicester",
+      "detail": "St Margaret's Bus Station, Bay SV"
     }
   ],
   "blogPosts": [

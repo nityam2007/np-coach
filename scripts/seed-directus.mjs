@@ -16,6 +16,7 @@ const api = directus.request;
 // ---- field helpers ----
 const pk = (field) => ({ field, type: "integer", schema: { is_primary_key: true, has_auto_increment: true }, meta: { hidden: true } });
 const str = (field) => ({ field, type: "string", meta: {}, schema: {} });
+const uniqueStr = (field) => ({ field, type: "string", meta: {}, schema: { is_unique: true } });
 const text = (field) => ({ field, type: "text", meta: { interface: "input-multiline" }, schema: {} });
 const int = (field) => ({ field, type: "integer", meta: {}, schema: {} });
 const json = (field) => ({ field, type: "json", meta: { interface: "input-code", options: { language: "json" } }, schema: {} });
@@ -26,6 +27,7 @@ const anyFileField = (field, note) => ({ field, type: "uuid", meta: { interface:
 const SETTINGS_FIELDS = [
   pk("id"),
   str("name"), str("legal_name"), str("tagline"), text("subtitle"), text("description"), str("url"), int("founded"),
+  str("company_number"), str("registered_in"),
   str("phone_display"), str("phone_href"), str("phone_hours"),
   str("email_general"), str("email_bookings"),
   json("email_templates"),
@@ -85,6 +87,7 @@ const ROUTES_FIELDS = [
   str("slug"), str("from"), str("to"), str("days"),
   { field: "price_single", type: "integer", meta: { interface: "input", note: "Single fare in pence (e.g. 1500 = £15.00)" }, schema: {} },
   { field: "price_return", type: "integer", meta: { interface: "input", note: "Return fare in pence (e.g. 2500 = £25.00)" }, schema: {} },
+  { field: "capacity", type: "integer", meta: { interface: "input", note: "Sellable seats per departure; keep 0 until operations approves online sales" }, schema: { default_value: 0 } },
   text("summary"), fileField("image", "Route hero banner."), str("image_alt"),
   json("stops"),
   str("seo_title"), text("seo_description"),
@@ -128,10 +131,15 @@ const SCHOOL_ROUTES_FIELDS = [
 const datetimeCreated = { field: "created_at", type: "timestamp", meta: { interface: "datetime", readonly: true, special: ["date-created"] }, schema: {} };
 const deliveryStatus = (field) => ({ field, type: "string", meta: { hidden: true, readonly: true }, schema: { default_value: "pending" } });
 const deliverySentAt = (field) => ({ field, type: "timestamp", meta: { interface: "datetime", hidden: true, readonly: true }, schema: {} });
+const deliveryStartedAt = (field) => ({ field, type: "timestamp", meta: { interface: "datetime", hidden: true, readonly: true }, schema: {} });
+const publishedStatus = { field: "status", type: "string", meta: { interface: "select-dropdown", options: { choices: [{ text: "Draft", value: "draft" }, { text: "Published", value: "published" }] } }, schema: { default_value: "published" } };
 
 const CONTACT_SUBMISSIONS_FIELDS = [
   pk("id"),
   str("name"), str("email"), str("phone"), str("subject"), text("message"),
+  deliveryStatus("email_status"),
+  deliveryStartedAt("email_started_at"),
+  deliverySentAt("email_sent_at"),
   datetimeCreated,
 ];
 
@@ -142,6 +150,9 @@ const QUOTE_REQUESTS_FIELDS = [
   { field: "outbound_date", type: "date", meta: { interface: "datetime" }, schema: {} },
   { field: "return_date", type: "date", meta: { interface: "datetime" }, schema: {} },
   int("passengers"), str("coach_size"), text("journey_details"), datetimeCreated,
+  deliveryStatus("email_status"),
+  deliveryStartedAt("email_started_at"),
+  deliverySentAt("email_sent_at"),
 ];
 
 // server token; the public can neither read nor write them. Identified by email.
@@ -165,24 +176,56 @@ const OTP_FIELDS = [
 ];
 
 
+// Opaque, revocable customer sessions. Only the random token hash is persisted.
+const CUSTOMER_SESSIONS_FIELDS = [
+  pk("id"),
+  uniqueStr("token_hash"),
+  str("email"),
+  { field: "expires_at", type: "timestamp", meta: { interface: "datetime" }, schema: {} },
+  { field: "revoked_at", type: "timestamp", meta: { interface: "datetime" }, schema: {} },
+  datetimeCreated,
+];
+
 // P4 — Daily Express bookings. Written ONLY by the server (server token, no public access):
 // the booking is created `pending` before payment, then set `paid` by the signed Stripe webhook.
 // `stripe_session_id` is unique → webhook idempotency. Amounts stored in pence, server-computed.
+// Atomic per-departure inventory. A unique run key represents route/date/time.
+const SERVICE_RUNS_FIELDS = [
+  pk("id"),
+  uniqueStr("run_key"),
+  str("route_slug"),
+  { field: "service_date", type: "date", meta: { interface: "datetime" }, schema: {} },
+  str("departure_time"),
+  int("capacity"),
+  { field: "booked_seats", type: "integer", meta: { interface: "input", readonly: true }, schema: { default_value: 0 } },
+  { field: "status", type: "string", meta: { interface: "select-dropdown", options: { choices: [{ text: "Scheduled", value: "scheduled" }, { text: "Cancelled", value: "cancelled" }] } }, schema: { default_value: "scheduled" } },
+  datetimeCreated,
+];
+
 const BOOKINGS_FIELDS = [
   pk("id"),
-  str("reference"),
+  uniqueStr("reference"),
+  str("route_slug"),
   str("from_stop"), str("to_stop"), str("route_label"),
   { field: "trip_date", type: "date", meta: { interface: "datetime" }, schema: {} },
   str("trip_type"), // "single" | "return"
+  str("departure_time"),
+  { field: "return_date", type: "date", meta: { interface: "datetime" }, schema: {} },
+  str("return_route_slug"),
+  str("return_departure_time"),
   int("passengers"),
   int("amount"), // total in pence
   str("currency"),
   str("name"), str("email"), str("phone"),
-  { field: "status", type: "string", meta: { interface: "select-dropdown", options: { choices: [{ text: "Pending", value: "pending" }, { text: "Paid", value: "paid" }, { text: "Failed", value: "failed" }] } }, schema: { default_value: "pending" } },
+  int("outward_run_id"),
+  int("return_run_id"),
+  str("inventory_status"),
+  { field: "status", type: "string", meta: { interface: "select-dropdown", options: { choices: [{ text: "Pending", value: "pending" }, { text: "Paid", value: "paid" }, { text: "Failed", value: "failed" }, { text: "Refunded", value: "refunded" }, { text: "Disputed", value: "disputed" }] } }, schema: { default_value: "pending" } },
   { field: "stripe_session_id", type: "string", meta: { note: "Stripe Checkout Session id (unique — webhook idempotency)" }, schema: { is_unique: true } },
   deliveryStatus("confirmation_email_status"),
+  deliveryStartedAt("confirmation_email_started_at"),
   deliverySentAt("confirmation_email_sent_at"),
-  str("stripe_payment_intent"),
+  uniqueStr("stripe_payment_intent"),
   datetimeCreated,
 ];
 
@@ -190,7 +233,7 @@ const BOOKINGS_FIELDS = [
 // server-side from settings.pricing. Same pending→paid + unique session-id idempotency.
 const PASS_PURCHASES_FIELDS = [
   pk("id"),
-  str("reference"),
+  uniqueStr("reference"),
   int("amount"), str("currency"),
   str("name"), str("email"), str("phone"),
   { field: "travel_date", type: "date", meta: { interface: "datetime" }, schema: {} },
@@ -198,12 +241,14 @@ const PASS_PURCHASES_FIELDS = [
   { field: "school_route", type: "boolean", meta: { interface: "boolean" }, schema: { default_value: false } },
   str("school"), str("route"), str("where_left"),
   text("item_description"), text("notes"),
-  { field: "status", type: "string", meta: { interface: "select-dropdown", options: { choices: [{ text: "Pending", value: "pending" }, { text: "Paid", value: "paid" }, { text: "Failed", value: "failed" }] } }, schema: { default_value: "pending" } },
+  { field: "status", type: "string", meta: { interface: "select-dropdown", options: { choices: [{ text: "Pending", value: "pending" }, { text: "Paid", value: "paid" }, { text: "Failed", value: "failed" }, { text: "Refunded", value: "refunded" }, { text: "Disputed", value: "disputed" }] } }, schema: { default_value: "pending" } },
   { field: "stripe_session_id", type: "string", meta: { note: "Stripe Checkout Session id (unique — webhook idempotency)" }, schema: { is_unique: true } },
-  str("stripe_payment_intent"),
+  uniqueStr("stripe_payment_intent"),
   deliveryStatus("confirmation_email_status"),
+  deliveryStartedAt("confirmation_email_started_at"),
   deliverySentAt("confirmation_email_sent_at"),
   deliveryStatus("staff_email_status"),
+  deliveryStartedAt("staff_email_started_at"),
   deliverySentAt("staff_email_sent_at"),
   datetimeCreated,
 ];
@@ -218,6 +263,17 @@ async function ensureCollection(name, meta, fields) {
   console.log(`✓ created collection "${name}"`);
 }
 
+
+async function ensureUniqueField(collection, field) {
+  const fields = await api(`/fields/${collection}`);
+  const current = fields.find((item) => item.field === field);
+  if (current?.schema?.is_unique) return;
+  await api(`/fields/${collection}/${field}`, {
+    method: "PATCH",
+    body: JSON.stringify({ schema: { is_unique: true } }),
+  });
+  console.log(`✓ enforced unique field "${collection}.${field}"`);
+}
 async function ensureField(collection, field) {
   const fields = await api(`/fields/${collection}`);
   if (fields.some((f) => f.field === field.field)) return;
@@ -225,21 +281,26 @@ async function ensureField(collection, field) {
   console.log(`✓ added field "${collection}.${field.field}"`);
 }
 
-async function ensurePublicRead(collection) {
+async function reconcileFieldMeta(collection, definition) {
+  await api(`/fields/${collection}/${definition.field}`, {
+    method: "PATCH",
+    body: JSON.stringify({ meta: definition.meta }),
+  });
+}
+
+async function ensurePublicRead(collection, publishedOnly = false) {
   const policies = await api("/policies?limit=-1");
   const publicPolicy = policies.find((p) => p.name === "$t:public_label");
   if (!publicPolicy) throw new Error("public policy not found");
-  const existing = await api(
-    `/permissions?filter[policy][_eq]=${publicPolicy.id}&filter[collection][_eq]=${collection}&filter[action][_eq]=read&limit=1`,
-  );
+  const permissions = publishedOnly ? { status: { _eq: "published" } } : {};
+  const payload = { policy: publicPolicy.id, collection, action: "read", fields: ["*"], permissions, validation: {} };
+  const existing = await api(`/permissions?filter[policy][_eq]=${publicPolicy.id}&filter[collection][_eq]=${collection}&filter[action][_eq]=read&limit=1`);
   if (existing.length) {
-    console.log(`• public read on "${collection}" already granted`);
+    await api(`/permissions/${existing[0].id}`, { method: "PATCH", body: JSON.stringify(payload) });
+    console.log(`✓ reconciled public read on "${collection}"`);
     return;
   }
-  await api("/permissions", {
-    method: "POST",
-    body: JSON.stringify({ policy: publicPolicy.id, collection, action: "read", fields: ["*"], permissions: {}, validation: {} }),
-  });
+  await api("/permissions", { method: "POST", body: JSON.stringify(payload) });
   console.log(`✓ granted public read on "${collection}"`);
 }
 
@@ -266,18 +327,20 @@ async function ensurePublicCreate(collection) {
   console.log(`✓ granted public create on "${collection}"`);
 }
 
-// Brand the admin panel (project name/colour, navy navigation, brand fonts, login note).
-async function revokePublicCreate(collection) {
+// Reconcile all anonymous actions on protected collections. This removes accidental
+// read/update/delete drift as well as legacy create grants.
+async function revokePublicAccess(collection) {
   const policies = await api("/policies?limit=-1");
   const publicPolicy = policies.find((p) => p.name === "$t:public_label");
   if (!publicPolicy) throw new Error("public policy not found");
-  const existing = await api(`/permissions?filter[policy][_eq]=${publicPolicy.id}&filter[collection][_eq]=${collection}&filter[action][_eq]=create&limit=-1`);
+  const existing = await api(`/permissions?filter[policy][_eq]=${publicPolicy.id}&filter[collection][_eq]=${collection}&limit=-1`);
   for (const permission of existing) {
     await api(`/permissions/${permission.id}`, { method: "DELETE" });
   }
-  console.log(`✓ anonymous create removed from "${collection}"`);
+  console.log(`✓ anonymous access removed from "${collection}"`);
 }
 
+// Brand the admin panel (project name/colour, navy navigation, brand fonts, login note).
 async function applyBranding() {
   await api("/settings", {
     method: "PATCH",
@@ -366,15 +429,19 @@ async function run() {
   await ensureCollection("testimonials", { sort_field: "sort", icon: "format_quote", note: "Homepage testimonials" }, TESTIMONIALS_FIELDS);
   await ensureCollection("contact_submissions", { icon: "mail", note: "Contact form submissions (read in admin)" }, CONTACT_SUBMISSIONS_FIELDS);
   await ensureCollection("bookings", { icon: "confirmation_number", note: "Daily Express bookings (server-write only; Stripe)" }, BOOKINGS_FIELDS);
+  await ensureCollection("service_runs", { icon: "event_seat", note: "Daily Express departure inventory (server-reserved; operations may cancel/edit capacity)" }, SERVICE_RUNS_FIELDS);
   await ensureCollection("quote_requests", { icon: "request_quote", note: "Coach-hire quote requests (read in admin)" }, QUOTE_REQUESTS_FIELDS);
   await ensureCollection("pass_purchases", { icon: "luggage", note: "Lost Property pass purchases (server-write only; Stripe)" }, PASS_PURCHASES_FIELDS);
   await ensureCollection("customers", { icon: "person", note: "Customer accounts (server-write only; passwordless)" }, CUSTOMERS_FIELDS);
   await ensureCollection("otp_codes", { icon: "password", note: "Login OTP codes (server-write only; hashed, single-use)" }, OTP_FIELDS);
+  await ensureCollection("customer_sessions", { icon: "key", note: "Opaque customer sessions (server-only; revocable)" }, CUSTOMER_SESSIONS_FIELDS);
 
   const protectedBefore = await protectedDataCounts();
 
   // Fields added after a collection already exists (idempotent extension).
   await ensureField("settings", json("stats"));
+  await ensureField("settings", str("company_number"));
+  await ensureField("settings", str("registered_in"));
   await ensureField("settings", json("accreditations"));
   await ensureField("settings", json("email_templates"));
   await ensureField("settings", json("coverage"));
@@ -412,20 +479,42 @@ async function run() {
   // Routes gained fares (P4) — add to any pre-existing routes collection.
   await ensureField("routes", { field: "price_single", type: "integer", meta: { interface: "input", note: "Single fare in pence" }, schema: {} });
   await ensureField("routes", { field: "price_return", type: "integer", meta: { interface: "input", note: "Return fare in pence" }, schema: {} });
+  await ensureField("routes", { field: "capacity", type: "integer", meta: { interface: "input", note: "Sellable seats per departure; keep 0 until approved" }, schema: { default_value: 0 } });
   // Bookings moved to stop-to-stop — add from/to stop codes to any pre-existing bookings collection.
   await ensureField("bookings", str("from_stop"));
   await ensureField("bookings", str("to_stop"));
   // Media fields (added to pre-existing collections).
   await ensureField("fleet", fileField("image", "Exterior photo."));
+  await ensureField("bookings", str("route_slug"));
+  await ensureField("bookings", str("departure_time"));
+  await ensureField("bookings", { field: "return_date", type: "date", meta: { interface: "datetime" }, schema: {} });
+  await ensureField("bookings", int("outward_run_id"));
+  await ensureField("bookings", int("return_run_id"));
+  await ensureField("bookings", str("inventory_status"));
+  await ensureField("bookings", str("return_route_slug"));
+  await ensureField("bookings", str("return_departure_time"));
+
+  const paymentStatusDefinition = BOOKINGS_FIELDS.find((field) => field.field === "status");
+  if (!paymentStatusDefinition) throw new Error("payment status field definition missing");
+  await reconcileFieldMeta("bookings", paymentStatusDefinition);
+  await reconcileFieldMeta("pass_purchases", paymentStatusDefinition);
   await ensureField("fleet", json("gallery"));
   await ensureField("fleet", str("group_label"));
   await ensureField("fleet", str("image_alt"));
   await ensureField("fleet", json("layout_images"));
+  for (const collection of ["contact_submissions", "quote_requests"]) {
+    await ensureField(collection, deliveryStatus("email_status"));
+    await ensureField(collection, deliveryStartedAt("email_started_at"));
+    await ensureField(collection, deliverySentAt("email_sent_at"));
+  }
   await ensureField("bookings", deliveryStatus("confirmation_email_status"));
+  await ensureField("bookings", deliveryStartedAt("confirmation_email_started_at"));
   await ensureField("bookings", deliverySentAt("confirmation_email_sent_at"));
   await ensureField("pass_purchases", deliveryStatus("confirmation_email_status"));
+  await ensureField("pass_purchases", deliveryStartedAt("confirmation_email_started_at"));
   await ensureField("pass_purchases", deliverySentAt("confirmation_email_sent_at"));
   await ensureField("pass_purchases", deliveryStatus("staff_email_status"));
+  await ensureField("pass_purchases", deliveryStartedAt("staff_email_started_at"));
   await ensureField("pass_purchases", deliverySentAt("staff_email_sent_at"));
   await ensureField("pages", fileField("image", "Optional hero image for the content page."));
   await ensureField("pages", str("image_alt"));
@@ -441,19 +530,30 @@ async function run() {
   await ensureField("settings", json("school_transport"));
 
   await ensureField("blog_posts", fileField("thumbnail", "Blog card and article preview image."));
-  await ensurePublicRead("settings");
-  await ensurePublicRead("services");
-  await ensurePublicRead("fleet");
-  await ensurePublicRead("pages");
-  await ensurePublicRead("tours");
-  await ensurePublicRead("routes");
-  await ensurePublicRead("stops");
-  await ensurePublicRead("school_routes");
-  await ensurePublicRead("blog_posts");
-  await ensurePublicRead("testimonials");
-  await revokePublicCreate("contact_submissions");
+  const publishableCollections = ["services", "fleet", "pages", "tours", "routes", "stops", "school_routes", "blog_posts", "testimonials"];
+  for (const collection of publishableCollections) {
+    await ensureField(collection, publishedStatus);
+    await api(`/items/${collection}?filter[status][_null]=true`, { method: "PATCH", body: JSON.stringify({ status: "published" }) });
+  }
 
-  await revokePublicCreate("quote_requests");
+  await ensurePublicRead("settings");
+  await ensurePublicRead("services", true);
+  await ensurePublicRead("fleet", true);
+  await ensurePublicRead("pages", true);
+  await ensureUniqueField("bookings", "reference");
+  await ensureUniqueField("pass_purchases", "reference");
+  await ensureUniqueField("bookings", "stripe_payment_intent");
+  await ensureUniqueField("service_runs", "run_key");
+  await ensureUniqueField("pass_purchases", "stripe_payment_intent");
+  await ensurePublicRead("tours", true);
+  await ensurePublicRead("routes", true);
+  await ensurePublicRead("stops", true);
+  await ensurePublicRead("school_routes", true);
+  await ensurePublicRead("blog_posts", true);
+  await ensurePublicRead("testimonials", true);
+  for (const collection of ["contact_submissions", "quote_requests", "bookings", "service_runs", "pass_purchases", "customers", "otp_codes", "customer_sessions"]) {
+    await revokePublicAccess(collection);
+  }
   // Pricing: merge in any keys missing from the live row (e.g. newly-added fares),
   // but never overwrite values the client has already tuned in Directus.
   const currentSettings = await api("/items/settings");
@@ -482,6 +582,8 @@ async function run() {
   // routine deploys may add missing nested keys but never reset editor-managed values.
   const settingsDefaults = {
       name: content.name,
+      company_number: content.companyNumber,
+      registered_in: content.registeredIn,
       legal_name: content.legalName,
       tagline: content.tagline,
       subtitle: content.subtitle,
@@ -524,6 +626,8 @@ async function run() {
     if (socialLinksMissing) settingsPatch.social_links = content.socialLinks;
   }
 
+    if (!currentSettings.company_number) settingsPatch.company_number = content.companyNumber;
+    if (!currentSettings.registered_in) settingsPatch.registered_in = content.registeredIn;
   if (Object.keys(settingsPatch).length) {
     await api("/items/settings", {
       method: "PATCH",
@@ -694,6 +798,7 @@ async function run() {
           days: r.days,
           price_single: r.priceSingle,
           price_return: r.priceReturn,
+          capacity: r.capacity ?? 0,
           summary: r.summary,
           image_alt: r.imageAlt,          stops: r.stops,
           seo_title: r.seoTitle,
@@ -705,6 +810,27 @@ async function run() {
     console.log(`✓ seeded ${content.routes.length} routes`);
   } else {
     console.log("• routes already populated — skipped");
+  }
+
+  // Add newly introduced route directions without replacing edited CMS routes.
+  const existingRouteSlugs = new Set((await api("/items/routes?fields=slug&limit=-1")).map((route) => route.slug));
+  const missingRoutes = content.routes.filter((route) => !existingRouteSlugs.has(route.slug));
+  if (missingRoutes.length) {
+    await api("/items/routes", {
+      method: "POST",
+      body: JSON.stringify(missingRoutes.map((r, i) => ({
+        slug: r.slug,
+        from: r.from, to: r.to,
+        days: r.days,
+        price_single: r.priceSingle, price_return: r.priceReturn,
+        capacity: r.capacity ?? 0,
+        summary: r.summary,
+        image_alt: r.imageAlt, stops: r.stops,
+        seo_title: r.seoTitle, seo_description: r.seoDescription,
+        sort: existingRouteSlugs.size + i + 1,
+      }))),
+    });
+    console.log(`✓ seeded ${missingRoutes.length} missing routes`);
   }
 
   // Backfill fares on pre-existing routes that don't have a price yet (P4). Won't
@@ -721,16 +847,18 @@ async function run() {
     console.log(`✓ backfilled fares for route "${route.slug}"`);
   }
 
-  // Stops — only seed if empty.
-  const stops = await api("/items/stops?limit=1");
-  if (stops.length === 0) {
+  // Stops — add missing codes without changing existing CMS rows.
+  const existingStops = await api("/items/stops?fields=code,sort&limit=-1");
+  const haveStop = new Set(existingStops.map((stop) => stop.code));
+  const missingStops = content.stops.filter((stop) => !haveStop.has(stop.code));
+  if (missingStops.length) {
     await api("/items/stops", {
       method: "POST",
-      body: JSON.stringify(content.stops.map((s, i) => ({ code: s.code, name: s.name, detail: s.detail, sort: i + 1 }))),
+      body: JSON.stringify(missingStops.map((s, i) => ({ code: s.code, name: s.name, detail: s.detail, sort: existingStops.length + i + 1 }))),
     });
-    console.log(`✓ seeded ${content.stops.length} stops`);
+    console.log(`✓ seeded ${missingStops.length} missing stops`);
   } else {
-    console.log("• stops already populated — skipped");
+    console.log("• all stops present — skipped");
   }
 
   // School routes — only seed if empty.

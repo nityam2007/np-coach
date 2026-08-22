@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth";
+import { getSession } from "@/lib/auth-store";
 import { LoginForm } from "@/components/account/LoginForm";
 import { Icon } from "@/components/ui/Icon";
 

@@ -5,6 +5,7 @@ import { PageHero } from "@/components/sections/PageHero";
 import { ButtonLink } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { Reveal } from "@/components/ui/motion";
+import { CmsHtml } from "@/components/ui/CmsHtml";
 
 export const metadata: Metadata = {
   title: "Lost & Found | NP Coaches",
@@ -48,7 +49,7 @@ export default async function LostPropertyPage() {
           <Reveal>
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-accent">A simple, secure process</p>
             <h2 className="mt-3 max-w-xl font-display text-3xl font-bold text-navy sm:text-4xl">A clearer route back to your property</h2>
-            <div className="prose mt-6 max-w-2xl" dangerouslySetInnerHTML={{ __html: page?.body ?? "" }} />
+            <CmsHtml className="prose mt-6 max-w-2xl" html={page?.body ?? ""} />
             <div className="mt-8 flex flex-wrap gap-3">
               <ButtonLink href="/lost-property/claim" className="group">
                 Start your claim

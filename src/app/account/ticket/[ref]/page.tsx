@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { getSession } from "@/lib/auth";
+import { getSession } from "@/lib/auth-store";
 import { getBookingByReference } from "@/lib/stripe";
 import { getStops, getSettings } from "@/lib/directus";
 import { boardingPassFromBooking } from "@/lib/ticket";
@@ -25,7 +25,7 @@ export default async function TicketPage({ params }: { params: Promise<{ ref: st
   }
 
   const [stops, settings] = await Promise.all([getStops(), getSettings()]);
-  const pass = await boardingPassFromBooking(booking, stops, settings.name);
+  const pass = await boardingPassFromBooking(booking, stops, settings.name, settings.url);
 
   return (
     <section className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:py-20">

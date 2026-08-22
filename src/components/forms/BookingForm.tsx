@@ -1,17 +1,26 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+import Link from "next/link";
 import { useFormStatus } from "react-dom";
 import { startBooking } from "@/app/actions";
 import type { FormState } from "@/lib/forms";
 import { Turnstile } from "@/components/forms/Turnstile";
 import { Button } from "@/components/ui/Button";
 import { inputCls } from "@/components/ui/field";
+import { useFormErrors } from "@/components/forms/useFormErrors";
 import { RouteStopSelect } from "@/components/forms/RouteStopSelect";
 
 export interface BookingStopOption {
   code: string;
   name: string;
+}
+
+export interface BookingRouteOption {
+  stops: string[];
+  fareSingle: number;
+  fareReturn: number;
+  capacity: number;
 }
 
 const initial: FormState = { ok: false };
@@ -20,37 +29,38 @@ function formatGBP(pence: number) {
   return new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(pence / 100);
 }
 
-function SubmitButton({ total }: { total: number }) {
+function SubmitButton({ total, available }: { total: number; available: boolean }) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" disabled={pending}>
-      {pending ? "Redirecting to payment…" : `Pay ${formatGBP(total)} & book`}
+    <Button type="submit" disabled={pending || !available}>
+      {pending ? "Redirecting to payment…" : available ? `Pay ${formatGBP(total)} & book` : "Journey unavailable"}
     </Button>
   );
 }
 
 export function BookingForm({
   stops,
-  fareSingle,
-  fareReturn,
+  routes,
   defaultFrom,
   defaultTo,
   defaultDate,
   defaultPassengers,
+  defaultReturnDate,
   defaultTripType,
   cancelled,
 }: {
   stops: BookingStopOption[];
-  fareSingle: number;
-  fareReturn: number;
+  routes: BookingRouteOption[];
   defaultFrom?: string;
   defaultTo?: string;
   defaultDate?: string;
   defaultPassengers?: number;
+  defaultReturnDate?: string;
   defaultTripType?: "single" | "return";
   cancelled?: boolean;
 }) {
   const [state, action] = useActionState(startBooking, initial);
+  const formRef = useFormErrors(state.errors);
   const initialFrom = defaultFrom ?? stops[0]?.code ?? "";
   const initialTo = defaultTo && defaultTo !== initialFrom ? defaultTo : (stops.find((stop) => stop.code !== initialFrom)?.code ?? "");
   const [from, setFrom] = useState(initialFrom);
@@ -63,13 +73,17 @@ export function BookingForm({
     if (state.ok && state.redirect) window.location.href = state.redirect;
   }, [state]);
 
-  const unit = tripType === "return" ? fareReturn : fareSingle;
+  const matchingRoute = routes.find((route) => {
+    const fromIndex = route.stops.indexOf(from); const toIndex = route.stops.indexOf(to);
+    return fromIndex >= 0 && toIndex > fromIndex && route.capacity > 0;
+  });
+  const unit = matchingRoute ? (tripType === "return" ? matchingRoute.fareReturn : matchingRoute.fareSingle) : 0;
   const total = unit * (passengers > 0 ? passengers : 0);
   const sameStop = from === to;
   const today = new Date().toISOString().slice(0, 10);
 
   return (
-    <form action={action} className="grid gap-4">
+    <form ref={formRef} action={action} className="grid gap-4">
       {cancelled && !state.message && (
         <p className="rounded-lg bg-greyblue/15 px-4 py-2 text-sm text-navy">
           Payment cancelled — your booking wasn&apos;t taken. You can try again below.
@@ -103,7 +117,7 @@ export function BookingForm({
             <label key={t} className="flex items-center gap-2 font-normal capitalize">
               <input type="radio" name="tripType" value={t} checked={tripType === t} onChange={() => setTripType(t)} />
               {t}
-              <span className="text-navy/70">({formatGBP(t === "return" ? fareReturn : fareSingle)})</span>
+              <span className="text-navy/70">({matchingRoute ? formatGBP(t === "return" ? matchingRoute.fareReturn : matchingRoute.fareSingle) : "unavailable"})</span>
             </label>
           ))}
         </div>
@@ -117,6 +131,15 @@ export function BookingForm({
             <span className="mt-1 block text-xs font-normal text-red-600">{state.errors.date}</span>
           )}
         </label>
+        {tripType === "return" && (
+          <label className="text-sm font-semibold text-navy">
+            Return date
+            <input name="returnDate" type="date" min={defaultDate || today} defaultValue={defaultReturnDate} required className={inputCls} />
+            {state.errors?.returnDate && (
+              <span className="mt-1 block text-xs font-normal text-red-600">{state.errors.returnDate}</span>
+            )}
+          </label>
+        )}
         <label className="text-sm font-semibold text-navy">
           Passengers
           <input
@@ -173,10 +196,18 @@ export function BookingForm({
       </div>
 
       <Turnstile resetSignal={state} />
-      <SubmitButton total={total} />
+      <label className="flex items-start gap-3 rounded-lg border border-greyblue/20 bg-tint-soft px-4 py-3 text-sm text-navy/80">
+        <input name="termsAccepted" type="checkbox" required className="mt-1" aria-invalid={Boolean(state.errors?.termsAccepted)} />
+        <span>
+          I agree to the <Link href="/terms" className="font-semibold text-accent underline">booking terms</Link> and have read the <Link href="/privacy-policy" className="font-semibold text-accent underline">privacy policy</Link>, including service, cancellation and refund information.
+          {state.errors?.termsAccepted && <span className="mt-1 block text-xs text-red-600">{state.errors.termsAccepted}</span>}
+        </span>
+      </label>
+
+      <SubmitButton total={total} available={Boolean(matchingRoute && passengers <= matchingRoute.capacity)} />
       <p className="text-xs text-navy/70">
-        Payments are processed securely by Stripe. Online tickets are non-refundable; please book at least 1 hour before
-        departure and arrive 15 minutes early.
+        Payments are processed securely by Stripe. Discounted scheduled tickets are normally non-refundable, except where
+        your statutory rights apply. Book at least 1 hour before departure and arrive 15 minutes early.
       </p>
     </form>
   );

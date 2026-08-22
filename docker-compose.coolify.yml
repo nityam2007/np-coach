@@ -20,6 +20,8 @@ x-directus-bootstrap: &directus-bootstrap
 
 services:
   database:
+    networks:
+      - database
     image: mariadb:11.8.8
     restart: unless-stopped
     environment:
@@ -27,7 +29,6 @@ services:
       MARIADB_USER: directus
       MARIADB_PASSWORD: ${SERVICE_PASSWORD_64_DBUSER}
       MARIADB_ROOT_PASSWORD: ${SERVICE_PASSWORD_64_DBROOT}
-      MARIADB_AUTO_UPGRADE: "1"
     volumes:
       - mariadb_data:/var/lib/mysql
     healthcheck:
@@ -40,11 +41,13 @@ services:
       - no-new-privileges:true
 
   redis:
+    networks:
+      - cache
     image: redis:7.4.10-alpine
     restart: unless-stopped
     environment:
       REDIS_PASSWORD: ${SERVICE_PASSWORD_64_REDISPASS}
-    command: ["sh", "-c", "exec redis-server --appendonly yes --appendfsync everysec --maxmemory 768mb --maxmemory-policy allkeys-lfu --maxmemory-samples 10 --lazyfree-lazy-eviction yes --lazyfree-lazy-expire yes --requirepass \"$${REDIS_PASSWORD}\""]
+    command: ["sh", "-c", "exec redis-server --appendonly yes --appendfsync everysec --maxmemory 768mb --maxmemory-policy noeviction --lazyfree-lazy-expire yes --requirepass \"$${REDIS_PASSWORD}\""]
     volumes:
       - redis_data:/data
     healthcheck:
@@ -57,6 +60,8 @@ services:
       - no-new-privileges:true
 
   schema-migrate:
+    networks:
+      - database
     build:
       context: .
       dockerfile: Dockerfile.schema
@@ -74,7 +79,11 @@ services:
         condition: service_healthy
 
   directus:
-    image: directus/directus:12.0.2
+    networks:
+      - default
+      - database
+      - cache
+    image: directus/directus:12.1.0
     restart: unless-stopped
     expose:
       - "8055"
@@ -83,7 +92,9 @@ services:
       PUBLIC_URL: ${NEXT_PUBLIC_DIRECTUS_URL:?}
       CORS_ENABLED: "true"
       CORS_ORIGIN: "array:${NEXT_PUBLIC_SITE_URL:?}"
-      WEBSOCKETS_ENABLED: "true"
+      WEBSOCKETS_ENABLED: "false"
+      TUS_ENABLED: "false"
+      GRAPHQL_ENABLED: "false"
       REDIS: redis://:${SERVICE_PASSWORD_64_REDISPASS}@redis:6379
       CACHE_ENABLED: "true"
       CACHE_AUTO_PURGE: "true"
@@ -104,9 +115,11 @@ services:
       HSTS_ENABLED: "true"
       REFRESH_TOKEN_COOKIE_SECURE: "true"
       SESSION_COOKIE_SECURE: "true"
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?}
+      EXTENSIONS_MUST_LOAD: "true"
     volumes:
       - directus_uploads:/directus/uploads
-      - directus_extensions:/directus/extensions
+      - ./extensions:/directus/extensions:ro
     healthcheck:
       test: ["CMD-SHELL", "wget --spider -q http://127.0.0.1:8055/server/ping || exit 1"]
       interval: 15s
@@ -122,6 +135,8 @@ services:
       - no-new-privileges:true
 
   cms-bootstrap:
+    networks:
+      - default
     build:
       context: .
       dockerfile: Dockerfile.bootstrap
@@ -142,6 +157,9 @@ services:
       - no-new-privileges:true
 
   web:
+    networks:
+      - default
+      - cache
     build:
       context: .
       dockerfile: Dockerfile
@@ -159,6 +177,12 @@ services:
       DIRECTUS_SERVER_TOKEN: ${DIRECTUS_SERVER_TOKEN:-}
       REDIS_URL: redis://:${SERVICE_PASSWORD_64_REDISPASS}@redis:6379
       AUTH_SECRET: ${SERVICE_BASE64_64_WEBAUTH}
+      TICKET_SIGNING_SECRET: ${TICKET_SIGNING_SECRET:-}
+      OTP_PEPPER: ${OTP_PEPPER:-}
+      RATE_LIMIT_PEPPER: ${RATE_LIMIT_PEPPER:-}
+      REVALIDATION_SECRET: ${REVALIDATION_SECRET:-}
+      MAINTENANCE_SECRET: ${MAINTENANCE_SECRET:-}
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?}
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:?}
       NEXT_PUBLIC_DIRECTUS_URL: ${NEXT_PUBLIC_DIRECTUS_URL:?}
       NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}
@@ -167,6 +191,7 @@ services:
       NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      DAILY_EXPRESS_BOOKINGS_ENABLED: ${DAILY_EXPRESS_BOOKINGS_ENABLED:-false}
       SMTP_HOST: ${SMTP_HOST:-postfix}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_SECURE: ${SMTP_SECURE:-false}
@@ -186,8 +211,13 @@ services:
     security_opt:
       - no-new-privileges:true
 
+networks:
+  database:
+    internal: true
+  cache:
+    internal: true
+
 volumes:
   mariadb_data:
   redis_data:
   directus_uploads:
-  directus_extensions:

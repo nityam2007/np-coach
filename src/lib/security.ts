@@ -46,6 +46,10 @@ function sweepExpired(now: number): void {
   for (const [key, bucket] of buckets) {
     if (bucket.expiresAt <= now) buckets.delete(key);
   }
+  while (buckets.size >= MAX_BUCKETS) {
+    const oldest = buckets.keys().next().value as string | undefined;
+    if (!oldest) break; buckets.delete(oldest);
+  }
 }
 
 function memoryRateLimited(key: string, rule: RateLimitRule): boolean {
@@ -104,12 +108,15 @@ export async function rateLimited(key: string, rule: RateLimitRule): Promise<boo
       // Fall through to the local fail-safe when Redis is temporarily unavailable.
     }
   }
+  if (process.env.NODE_ENV === "production" && process.env.REDIS_URL) return true;
   return memoryRateLimited(key, rule);
 }
 
 /** Hash identities before using them as limiter keys so email addresses are not retained. */
 export function rateLimitKey(scope: string, identity: string): string {
-  const digest = crypto.createHash("sha256").update(identity.trim().toLowerCase()).digest("base64url");
+  const pepper = process.env.RATE_LIMIT_PEPPER || process.env.AUTH_SECRET || "np-coaches-dev-rate-limit";
+  if (process.env.NODE_ENV === "production" && !process.env.RATE_LIMIT_PEPPER && !process.env.AUTH_SECRET) throw new Error("RATE_LIMIT_PEPPER or AUTH_SECRET must be configured");
+  const digest = crypto.createHmac("sha256", pepper).update(identity.trim().toLowerCase()).digest("base64url");
   return `${scope}:${digest}`;
 }
 
@@ -119,11 +126,12 @@ export function rateLimitKey(scope: string, identity: string): string {
  */
 export async function clientIp(): Promise<string> {
   const requestHeaders = await headers();
-  const forwarded = requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim();
-  const value =
-    requestHeaders.get("cf-connecting-ip")?.trim() ||
-    requestHeaders.get("x-real-ip")?.trim() ||
-    forwarded ||
-    "unknown";
+  const cloudflare = requestHeaders.get("cf-connecting-ip")?.trim();
+  const value = process.env.NODE_ENV === "production"
+    ? cloudflare || "unknown"
+    : cloudflare ||
+      requestHeaders.get("x-real-ip")?.trim() ||
+      requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      "unknown";
   return value.slice(0, 64);
 }

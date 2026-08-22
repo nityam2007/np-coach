@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
+import { BreadcrumbJsonLd, JsonLdScript } from "@/components/seo/JsonLd";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Icon } from "@/components/ui/Icon";
 import { Reveal } from "@/components/ui/motion";
+import { CmsHtml } from "@/components/ui/CmsHtml";
 import { ButtonLink, buttonCls } from "@/components/ui/Button";
 import { assetUrl, getTour, getTours, getSettings, selectPageHeroFallback } from "@/lib/directus";
 
@@ -32,15 +33,19 @@ export default async function TourPage({ params }: { params: Promise<{ destinati
   const card = assetUrl(tour.cardImage ?? tour.image);
   const detail = assetUrl(tour.image ?? tour.cardImage);
   const jsonLd = {
-    "@context": "https://schema.org", "@type": "Service", serviceType: "Coach hire and UK tours",
-    name: `${tour.destination} coach tours from West London`, description: tour.seoDescription, areaServed: "United Kingdom",
-    provider: { "@type": "Organization", name: settings.name, telephone: settings.phone.display },
-    offers: { "@type": "Offer", priceCurrency: "GBP", url: `${settings.url}/get-a-quote` },
+    "@context": "https://schema.org",
+    "@type": "Service",
+    serviceType: "Coach hire and UK tours",
+    name: `${tour.destination} coach tours from West London`,
+    description: tour.seoDescription,
+    url: `${settings.url}/uk-tours/${tour.slug}`,
+    areaServed: "United Kingdom",
+    provider: { "@type": "Organization", "@id": `${settings.url}/#organization`, name: settings.name },
   };
 
   return (
     <article>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <JsonLdScript data={jsonLd} />
       <BreadcrumbJsonLd items={[{ label: "Home", path: "/" }, { label: "UK Tours", path: "/uk-tours" }, { label: tour.destination, path: `/uk-tours/${destination}` }]} />
       <section className="relative flex min-h-[34rem] items-end overflow-hidden bg-navy text-offwhite lg:aspect-[21/9] lg:min-h-0">
         {hero && <Image src={hero} alt={heroAlt} fill priority sizes="100vw" className="z-0 object-cover" />}
@@ -66,7 +71,7 @@ export default async function TourPage({ params }: { params: Promise<{ destinati
             <div className={card ? "" : "lg:col-span-2 lg:mx-auto lg:max-w-3xl"}>
               <Eyebrow>Discover {tour.destination}</Eyebrow>
               <h2 className="mt-3 font-display text-3xl font-bold text-navy">{tour.destination}</h2>
-              <div className="prose mt-5" dangerouslySetInnerHTML={{ __html: tour.body }} />
+              <CmsHtml className="prose mt-5" html={tour.body} />
             </div>
           </Reveal>
           <Reveal className="grid items-center gap-8 lg:grid-cols-2 lg:gap-14">

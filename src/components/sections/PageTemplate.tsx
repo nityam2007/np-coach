@@ -1,6 +1,7 @@
 import type { Page } from "@/lib/site-config";
 import { PageHero } from "@/components/sections/PageHero";
 import { Reveal } from "@/components/ui/motion";
+import { CmsHtml } from "@/components/ui/CmsHtml";
 import { Icon } from "@/components/ui/Icon";
 import { assetUrl } from "@/lib/directus";
 
@@ -14,7 +15,7 @@ export function PageTemplate({ page }: { page: Page }) {
           <Reveal>
             <div className="relative overflow-hidden rounded-3xl border border-accent/10 bg-white px-6 py-9 shadow-md shadow-navy/5 sm:px-10 sm:py-14">
               <div aria-hidden="true" className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-accent via-sky-400 to-accent/20" />
-              <div className="prose mx-auto max-w-3xl" dangerouslySetInnerHTML={{ __html: page.body }} />
+              <CmsHtml className="prose mx-auto max-w-3xl" html={page.body} />
               {page.attachments && page.attachments.length > 0 && (
                 <ul className="mx-auto mt-10 grid max-w-3xl gap-4">
                   {page.attachments.map((attachment) => {

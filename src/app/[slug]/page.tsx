@@ -5,7 +5,7 @@ import { FleetDetail } from "@/components/sections/FleetDetail";
 import { notFound } from "next/navigation";
 import { PageTemplate } from "@/components/sections/PageTemplate";
 import { RouteTimetable } from "@/components/sections/RouteTimetable";
-import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
+import { BreadcrumbJsonLd, JsonLdScript } from "@/components/seo/JsonLd";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Icon } from "@/components/ui/Icon";
 import { Reveal } from "@/components/ui/motion";
@@ -53,7 +53,7 @@ export default async function SlugPage({ params }: { params: Promise<{ slug: str
     };
     return (
       <>
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+        <JsonLdScript data={jsonLd} />
         <FleetDetail vehicle={vehicle} settings={settings} />
       </>
     );
@@ -82,19 +82,24 @@ export default async function SlugPage({ params }: { params: Promise<{ slug: str
       : (routeFallback?.imageAlt ?? route.imageAlt ?? `${route.from} to ${route.to} coach service`);
     const jsonLd = {
       "@context": "https://schema.org",
-      "@type": "BusTrip",
-      provider: { "@type": "Organization", name: settings.name, telephone: settings.phone.display },
-      departureBusStop: { "@type": "BusStop", name: route.stops[0]?.place, description: route.stops[0]?.detail },
-      arrivalBusStop: {
-        "@type": "BusStop",
-        name: route.stops[route.stops.length - 1]?.place,
-        description: route.stops[route.stops.length - 1]?.detail,
-      },
+      "@type": "Service",
+      serviceType: "Scheduled coach service",
+      name: `${route.from} to ${route.to} coach service`,
+      description: route.seoDescription,
+      url: `${settings.url}/${route.slug}`,
+      areaServed: "United Kingdom",
+      provider: { "@type": "Organization", "@id": `${settings.url}/#organization`, name: settings.name },
+      offers: route.priceSingle > 0 ? {
+        "@type": "Offer",
+        price: (route.priceSingle / 100).toFixed(2),
+        priceCurrency: "GBP",
+        url: `${settings.url}${bookHref}`,
+      } : undefined,
     };
 
     return (
       <article>
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+        <JsonLdScript data={jsonLd} />
         <BreadcrumbJsonLd
           items={[
             { label: "Home", path: "/" },

@@ -25,8 +25,8 @@ export function buildMetadata({
     title: titleAbsolute ? { absolute: title } : title,
     description,
     alternates: { canonical: path },
-    openGraph: { title, description, url },
-    twitter: { title, description },
+    openGraph: { title, description, url, images: [{ url: "/opengraph-image", alt: "NP Coaches" }] },
+    twitter: { title, description, images: ["/opengraph-image"] },
     ...(noIndex ? { robots: { index: false, follow: false } } : {}),
   };
 }

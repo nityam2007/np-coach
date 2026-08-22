@@ -1,0 +1,13 @@
+{
+  "name": "directus-extension-np-internal",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "files": ["dist"],
+  "directus:extension": {
+    "type": "endpoint",
+    "path": "dist/index.js",
+    "host": "^12.1.0"
+  }
+}

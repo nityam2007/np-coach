@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { RouteTimetable } from "@/components/sections/RouteTimetable";
 import { PageHero } from "@/components/sections/PageHero";
-import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
+import { BreadcrumbJsonLd, JsonLdScript } from "@/components/seo/JsonLd";
 import { buildMetadata } from "@/lib/seo";
 import { getRoutes, getSettings, getStops } from "@/lib/directus";
 
@@ -40,7 +40,7 @@ export default async function DailyExpressPage() {
 
   return (
     <article>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <JsonLdScript data={jsonLd} />
       <BreadcrumbJsonLd items={[{ label: "Home", path: "/" }, { label: "Daily Express", path: "/daily-express-service" }]} />
 
       <PageHero

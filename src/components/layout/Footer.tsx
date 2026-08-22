@@ -103,6 +103,8 @@ export function Footer({ settings }: { settings: SiteSettings }) {
         <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-6 text-xs sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <p>
             © {year} {settings.legalName}. All rights reserved.
+            <br />Company no. {settings.companyNumber} · Registered in {settings.registeredIn}
+            <br />Registered office: {address.line1}, {address.line2}, {address.city}, {address.postcode}
           </p>
           <div className="flex flex-wrap gap-4">
             {settings.legalLinks.map((l) => (

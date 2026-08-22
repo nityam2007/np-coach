@@ -2,7 +2,7 @@
 
 This is the **single source of truth for picking up development**. For production ownership and operations, read [../HANDOVER.md](../HANDOVER.md) first. Then read [../CLAUDE.md](../CLAUDE.md) → [PLAN.md](PLAN.md) → [TASKS.md](TASKS.md). Keep this file current as work continues.
 
-> Convert relative dates to absolute. Today's reference when this file was last updated: **2026-08-20**.
+> Convert relative dates to absolute. Today's reference when this file was last updated: **2026-08-22**.
 
 ---
 
@@ -67,7 +67,7 @@ App → http://localhost:3000 · Directus → http://localhost:8055 (`admin@np-c
 ## 4. Architecture (what to copy when adding things)
 
 **Data flow (one pattern for everything):**
-Directus collection → seed (`scripts/seed-directus.mjs`) → typed in `src/lib/site-config.ts` → fetched in `src/lib/directus.ts` (raw `fetch`, `next:{revalidate:5, tags}`, **fallback to `siteConfig`**) → rendered. `site-content.json` is the single seed source **and** offline fallback.
+Directus collection → seed (`scripts/seed-directus.mjs`) → typed in `src/lib/site-config.ts` → fetched in `src/lib/directus.ts` (raw `fetch`, `next:{revalidate:300, tags}`, **fallback to `siteConfig` only on an outage**) → rendered. `site-content.json` is the seed source and outage fallback.
 
 **Payments (P4/P5 — reuse for any new paid flow):**
 - Price **always computed server-side** from Directus (`src/lib/stripe.ts` — `priceBooking`, `priceLostPropertyPass`, `computeGross`). Client never sends an amount.
@@ -89,8 +89,9 @@ Grouped (via `npm run configure`):
 - **Content:** `pages` (+ optional `image`), `blog_posts` (+ `thumbnail`)
 - **Marketing:** `fleet` (+`image`,`gallery`,`layout_images`,`group_label`), `tours` (+`image`), `testimonials`, `services`
 - **Daily Express:** `routes` (timetable + per-route fares, now informational), `stops` (6 corridor stops → booking From/To), `school_routes` (home-to-school timetables)
-- **Bookings & Payments:** `bookings`, `pass_purchases` (server-write only)
+- **Bookings & Payments:** `bookings`, `pass_purchases`, `service_runs` (server-write only; transactional inventory uses the private Directus extension)
 - **Leads:** `contact_submissions`, `quote_requests` (server-token create, no anonymous access)
+- **Accounts:** `customers`, `otp_codes`, `customer_sessions` (server-only; HMAC OTPs and opaque revocable sessions)
 - **Settings** (singleton): site config, nav (grouped/dropdown), footer, `pricing`, `coverage`, `faqs`, `fleet_page`, `school_transport` (schools list + `logos` by slug), and `email_templates` copy.
 
 **Routes/URLs of note:** stop-to-stop booking at `/daily-express-service/book`; school pages at `/home-to-school/<slug>`; `/[slug]` resolves fleet vehicle OR content page OR Daily Express route; coded routes `/contact-us`, `/get-a-quote`, `/booking/success`, `/pass/success`, `/lost-property/claim`.
@@ -113,6 +114,15 @@ Don't over-engineer · simple-yet-complete (no stubs) · **read every target fil
 
 The six-slide client review and supplied Google Drive photos are implemented. The committed pack is `directus/seed-media/client-2026-08/` (23 files), and `npm run media` applies revision `client-review-2026-08-20-v2` once after the additive seed creates its fields. Do not remove or change `settings.client_media_revision` casually: it is the guard that prevents later deployments from replacing media edited by the client in Directus.
 
-The review correction makes CMS banner photos the full hero background (with a navy contrast overlay) rather than a separate card, reduces content ISR to about 5 seconds, and documents the editable media/copy fields in Directus Studio.
+The review correction makes CMS banner photos the full hero background (with a navy contrast overlay) rather than a separate card. Content uses five-minute ISR plus the protected immediate-revalidation endpoint, and editable media/copy fields are documented in Directus Studio.
 
 Post-deploy, verify the homepage video, one-pin UK tactical globe, school block, accreditation row, Daily Express/Home-to-School/route banners, `/uk-tours` and all seven destination pages, `/fleet`, `/downloads`, `/lost-property`, both From/To selectors, and Facebook/Instagram footer links. The optimized homepage MP4 is approximately 4.5 MB; the current compliance document is the 2025–2026 pack. TypeScript, ESLint, both bootstrap-script syntax checks, and diff whitespace checks passed before push.
+## Production-readiness audit handoff — 2026-08-22
+
+The code remediation is implemented and documented in [`../SECURITY_AND_OPERATIONS.md`](../SECURITY_AND_OPERATIONS.md). The full gate is `npm run check`; production dependency audit and Compose parsing are separate release checks.
+
+- Keep `DAILY_EXPRESS_BOOKINGS_ENABLED=false` until the Directus extension/schema are deployed, route capacities are entered, and last-seat/payment concurrency acceptance passes. Atomic two-leg inventory is implemented; the flag is the launch switch.
+- Coolify must receive the six independent audit secrets plus the existing scoped Directus, Turnstile, Stripe, and SMTP settings from `.env.coolify.example`. Schedule the authenticated maintenance endpoint hourly.
+- Directus writes purge its cache; configure the protected revalidation Flow for immediate web refresh, otherwise pages use five-minute ISR.
+- Schedule encrypted database/uploads backups and prove restore with `scripts/restore-test.sh`; Docker was unavailable on the audit workstation, so the disposable restore still needs an operator run.
+- Complete the external acceptance checklist (Cloudflare origin/WAF, live Stripe scenarios, M365 delivery, Directus roles, legal/ICO review, accessibility/mobile, redirects/indexing, content/fare/timetable approval) before launch sign-off.

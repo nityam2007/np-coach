@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import type { Faq } from "@/lib/site-config";
 import { Reveal } from "@/components/ui/motion";
+import { safeJson } from "@/lib/safe-json";
 
 /** Accessible FAQ accordion. Also emits FAQPage JSON-LD for SEO. */
 export function FaqAccordion({ faqs }: { faqs: Faq[] }) {
@@ -21,7 +22,7 @@ export function FaqAccordion({ faqs }: { faqs: Faq[] }) {
 
   return (
     <section className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJson(jsonLd) }} />
       <Reveal>
         <h2 className="font-display text-2xl font-bold text-navy sm:text-3xl">Frequently asked questions</h2>
       </Reveal>

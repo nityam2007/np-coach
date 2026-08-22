@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { directusServerRead, directusServerWrite } from "@/lib/directus-server";
+import { directusAtomicUpdate, directusServerRead, directusServerWrite } from "@/lib/directus-server";
 import { sendEmail } from "@/lib/email";
 import { otpEmail } from "@/lib/email-templates";
 import type { SiteSettings } from "@/lib/directus";
@@ -19,8 +19,15 @@ const OTP_RETENTION_MS = 24 * 60 * 60 * 1000; // purge otp rows older than this 
 const normalise = (email: string) => email.trim().toLowerCase();
 
 /** OTP hash is bound to the email so a code can't be replayed against another account. */
+function otpPepper(): string {
+  const value = process.env.OTP_PEPPER || process.env.AUTH_SECRET;
+  if (value) return value;
+  if (process.env.NODE_ENV === "production") throw new Error("OTP_PEPPER or AUTH_SECRET must be configured");
+  return "np-coaches-dev-otp-pepper";
+}
+
 function hashCode(email: string, code: string): string {
-  return crypto.createHash("sha256").update(`${normalise(email)}:${code}`).digest("hex");
+  return crypto.createHmac("sha256", otpPepper()).update(`${normalise(email)}:${code}`).digest("hex");
 }
 
 export interface Customer {
@@ -80,17 +87,18 @@ export async function createAndSendOtp(
   if (prior) for (const p of prior) await directusServerWrite(`/items/otp_codes/${p.id}`, "PATCH", { consumed: true });
 
   const code = String(crypto.randomInt(0, 1_000_000)).padStart(6, "0");
-  const row = await directusServerWrite("/items/otp_codes", "POST", {
+  const row = (await directusServerWrite("/items/otp_codes", "POST", {
     email: e,
     code_hash: hashCode(e, code),
     expires_at: new Date(Date.now() + OTP_TTL_MS).toISOString(),
     consumed: false,
     attempts: 0,
-  });
+  })) as { id: number } | null;
   if (!row) return { ok: false };
 
   const result = await sendEmail(otpEmail(settings, e, code));
   if (!result.ok || (!result.delivered && process.env.NODE_ENV === "production")) {
+    await directusServerWrite(`/items/otp_codes/${row.id}`, "PATCH", { consumed: true });
     return { ok: false };
   }
 
@@ -123,11 +131,27 @@ export async function verifyOtp(email: string, code: string): Promise<boolean> {
   const b = Buffer.from(expected);
   const match = a.length === b.length && crypto.timingSafeEqual(a, b);
   if (!match) {
-    await directusServerWrite(`/items/otp_codes/${row.id}`, "PATCH", { attempts: row.attempts + 1 });
+    const attempts = row.attempts + 1;
+    await directusAtomicUpdate(
+      "otp_codes",
+      row.id,
+      { consumed: false, attempts: row.attempts },
+      { attempts, ...(attempts >= OTP_MAX_ATTEMPTS ? { consumed: true } : {}) },
+    );
     return false;
   }
 
-  await directusServerWrite(`/items/otp_codes/${row.id}`, "PATCH", { consumed: true });
+  const consumed = await directusAtomicUpdate(
+    "otp_codes",
+    row.id,
+    {
+      consumed: false,
+      code_hash: expected,
+      expires_at: row.expires_at,
+      attempts: row.attempts,
+    },
+    { consumed: true },
+  );
   await upsertCustomer(e);
   return true;
 }

@@ -23,23 +23,25 @@ async function deliver(label: string, message: Parameters<typeof sendEmail>[0]):
 export async function sendContactNotifications(
   settings: SiteSettings,
   data: ContactEmailData,
-): Promise<void> {
+): Promise<boolean> {
   const staffTo = process.env.CONTACT_TO?.trim() || settings.email.general;
-  await Promise.all([
+  const results = await Promise.all([
     deliver("contact acknowledgement", contactCustomerEmail(settings, data)),
     deliver("contact staff notification", contactStaffEmail(settings, data, staffTo)),
   ]);
+  return results.every((result) => result.delivered);
 }
 
 export async function sendQuoteNotifications(
   settings: SiteSettings,
   data: QuoteEmailData,
-): Promise<void> {
+): Promise<boolean> {
   const staffTo = process.env.QUOTE_TO?.trim() || settings.email.general;
-  await Promise.all([
+  const results = await Promise.all([
     deliver("quote acknowledgement", quoteCustomerEmail(settings, data)),
     deliver("quote staff notification", quoteStaffEmail(settings, data, staffTo)),
   ]);
+  return results.every((result) => result.delivered);
 }
 
 export function sendBookingConfirmation(

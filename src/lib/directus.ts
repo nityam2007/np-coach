@@ -23,6 +23,8 @@ import {
   type TourPageContent,
   type PageAttachment,
 } from "./site-config";
+import { withRouteStopCodes } from "./route-stops";
+import { safeCmsUrl } from "./content-security";
 
 /**
  * Server-side reads from Directus. Public collections, no auth needed.
@@ -35,8 +37,8 @@ const DIRECTUS_URL =
 // Browser-facing Directus URL — images are loaded by the client, so they must use the
 // public host, not the internal docker hostname.
 const PUBLIC_DIRECTUS_URL = process.env.NEXT_PUBLIC_DIRECTUS_URL ?? "http://localhost:8055";
-// Keep the speed benefits of ISR while making saved CMS edits visible promptly.
-const REVALIDATE_SECONDS = 5;
+const REVALIDATE_SECONDS = 300;
+const DIRECTUS_TIMEOUT_MS = 8_000;
 
 /**
  * Build a public asset URL for a Directus file id. Returns null when there's no image.
@@ -61,6 +63,8 @@ export interface PageHeroFallback {
 /** Normalised settings shape consumed by the UI (mirrors site-content). */
 export interface SiteSettings {
   name: string;
+  companyNumber: string;
+  registeredIn: string;
   legalName: string;
   tagline: string;
   subtitle: string;
@@ -109,6 +113,8 @@ export interface SiteSettings {
 interface SettingsRow {
   name: string;
   legal_name: string;
+  company_number: string;
+  registered_in: string;
   tagline: string;
   subtitle: string;
   description: string;
@@ -185,20 +191,23 @@ interface FleetRow {
   seo_description: string;
 }
 
-async function fetchData<T>(path: string, tag: string): Promise<T | null> {
+async function fetchData<T>(path: string, tag: string): Promise<T | undefined> {
   try {
     const res = await fetch(`${DIRECTUS_URL}${path}`, {
       next: { revalidate: REVALIDATE_SECONDS, tags: [tag] },
+      signal: AbortSignal.timeout(DIRECTUS_TIMEOUT_MS),
     });
-    if (!res.ok) return null;
+    if (!res.ok) return undefined;
     const json = (await res.json()) as { data: T };
     return json.data;
   } catch {
-    return null;
+    return undefined;
   }
 }
 
 const fallbackSettings: SiteSettings = {
+  companyNumber: siteConfig.companyNumber,
+  registeredIn: siteConfig.registeredIn,
   name: siteConfig.name,
   legalName: siteConfig.legalName,
   tagline: siteConfig.tagline,
@@ -252,17 +261,19 @@ function mergeEmailTemplates(stored: EmailTemplates | null | undefined): EmailTe
 
 export async function getSettings(): Promise<SiteSettings> {
   const row = await fetchData<SettingsRow>("/items/settings", "settings");
-  if (!row) return fallbackSettings;
+  if (row === undefined) return fallbackSettings;
   return {
     name: row.name,
     legalName: row.legal_name,
+    companyNumber: row.company_number || siteConfig.companyNumber,
+    registeredIn: row.registered_in || siteConfig.registeredIn,
     tagline: row.tagline,
     subtitle: row.subtitle,
     description: row.description,
     url: row.url,
     founded: row.founded,
     pricing: row.pricing ?? siteConfig.pricing,
-    phone: { display: row.phone_display, href: row.phone_href, hours: row.phone_hours },
+    phone: { display: row.phone_display, href: safeCmsUrl(row.phone_href, siteConfig.phone.href), hours: row.phone_hours },
     email: { general: row.email_general, bookings: row.email_bookings },
     emailTemplates: mergeEmailTemplates(row.email_templates),
     address: {
@@ -272,10 +283,10 @@ export async function getSettings(): Promise<SiteSettings> {
       county: row.address_county,
       postcode: row.address_postcode,
     },
-    nav: row.nav,
-    footerColumns: row.footer_columns,
-    socialLinks: row.social_links ?? siteConfig.socialLinks,
-    legalLinks: row.legal_links,
+    nav: row.nav.map((item) => ({ ...item, href: safeCmsUrl(item.href), children: item.children?.map((child) => ({ ...child, href: safeCmsUrl(child.href) })) })),
+    footerColumns: row.footer_columns.map((column) => ({ ...column, links: column.links.map((link) => ({ ...link, href: safeCmsUrl(link.href) })) })),
+    socialLinks: (row.social_links ?? siteConfig.socialLinks).map((link) => ({ ...link, href: safeCmsUrl(link.href) })),
+    legalLinks: row.legal_links.map((link) => ({ ...link, href: safeCmsUrl(link.href) })),
     stats: row.stats ?? siteConfig.stats,
     accreditations: row.accreditations ?? siteConfig.accreditations,
     coverage: row.coverage ?? siteConfig.coverage,
@@ -326,22 +337,24 @@ export function selectPageHeroFallback(settings: SiteSettings, key: string): Pag
 
 interface SchoolTransportBlob {
   logos?: Record<string, string>;
+  schools?: SchoolTransport["schools"];
 }
 
 function mergeSchoolLogos(blob: SchoolTransportBlob | null | undefined): SchoolTransport {
   const logos = blob?.logos ?? {};
+  const schools = blob?.schools?.length ? blob.schools : siteConfig.schoolTransport.schools;
   return {
-    schools: siteConfig.schoolTransport.schools.map((s) => ({ ...s, logo: logos[s.slug] ?? null })),
+    schools: schools.map((school) => ({ ...school, buyUrl: safeCmsUrl(school.buyUrl), waitlistUrl: school.waitlistUrl ? safeCmsUrl(school.waitlistUrl) : "", logo: logos[school.slug] ?? school.logo ?? null })),
   };
 }
 
 export async function getServices(): Promise<ServiceCard[]> {
   const rows = await fetchData<ServiceRow[]>("/items/services?sort=sort&limit=-1", "services");
-  if (!rows || rows.length === 0) return siteConfig.services;
+  if (rows === undefined) return siteConfig.services;
   return rows.map(({ title, blurb, href, icon, image, image_alt }) => ({
     title,
     blurb,
-    href,
+    href: safeCmsUrl(href),
     icon: icon ?? undefined,
     image: image ?? null,
     imageAlt: image_alt || siteConfig.services.find((service) => service.title === title)?.imageAlt,
@@ -367,7 +380,7 @@ function toVehicle(row: FleetRow): FleetVehicle {
 
 export async function getFleet(): Promise<FleetVehicle[]> {
   const rows = await fetchData<FleetRow[]>("/items/fleet?sort=sort&limit=-1", "fleet");
-  if (!rows || rows.length === 0) return siteConfig.fleet;
+  if (rows === undefined) return siteConfig.fleet;
   return rows.map(toVehicle);
 }
 
@@ -376,8 +389,8 @@ export async function getFleetVehicle(slug: string): Promise<FleetVehicle | null
     `/items/fleet?filter[slug][_eq]=${encodeURIComponent(slug)}&limit=1`,
     `fleet:${slug}`,
   );
-  if (rows && rows.length > 0) return toVehicle(rows[0]);
-  return siteConfig.fleet.find((v) => v.slug === slug) ?? null;
+  if (rows === undefined) return siteConfig.fleet.find((v) => v.slug === slug) ?? null;
+  return rows[0] ? toVehicle(rows[0]) : null;
 }
 
 /** Raw `pages` row as stored in Directus. */
@@ -409,7 +422,7 @@ function toPage(row: PageRow): Page {
 
 export async function getPages(): Promise<Page[]> {
   const rows = await fetchData<PageRow[]>("/items/pages?sort=sort&limit=-1", "pages");
-  if (!rows || rows.length === 0) return siteConfig.pages;
+  if (rows === undefined) return siteConfig.pages;
   return rows.map(toPage);
 }
 
@@ -418,8 +431,8 @@ export async function getPage(slug: string): Promise<Page | null> {
     `/items/pages?filter[slug][_eq]=${encodeURIComponent(slug)}&limit=1`,
     `pages:${slug}`,
   );
-  if (rows && rows.length > 0) return toPage(rows[0]);
-  return siteConfig.pages.find((p) => p.slug === slug) ?? null;
+  if (rows === undefined) return siteConfig.pages.find((p) => p.slug === slug) ?? null;
+  return rows[0] ? toPage(rows[0]) : null;
 }
 
 // ---- tours (T2: UK Tours) ----
@@ -457,7 +470,7 @@ function toTour(row: TourRow): Tour {
 
 export async function getTours(): Promise<Tour[]> {
   const rows = await fetchData<TourRow[]>("/items/tours?sort=sort&limit=-1", "tours");
-  if (!rows || rows.length === 0) return siteConfig.tours;
+  if (rows === undefined) return siteConfig.tours;
   return rows.map(toTour);
 }
 
@@ -466,8 +479,8 @@ export async function getTour(slug: string): Promise<Tour | null> {
     `/items/tours?filter[slug][_eq]=${encodeURIComponent(slug)}&limit=1`,
     `tours:${slug}`,
   );
-  if (rows && rows.length > 0) return toTour(rows[0]);
-  return siteConfig.tours.find((t) => t.slug === slug) ?? null;
+  if (rows === undefined) return siteConfig.tours.find((t) => t.slug === slug) ?? null;
+  return rows[0] ? toTour(rows[0]) : null;
 }
 
 // ---- routes (T3: Daily Express) ----
@@ -479,6 +492,7 @@ interface RouteRow {
   price_single: number;
   price_return: number;
   summary: string;
+  capacity: number | null;
   image: string | null;
   image_alt: string | null;
   stops: RouteStop[];
@@ -494,6 +508,7 @@ function toRoute(row: RouteRow): CoachRoute {
     days: row.days,
     priceSingle: row.price_single,
     priceReturn: row.price_return,
+    capacity: row.capacity ?? 0,
     summary: row.summary,
     image: row.image ?? null,
     imageAlt: row.image_alt || siteConfig.routes.find((route) => route.slug === row.slug)?.imageAlt,
@@ -505,8 +520,8 @@ function toRoute(row: RouteRow): CoachRoute {
 
 export async function getRoutes(): Promise<CoachRoute[]> {
   const rows = await fetchData<RouteRow[]>("/items/routes?sort=sort&limit=-1", "routes");
-  if (!rows || rows.length === 0) return siteConfig.routes;
-  return rows.map(toRoute);
+  if (rows === undefined) return siteConfig.routes.map(withRouteStopCodes);
+  return rows.map(toRoute).map(withRouteStopCodes);
 }
 
 export async function getRoute(slug: string): Promise<CoachRoute | null> {
@@ -514,14 +529,14 @@ export async function getRoute(slug: string): Promise<CoachRoute | null> {
     `/items/routes?filter[slug][_eq]=${encodeURIComponent(slug)}&limit=1`,
     `routes:${slug}`,
   );
-  if (rows && rows.length > 0) return toRoute(rows[0]);
-  return siteConfig.routes.find((r) => r.slug === slug) ?? null;
+  if (rows === undefined) return siteConfig.routes.find((r) => r.slug === slug) ? withRouteStopCodes(siteConfig.routes.find((r) => r.slug === slug)!) : null;
+  return rows[0] ? withRouteStopCodes(toRoute(rows[0])) : null;
 }
 
 // ---- stops (Daily Express corridor; stop-to-stop booking) ----
 export async function getStops(): Promise<Stop[]> {
   const rows = await fetchData<Stop[]>("/items/stops?sort=sort&limit=-1", "stops");
-  if (!rows || rows.length === 0) return siteConfig.stops;
+  if (rows === undefined) return siteConfig.stops;
   return rows.map(({ code, name, detail }) => ({ code, name, detail }));
 }
 
@@ -541,7 +556,7 @@ function toSchoolRoute(row: SchoolRouteRow): SchoolRoute {
 export async function getSchoolRoutes(school?: string): Promise<SchoolRoute[]> {
   const filter = school ? `&filter[school][_eq]=${encodeURIComponent(school)}` : "";
   const rows = await fetchData<SchoolRouteRow[]>(`/items/school_routes?sort=sort&limit=-1${filter}`, "school_routes");
-  if (!rows || rows.length === 0) {
+  if (rows === undefined) {
     return school ? siteConfig.schoolRoutes.filter((r) => r.school === school) : siteConfig.schoolRoutes;
   }
   return rows.map(toSchoolRoute);
@@ -576,7 +591,7 @@ function toBlogPost(row: BlogRow): BlogPost {
 
 export async function getBlogPosts(): Promise<BlogPost[]> {
   const rows = await fetchData<BlogRow[]>("/items/blog_posts?sort=-date&limit=-1", "blog_posts");
-  if (!rows || rows.length === 0) return siteConfig.blogPosts;
+  if (rows === undefined) return siteConfig.blogPosts;
   return rows.map(toBlogPost);
 }
 
@@ -585,8 +600,8 @@ export async function getBlogPost(slug: string): Promise<BlogPost | null> {
     `/items/blog_posts?filter[slug][_eq]=${encodeURIComponent(slug)}&limit=1`,
     `blog_posts:${slug}`,
   );
-  if (rows && rows.length > 0) return toBlogPost(rows[0]);
-  return siteConfig.blogPosts.find((p) => p.slug === slug) ?? null;
+  if (rows === undefined) return siteConfig.blogPosts.find((p) => p.slug === slug) ?? null;
+  return rows[0] ? toBlogPost(rows[0]) : null;
 }
 
 // ---- testimonials (T7) ----
@@ -603,7 +618,7 @@ interface TestimonialRow {
 
 export async function getTestimonials(): Promise<Testimonial[]> {
   const rows = await fetchData<TestimonialRow[]>("/items/testimonials?sort=sort&limit=-1", "testimonials");
-  if (!rows || rows.length === 0) return siteConfig.testimonials;
+  if (rows === undefined) return siteConfig.testimonials;
   return rows.map(({ quote, author, role, company, image, rating }) => ({
     quote,
     author,

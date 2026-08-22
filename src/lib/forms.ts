@@ -55,13 +55,17 @@ export const bookingSchema = z
     to: z.string().trim().min(1, "Please choose your destination").max(60),
     tripType: z.enum(["single", "return"]).default("single"),
     date: z.string().trim().min(1, "Please choose a travel date").max(40),
+    returnDate: z.string().trim().max(40).optional().default(""),
+    termsAccepted: z.literal("on", { message: "Please accept the booking terms" }),
     passengers: z.coerce.number().int().min(1, "At least 1 passenger").max(50, "Max 50 per booking"),
     name: z.string().trim().min(2, "Please enter your name").max(120),
     email: z.string().trim().email("Please enter a valid email").max(200),
     phone: z.string().trim().max(40).optional().default(""),
     website: honeypot,
   })
-  .refine((d) => d.from !== d.to, { path: ["to"], message: "From and To must be different stops" });
+  .refine((d) => d.from !== d.to, { path: ["to"], message: "From and To must be different stops" })
+  .refine((d) => d.tripType === "single" || Boolean(d.returnDate), { path: ["returnDate"], message: "Please choose a return date" })
+  .refine((d) => !d.returnDate || d.returnDate >= d.date, { path: ["returnDate"], message: "Return must be on or after the outward date" });
 
 // Lost Property reclaim pass (P5). Mirrors the live-site form. The fee/VAT are
 // NOT accepted from the client — they're computed server-side from CMS pricing.
@@ -139,7 +143,10 @@ export async function verifyTurnstile(token: string | undefined, ip?: string): P
 }
 
 // ---- Directus write ----
-/** Create an item in a server-write collection. Returns true on success. */
-export async function createSubmission(collection: string, data: Record<string, unknown>): Promise<boolean> {
-  return Boolean(await directusServerWrite(`/items/${collection}`, "POST", data));
+/** Create an item in a server-write collection and return its durable id. */
+export async function createSubmission(
+  collection: string,
+  data: Record<string, unknown>,
+): Promise<{ id: number } | null> {
+  return (await directusServerWrite(`/items/${collection}`, "POST", data)) as { id: number } | null;
 }

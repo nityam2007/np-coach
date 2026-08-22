@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion, useScroll, useMotionValueEvent } from "motion/react";
 import type { SiteSettings } from "@/lib/directus";
 import type { NavLink } from "@/lib/site-config";
@@ -51,15 +51,40 @@ export function Header({ settings }: { settings: SiteSettings }) {
   const reduce = useReducedMotion();
   const pathname = usePathname();
   const logo = assetUrl(settings.logo);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLElement>(null);
 
   const { scrollY } = useScroll();
   useMotionValueEvent(scrollY, "change", (y) => setScrolled(y > 8));
 
-  // Lock body scroll while the mobile drawer is open.
+  // Treat the mobile drawer as a real modal: contain keyboard focus, support Escape,
+  // make page content inert, and return focus to the trigger when it closes.
   useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "";
+    if (!open) return;
+    const drawer = drawerRef.current;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const background = Array.from(document.querySelectorAll<HTMLElement>("main, footer"));
+    const selector = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+    const focusable = () => Array.from(drawer?.querySelectorAll<HTMLElement>(selector) ?? []);
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { event.preventDefault(); setOpen(false); return; }
+      if (event.key !== "Tab") return;
+      const items = focusable();
+      if (!items.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
+    document.body.style.overflow = "hidden";
+    for (const element of background) element.inert = true;
+    window.addEventListener("keydown", onKeyDown);
+    requestAnimationFrame(() => focusable()[0]?.focus());
     return () => {
       document.body.style.overflow = "";
+      for (const element of background) element.inert = false;
+      window.removeEventListener("keydown", onKeyDown);
+      requestAnimationFrame(() => previouslyFocused?.focus());
     };
   }, [open]);
 
@@ -169,6 +194,7 @@ export function Header({ settings }: { settings: SiteSettings }) {
 
           <button
             type="button"
+            ref={triggerRef}
             onClick={() => setOpen((v) => !v)}
             className="relative grid h-10 w-10 place-items-center rounded-lg text-navy transition-colors hover:bg-navy/5 lg:hidden"
             aria-label={open ? "Close menu" : "Open menu"}
@@ -209,6 +235,7 @@ export function Header({ settings }: { settings: SiteSettings }) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             />
+              ref={drawerRef}
             <motion.nav
               className="fixed right-0 top-0 z-50 flex h-dvh w-[86%] max-w-sm flex-col overflow-y-auto bg-white shadow-lg lg:hidden"
               aria-label="Mobile"

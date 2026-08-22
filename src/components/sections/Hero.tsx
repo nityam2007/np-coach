@@ -3,12 +3,32 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion, useReducedMotion } from "motion/react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import type { SiteSettings } from "@/lib/directus";
 import { assetUrl } from "@/lib/directus";
 import type { Stop } from "@/lib/site-config";
 import { HeroSearch } from "@/components/sections/HeroSearch";
 import { Eyebrow, Stars } from "@/components/ui/Eyebrow";
 import { Icon } from "@/components/ui/Icon";
+
+type NetworkInformation = {
+  saveData?: boolean;
+  addEventListener?: (type: "change", listener: () => void) => void;
+  removeEventListener?: (type: "change", listener: () => void) => void;
+};
+
+function connection(): NetworkInformation | undefined {
+  return (navigator as Navigator & { connection?: NetworkInformation }).connection;
+}
+
+function subscribeToSaveData(onChange: () => void) {
+  const current = connection();
+  current?.addEventListener?.("change", onChange);
+  return () => current?.removeEventListener?.("change", onChange);
+}
+
+const saveDataSnapshot = () => Boolean(connection()?.saveData);
+const saveDataServerSnapshot = () => true;
 
 /** Wrap the highlighted word of the tagline in the accent colour (e.g. "…the UK"). */
 function withHighlight(text: string, word: string) {
@@ -31,6 +51,21 @@ export function Hero({ settings, stops }: { settings: SiteSettings; stops: Stop[
   const video = assetUrl(settings.heroVideo);
   const rating = homepage.heroRating;
   const reduce = useReducedMotion();
+
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [videoPlaying, setVideoPlaying] = useState(false);
+  const saveData = useSyncExternalStore(subscribeToSaveData, saveDataSnapshot, saveDataServerSnapshot);
+  const displayVideo = Boolean(video && !reduce && !saveData);
+
+  async function toggleVideo() {
+    const element = videoRef.current;
+    if (!element) return;
+    if (element.paused) {
+      await element.play().catch(() => undefined);
+    } else {
+      element.pause();
+    }
+  }
   /** Simple fade-up entrance — calm and professional, no blur or stagger effects. */
   const entrance = (delay = 0) =>
     reduce
@@ -90,16 +125,37 @@ export function Hero({ settings, stops }: { settings: SiteSettings; stops: Stop[
 
           {/* Right: coach photo */}
           <motion.div className="relative" {...entrance(0.1)}>
-            {video || coach ? (
+            {displayVideo || coach ? (
               <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-navy/5 shadow-lg shadow-navy/10 ring-1 ring-white/60" role="img" aria-label={settings.heroImageAlt}>
-                {video ? (
-                  <video autoPlay muted loop playsInline preload="metadata" poster={coach ?? undefined} className="absolute inset-0 h-full w-full object-cover" aria-hidden="true">
-                    <source src={video} type="video/mp4" />
+                {displayVideo ? (
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="metadata"
+                    poster={coach ?? undefined}
+                    className="absolute inset-0 h-full w-full object-cover"
+                    aria-hidden="true"
+                    onPlay={() => setVideoPlaying(true)}
+                    onPause={() => setVideoPlaying(false)}
+                  >
+                    <source src={video ?? undefined} type="video/mp4" />
                   </video>
                 ) : coach ? (
                   <Image src={coach} alt={settings.heroImageAlt} fill priority sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />
                 ) : null}
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-navy/30 via-transparent to-transparent" />
+                {displayVideo && (
+                  <button
+                    type="button"
+                    onClick={toggleVideo}
+                    className="absolute right-4 top-4 z-10 rounded-full bg-navy/85 px-3 py-2 text-xs font-semibold text-white shadow-sm backdrop-blur hover:bg-navy focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                  >
+                    {videoPlaying ? "Pause video" : "Play video"}
+                  </button>
+                )}
 
                 {/* Fleet trust badge */}
                 <div className="absolute bottom-4 left-4 flex items-center gap-3 rounded-2xl bg-white/90 px-4 py-3 shadow-sm shadow-navy/10 ring-1 ring-white/60 backdrop-blur">

@@ -10,6 +10,14 @@ import { FaqAccordion } from "@/components/sections/FaqAccordion";
 import { Reveal } from "@/components/ui/motion";
 import { getFleet, getServices, getSettings, getStops, getTestimonials } from "@/lib/directus";
 
+import { buildMetadata } from "@/lib/seo";
+
+export const metadata = buildMetadata({
+  title: "NP Coaches — Premium Coach Transport Across the UK",
+  description: "Family-run coach hire, UK tours, Daily Express and home-to-school transport from West London since 1999.",
+  path: "/",
+  titleAbsolute: true,
+});
 export default async function HomePage() {
   const [settings, services, fleet, testimonials, stops] = await Promise.all([
     getSettings(),

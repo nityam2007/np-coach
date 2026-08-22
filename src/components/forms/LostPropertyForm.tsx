@@ -7,6 +7,7 @@ import type { FormState } from "@/lib/forms";
 import { Turnstile } from "@/components/forms/Turnstile";
 import { Button } from "@/components/ui/Button";
 import { inputCls } from "@/components/ui/field";
+import { useFormErrors } from "@/components/forms/useFormErrors";
 
 const initial: FormState = { ok: false };
 
@@ -36,6 +37,7 @@ export function LostPropertyForm({
   cancelled?: boolean;
 }) {
   const [state, action] = useActionState(startPassPurchase, initial);
+  const formRef = useFormErrors(state.errors);
   const [schoolRoute, setSchoolRoute] = useState<"yes" | "no">("no");
 
   useEffect(() => {
@@ -43,7 +45,7 @@ export function LostPropertyForm({
   }, [state]);
 
   return (
-    <form action={action} className="grid gap-4">
+    <form ref={formRef} action={action} className="grid gap-4">
       {cancelled && !state.message && (
         <p className="rounded-lg bg-greyblue/15 px-4 py-2 text-sm text-navy">
           Payment cancelled — nothing was charged. You can try again below.

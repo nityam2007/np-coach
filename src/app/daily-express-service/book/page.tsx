@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { BookingForm, type BookingStopOption } from "@/components/forms/BookingForm";
+import { BookingForm, type BookingRouteOption, type BookingStopOption } from "@/components/forms/BookingForm";
 import { PageHero } from "@/components/sections/PageHero";
 import { Icon } from "@/components/ui/Icon";
-import { getStops, getSettings, selectPageHeroFallback } from "@/lib/directus";
+import { getRoutes, getStops, getSettings, selectPageHeroFallback } from "@/lib/directus";
 import { computeGross } from "@/lib/stripe";
 
 export const metadata: Metadata = {
@@ -15,15 +15,18 @@ export const metadata: Metadata = {
 export default async function BookPage({
   searchParams,
 }: {
-  searchParams: Promise<{ from?: string; to?: string; date?: string; pax?: string; trip?: string; cancelled?: string }>;
+  searchParams: Promise<{ from?: string; to?: string; date?: string; returnDate?: string; pax?: string; trip?: string; cancelled?: string }>;
 }) {
-  const { from, to, date, pax, trip, cancelled } = await searchParams;
-  const [stops, settings] = await Promise.all([getStops(), getSettings()]);
+  const { from, to, date, returnDate, pax, trip, cancelled } = await searchParams;
+  const [stops, routes, settings] = await Promise.all([getStops(), getRoutes(), getSettings()]);
   const options: BookingStopOption[] = stops.map((s) => ({ code: s.code, name: s.name }));
 
-  // Fares are VAT-inclusive, computed from the CMS pricing (same logic the server uses).
-  const fareSingle = computeGross(settings.pricing.dailyExpressSingle, settings.pricing.dailyExpressVat).gross;
-  const fareReturn = computeGross(settings.pricing.dailyExpressReturn, settings.pricing.dailyExpressVat).gross;
+  const routeOptions: BookingRouteOption[] = routes.map((route) => ({
+    stops: route.stops.flatMap((stop) => stop.code ? [stop.code] : []),
+    fareSingle: computeGross(route.priceSingle, settings.pricing.dailyExpressVat).gross,
+    fareReturn: computeGross(route.priceReturn, settings.pricing.dailyExpressVat).gross,
+    capacity: route.capacity ?? 0,
+  }));
   const heroFallback = selectPageHeroFallback(settings, "/daily-express-service/book");
 
   return (
@@ -59,13 +62,13 @@ export default async function BookPage({
 
         <BookingForm
           stops={options}
-          fareSingle={fareSingle}
-          fareReturn={fareReturn}
+          routes={routeOptions}
           defaultFrom={from}
           defaultTo={to}
           defaultDate={date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : undefined}
           defaultPassengers={pax ? Number(pax) || undefined : undefined}
           defaultTripType={trip === "return" ? "return" : undefined}
+          defaultReturnDate={returnDate && /^\d{4}-\d{2}-\d{2}$/.test(returnDate) ? returnDate : undefined}
           cancelled={cancelled === "1"}
         />
       </section>

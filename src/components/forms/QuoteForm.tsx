@@ -7,6 +7,7 @@ import type { FormState } from "@/lib/forms";
 import { Turnstile } from "@/components/forms/Turnstile";
 import { Button } from "@/components/ui/Button";
 import { inputCls } from "@/components/ui/field";
+import { useFormErrors } from "@/components/forms/useFormErrors";
 
 const initial: FormState = { ok: false };
 
@@ -17,12 +18,13 @@ function SubmitButton() {
 
 export function QuoteForm() {
   const [state, action] = useActionState(submitQuote, initial);
+  const formRef = useFormErrors(state.errors);
   if (state.ok) {
     return <div className="rounded-xl border border-accent/40 bg-accent/5 p-6 text-navy"><p className="font-display text-lg font-semibold">Quote request sent</p><p className="mt-1 text-sm text-navy/70">{state.message}</p></div>;
   }
   const error = (name: string) => state.errors?.[name] && <span className="mt-1 block text-xs font-normal text-red-600">{state.errors[name]}</span>;
   return (
-    <form action={action} className="grid gap-4">
+    <form ref={formRef} action={action} className="grid gap-4">
       {state.message && <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{state.message}</p>}
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="text-sm font-semibold text-navy">Name<input name="name" required autoComplete="name" className={inputCls} />{error("name")}</label>

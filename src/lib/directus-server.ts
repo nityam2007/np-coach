@@ -24,6 +24,7 @@ export async function directusServerToken(): Promise<string | null> {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
       cache: "no-store",
+      signal: AbortSignal.timeout(8_000),
     });
     if (!res.ok) return null;
     const json = (await res.json()) as { data: { access_token: string; expires: number } };
@@ -42,6 +43,7 @@ export async function directusServerRead<T>(path: string): Promise<T | null> {
     const res = await fetch(`${DIRECTUS_URL}${path}`, {
       headers: { Authorization: `Bearer ${token}` },
       cache: "no-store",
+      signal: AbortSignal.timeout(8_000),
     });
     if (!res.ok) return null;
     const json = (await res.json()) as { data: T };
@@ -65,6 +67,7 @@ export async function directusServerWrite(
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: body === undefined ? undefined : JSON.stringify(body),
       cache: "no-store",
+      signal: AbortSignal.timeout(8_000),
     });
     if (!res.ok) return null;
     const text = await res.text();
@@ -72,4 +75,60 @@ export async function directusServerWrite(
   } catch {
     return null;
   }
+}
+
+async function internalRequest<T>(path: string, body: unknown): Promise<T | null> {
+  const token = await directusServerToken();
+  const secret = process.env.INTERNAL_API_SECRET;
+  if (!token || !secret) return null;
+  try {
+    const res = await fetch(`${DIRECTUS_URL}/np-internal${path}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        "X-Internal-API-Secret": secret,
+      },
+      body: JSON.stringify(body),
+      cache: "no-store",
+      signal: AbortSignal.timeout(8_000),
+    });
+    if (!res.ok) return null;
+    const json = (await res.json()) as { data: T };
+    return json.data;
+  } catch {
+    return null;
+  }
+}
+
+/** A SQL-level conditional update performed inside Directus. */
+export async function directusAtomicUpdate(
+  collection: string,
+  id: number,
+  expected: Record<string, unknown>,
+  changes: Record<string, unknown>,
+): Promise<boolean | null> {
+  const result = await internalRequest<{ updated: boolean }>("/cas", { collection, id, expected, changes });
+  return result?.updated ?? (result === null ? null : false);
+}
+
+export interface AtomicInventoryRun {
+  routeSlug: string;
+  serviceDate: string;
+  departureTime: string;
+  capacity: number;
+}
+
+export async function directusReserveInventory(
+  runs: AtomicInventoryRun[],
+  seats: number,
+): Promise<number[] | null> {
+  const result = await internalRequest<{ runIds: number[] }>("/inventory/reserve", { runs, seats });
+  return result?.runIds ?? null;
+}
+
+export async function directusReleaseInventory(runIds: number[], seats: number): Promise<boolean> {
+  if (runIds.length === 0) return true;
+  const result = await internalRequest<{ released: boolean }>("/inventory/release", { runIds, seats });
+  return result?.released === true;
 }

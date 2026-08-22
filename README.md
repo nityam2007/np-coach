@@ -59,7 +59,7 @@ npm run configure                 # one-time: organise the admin (groups, field 
 
 `npm run seed` is idempotent — re-run it any time; it only creates what's missing and won't overwrite content you've edited in Directus (it merges new `settings.pricing` keys without clobbering edited fares). `npm run media` uploads the real fleet/tour photos + school logos (from `directus/seed-media/`) into Directus and links them to the items (skips anything already set). `npm run configure` is also idempotent — it groups the collections (Content · Marketing · Daily Express · Bookings & Payments · Leads), adds field notes/widths/status colours + display templates (including clear page, route, tour, fleet, service and global-media guidance), and builds the **NP Coaches** Insights dashboard (paid bookings, pass purchases, revenue, recent leads).
 
-Saved CMS content is revalidated by the site in about 5 seconds. Images are served and resized by Directus (`/assets/<id>`); a custom `next/image` loader ([src/lib/directus-loader.ts](src/lib/directus-loader.ts)) requests cached WebP at responsive dimensions capped at 2560px with no upscaling; Directus runs at most eight transforms concurrently so browser bursts do not receive capacity errors. Shared page heroes keep foreground copy above decoded images with explicit stacking, and image-less pages select consistently from the three CMS fallback slots. Production builds use the public Directus URL for SSG when the private runtime hostname is unavailable, so first visitors do not receive build-time offline fallbacks. Production Redis has a 768 MB LFU budget: Directus caches auto-purge after CMS writes, while Next.js uses atomic Redis counters for form, checkout and OTP limits with a local fail-safe. **Note:** for host `npm run dev`, `DIRECTUS_URL` must be `http://localhost:8055` (not the Docker hostname) — otherwise the app can't reach the CMS and silently falls back to `site-content.json`.
+Saved CMS content uses five-minute ISR and can be refreshed immediately through the protected revalidation endpoint. Images are served and resized by Directus (`/assets/<id>`); a custom `next/image` loader ([src/lib/directus-loader.ts](src/lib/directus-loader.ts)) requests cached WebP at responsive dimensions capped at 2560px with no upscaling; Directus runs at most eight transforms concurrently so browser bursts do not receive capacity errors. Shared page heroes keep foreground copy above decoded images with explicit stacking, and image-less pages select consistently from the three CMS fallback slots. Production builds use the public Directus URL for SSG when the private runtime hostname is unavailable, so first visitors do not receive build-time offline fallbacks. Production Redis has a 768 MB budget: Directus caches auto-purge after CMS writes, while Next.js uses atomic Redis counters for form, checkout and OTP limits with a bounded development fallback. **Note:** for host `npm run dev`, `DIRECTUS_URL` must be `http://localhost:8055` (not the Docker hostname) — otherwise the app can't reach the CMS and falls back to `site-content.json`.
 
 **App on host, services in Docker** (if you prefer running Next.js directly):
 
@@ -98,7 +98,8 @@ src/
     sections/           page sections — Hero (service cards, carousels, … land here)
   lib/
     site-config.ts      shared CMS/fallback content types
-directus/               Directus uploads + extensions (bind-mounted in dev)
+directus/               Directus seed media and development uploads
+extensions/             required private Directus endpoint (read-only mount)
 docker-compose.yml      dev stack: MariaDB + Directus + app
 docker-compose.coolify.yml  production stack managed by Coolify
 Dockerfile.bootstrap    one-shot committed CMS/content/media bootstrap
@@ -112,3 +113,11 @@ Root config: `package.json` · `tsconfig.json` · `next.config.ts` · `postcss.c
 
 ---
 _Keep this README updated as the build progresses._
+
+## Production-readiness controls (20 August 2026)
+
+The security, payment, CMS-cache, timetable, QR-ticket, deployment, backup, accessibility, redirect, dependency, and CI findings from the August audit have been remediated in code. See [SECURITY_AND_OPERATIONS.md](SECURITY_AND_OPERATIONS.md) for the implemented controls and the production acceptance checklist.
+
+Daily Express paid checkout is deliberately disabled in production by default (`DAILY_EXPRESS_BOOKINGS_ENABLED=false`). Atomic per-departure inventory is implemented through the private Directus extension; do not enable the launch switch until that extension and the additive schema are deployed, approved capacities are entered, and last-seat/payment concurrency tests pass. Quote and lost-property flows are unaffected.
+
+Use `npm run check` for the full local gate. Production backups use `scripts/backup-db.sh`; validate each backup generation with `scripts/restore-test.sh` on a non-production Docker host.

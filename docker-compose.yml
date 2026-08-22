@@ -24,7 +24,7 @@ services:
       retries: 10
 
   directus:
-    image: directus/directus:latest # pin to a specific patch version before production
+    image: directus/directus:12.1.0
     restart: unless-stopped
     ports:
       - "8055:8055"
@@ -34,6 +34,8 @@ services:
     environment:
       KEY: ${DIRECTUS_KEY:-dev-key-change-me}
       SECRET: ${DIRECTUS_SECRET:-dev-secret-change-me}
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:-dev-internal-secret-change-me-32}
+      EXTENSIONS_MUST_LOAD: "true"
       DB_CLIENT: mysql
       DB_HOST: db
       DB_PORT: "3306"
@@ -47,11 +49,11 @@ services:
       CORS_ORIGIN: http://localhost:3000
       WEBSOCKETS_ENABLED: "true" # realtime + live updates in the admin
       MARKETPLACE_TRUST: all # dev: allow installing any Marketplace extension (review before prod)
-      EXTENSIONS_AUTO_RELOAD: "true" # hot-reload extensions added to ./directus/extensions
+      EXTENSIONS_AUTO_RELOAD: "true"
     volumes:
-      # Bind mounts so uploads & custom extensions are visible/editable on the host.
+      # Bind mounts keep uploads persistent and load the required private endpoint.
       - ./directus/uploads:/directus/uploads
-      - ./directus/extensions:/directus/extensions
+      - ./extensions:/directus/extensions:ro
 
   # web:
   #   image: node:20
@@ -64,6 +66,7 @@ services:
   #     WATCHPACK_POLLING: "true" # reliable file-watching across the bind mount
   #     NEXT_PUBLIC_DIRECTUS_URL: http://localhost:8055
   #     DIRECTUS_URL: http://directus:8055
+  #     INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:-dev-internal-secret-change-me-32}
   #   volumes:
   #     - ./:/app # bind: your source — edits hot-reload, no container rebuild
   #     - /app/node_modules # keep the container's installed deps

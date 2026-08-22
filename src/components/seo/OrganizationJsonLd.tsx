@@ -1,13 +1,18 @@
-import type { SiteSettings } from "@/lib/directus";
+import { assetUrl, type SiteSettings } from "@/lib/directus";
+import { JsonLdScript } from "@/components/seo/JsonLd";
 
 /** Site-wide Organization / LocalBusiness structured data. */
 export function OrganizationJsonLd({ settings }: { settings: SiteSettings }) {
+  const logo = assetUrl(settings.logo);
+  const sameAs = settings.socialLinks.map((link) => link.href).filter(Boolean);
   const data = {
     "@context": "https://schema.org",
-    "@type": "Organization",
+    "@type": ["Organization", "LocalBusiness"],
+    "@id": `${settings.url}/#organization`,
     name: settings.name,
     legalName: settings.legalName,
     url: settings.url,
+    logo: logo ?? undefined,
     telephone: settings.phone.display,
     email: settings.email.general,
     foundingDate: String(settings.founded),
@@ -20,7 +25,8 @@ export function OrganizationJsonLd({ settings }: { settings: SiteSettings }) {
       addressCountry: "GB",
     },
     areaServed: "United Kingdom",
+    sameAs: sameAs.length ? sameAs : undefined,
   };
 
-  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />;
+  return <JsonLdScript data={data} />;
 }

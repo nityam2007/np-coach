@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createAndSendOtp, verifyOtp } from "@/lib/account";
-import { createSession } from "@/lib/auth";
+import { createSession } from "@/lib/auth-store";
 import { verifyTurnstile } from "@/lib/forms";
 import { getSettings } from "@/lib/directus";
 import { clientIp, rateLimited, rateLimitKey, RATE_LIMITS } from "@/lib/security";

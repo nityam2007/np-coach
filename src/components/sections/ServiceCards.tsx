@@ -26,6 +26,7 @@ export function ServiceCards({
 }) {
   const track = useRef<HTMLUListElement>(null);
   const [paused, setPaused] = useState(false);
+  const [userPaused, setUserPaused] = useState(false);
   const reduce = useReducedMotion();
 
   /** Scroll one card in either direction; wraps to the start past the end. */
@@ -39,10 +40,10 @@ export function ServiceCards({
   }, []);
 
   useEffect(() => {
-    if (reduce || paused || services.length < 2) return;
+    if (reduce || paused || userPaused || services.length < 2) return;
     const id = setInterval(() => step(1), 4000);
     return () => clearInterval(id);
-  }, [reduce, paused, services.length, step]);
+  }, [reduce, paused, services.length, step, userPaused]);
 
   return (
     <section className="bg-tint-soft">
@@ -112,6 +113,16 @@ export function ServiceCards({
                 );
               })}
             </ul>
+            {services.length > 1 && (
+              <button
+                type="button"
+                onClick={() => setUserPaused((value) => !value)}
+                aria-pressed={userPaused}
+                className="mt-4 rounded-full border border-navy/15 bg-white px-4 py-2 text-xs font-semibold text-navy hover:border-accent"
+              >
+                {userPaused ? "Resume services" : "Pause services"}
+              </button>
+            )}
 
             {services.length > 1 && (
               <>

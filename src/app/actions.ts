@@ -18,11 +18,13 @@ import {
   createPendingBooking,
   createPendingPassPurchase,
   attachSession,
+  failPendingOrder,
 } from "@/lib/stripe";
 import { upsertCustomer } from "@/lib/account";
 import { getSettings } from "@/lib/directus";
-import { sendContactNotifications, sendQuoteNotifications } from "@/lib/notifications";
+import { deliverLead } from "@/lib/lead-delivery";
 import { clientIp, rateLimited, rateLimitKey, RATE_LIMITS } from "@/lib/security";
+import { releaseInventory, reserveInventory } from "@/lib/inventory";
 
 
 export async function submitContact(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -48,12 +50,10 @@ export async function submitContact(_prev: FormState, formData: FormData): Promi
     message: data.message,
   });
   if (!saved) return { ok: false, message: "Something went wrong saving your message. Please call us instead." };
-  const settings = await getSettings();
-  await sendContactNotifications(settings, data).catch((error) => {
-    console.error("[email] contact notifications failed", error);
-  });
-
-  return { ok: true, message: "Thanks — we've received your message and aim to reply within 24 hours." };
+  const delivered = await deliverLead("contact_submissions", saved.id).catch(() => false);
+  return delivered
+    ? { ok: true, message: "Thanks — we've received your message and aim to reply within 24 hours." }
+    : { ok: true, message: "Thanks — your message is saved. Email delivery is queued for retry." };
 }
 
 export async function submitQuote(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -76,14 +76,19 @@ export async function submitQuote(_prev: FormState, formData: FormData): Promise
     coach_size: data.coachSize, journey_details: data.journeyDetails,
   });
   if (!saved) return { ok: false, message: "Something went wrong saving your request. Please call us instead." };
-  const settings = await getSettings();
-  await sendQuoteNotifications(settings, data).catch((error) => {
-    console.error("[email] quote notifications failed", error);
-  });
-  return { ok: true, message: "Thanks — we have your quote request and will be in touch shortly." };
+  const delivered = await deliverLead("quote_requests", saved.id).catch(() => false);
+  return delivered
+    ? { ok: true, message: "Thanks — we have your quote request and will be in touch shortly." }
+    : { ok: true, message: "Thanks — your quote request is saved. Email delivery is queued for retry." };
 }
 
 export async function startBooking(_prev: FormState, formData: FormData): Promise<FormState> {
+  // Capacity is not yet modelled atomically per departure. Keep paid ticket sales
+  // fail-closed in production so concurrent checkouts cannot oversell a service.
+  if (process.env.NODE_ENV === "production" && process.env.DAILY_EXPRESS_BOOKINGS_ENABLED !== "true") {
+    return { ok: false, message: "Online Daily Express booking is temporarily unavailable. Please call us to book." };
+  }
+
   const parsed = bookingSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { ok: false, errors: fieldErrors(parsed.error) };
   const data = parsed.data;
@@ -99,11 +104,31 @@ export async function startBooking(_prev: FormState, formData: FormData): Promis
   }
 
   // Price is computed server-side from Directus — the client never sends an amount.
-  const priced = await priceBooking(data.from, data.to, data.tripType, data.passengers);
+  const priced = await priceBooking(data.from, data.to, data.tripType, data.passengers, data.date, data.returnDate);
   if (!priced) return { ok: false, message: "That journey or passenger count isn't available. Please check and try again." };
 
   if (!process.env.STRIPE_SECRET_KEY) {
     return { ok: false, message: "Online payments are not available at the moment. Please call us to book." };
+  }
+  const reservation = await reserveInventory(
+    {
+      routeSlug: priced.routeSlug,
+      serviceDate: priced.travelDate,
+      departureTime: priced.departureTime,
+      capacity: priced.outwardCapacity,
+    },
+    priced.returnRouteSlug && priced.returnDate && priced.returnDepartureTime && priced.returnCapacity
+      ? {
+          routeSlug: priced.returnRouteSlug,
+          serviceDate: priced.returnDate,
+          departureTime: priced.returnDepartureTime,
+          capacity: priced.returnCapacity,
+        }
+      : null,
+    priced.passengers,
+  );
+  if (!reservation) {
+    return { ok: false, message: "That departure no longer has enough seats available. Please choose another journey or call us." };
   }
   const reference = bookingReference();
   // Persist the booking as `pending` BEFORE payment (data-safety rule).
@@ -112,15 +137,26 @@ export async function startBooking(_prev: FormState, formData: FormData): Promis
     fromStop: priced.from.code,
     toStop: priced.to.code,
     routeLabel: priced.label,
-    tripDate: data.date,
+    routeSlug: priced.routeSlug,
+    tripDate: priced.travelDate,
+    departureTime: priced.departureTime,
+    returnDate: priced.returnDate,
+    returnRouteSlug: priced.returnRouteSlug,
+    returnDepartureTime: priced.returnDepartureTime,
     tripType: priced.tripType,
     passengers: priced.passengers,
     amount: priced.amount,
     name: data.name,
     email: data.email,
     phone: data.phone,
+    outwardRunId: reservation.outwardRunId,
+    returnRunId: reservation.returnRunId,
+    inventoryStatus: "held",
   });
-  if (!booking) return { ok: false, message: "Couldn't start your booking. Please try again or call us." };
+  if (!booking) {
+    await releaseInventory(reservation.outwardRunId, reservation.returnRunId, priced.passengers);
+    return { ok: false, message: "Couldn't start your booking. Please try again or call us." };
+  }
 
   // Auto-create/link a customer account (email only) so the booking shows up in /account.
   await upsertCustomer(data.email, data.name);
@@ -141,21 +177,25 @@ export async function startBooking(_prev: FormState, formData: FormData): Promis
             unit_amount: priced.unitAmount,
             product_data: {
               name: `Daily Express: ${priced.label}`,
-              description: `${data.date} · ${priced.passengers} passenger${priced.passengers > 1 ? "s" : ""}`,
+              description: `${priced.travelDate} at ${priced.departureTime}${priced.returnDate ? ` · return ${priced.returnDate} at ${priced.returnDepartureTime}` : ""} · ${priced.passengers} passenger${priced.passengers > 1 ? "s" : ""}`,
             },
           },
         },
       ],
-      metadata: { kind: "booking", reference, from: priced.from.code, to: priced.to.code, trip_type: priced.tripType },
-      payment_intent_data: { receipt_email: data.email },
+      metadata: { kind: "booking", reference, route: priced.routeSlug, travel_date: priced.travelDate, trip_type: priced.tripType },
+      payment_intent_data: { receipt_email: data.email, metadata: { kind: "booking", reference } },
       success_url: `${baseUrl}/booking/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/daily-express-service/book?cancelled=1`,
     });
 
-    if (!session.url) return { ok: false, message: "Couldn't open the payment page. Please try again." };
-    await attachSession("bookings", booking.id, session.id);
+    if (!session.url || !(await attachSession("bookings", booking.id, session.id))) {
+      await getStripe().checkout.sessions.expire(session.id).catch(() => undefined);
+      await failPendingOrder("bookings", booking.id);
+      return { ok: false, message: "Couldn't safely start payment. No charge was taken; please try again." };
+    }
     return { ok: true, redirect: session.url };
   } catch (err) {
+    await failPendingOrder("bookings", booking.id);
     console.error("[stripe] booking checkout failed:", err);
     return { ok: false, message: "Couldn't open the payment page. Please try again or call us." };
   }
@@ -219,21 +259,25 @@ export async function startPassPurchase(_prev: FormState, formData: FormData): P
             unit_amount: priced.amount,
             product_data: {
               name: "Lost Property reclaim admin fee",
-              description: `Includes VAT @ ${priced.vatRate}%. Item: ${data.itemDescription.slice(0, 80)}`,
+              description: `Includes VAT @ ${priced.vatRate}%.`,
             },
           },
         },
       ],
       metadata: { kind: "pass", reference },
-      payment_intent_data: { receipt_email: data.email },
+      payment_intent_data: { receipt_email: data.email, metadata: { kind: "pass", reference } },
       success_url: `${baseUrl}/pass/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/lost-property/claim?cancelled=1`,
     });
 
-    if (!session.url) return { ok: false, message: "Couldn't open the payment page. Please try again." };
-    await attachSession("pass_purchases", record.id, session.id);
+    if (!session.url || !(await attachSession("pass_purchases", record.id, session.id))) {
+      await getStripe().checkout.sessions.expire(session.id).catch(() => undefined);
+      await failPendingOrder("pass_purchases", record.id);
+      return { ok: false, message: "Couldn't safely start payment. No charge was taken; please try again." };
+    }
     return { ok: true, redirect: session.url };
   } catch {
+    await failPendingOrder("pass_purchases", record.id);
     return { ok: false, message: "Couldn't open the payment page. Please try again or call us." };
   }
 }

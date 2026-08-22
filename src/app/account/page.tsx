@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth";
+import { getSession } from "@/lib/auth-store";
 import { getCustomerBookings, getCustomerPasses } from "@/lib/account";
 import { Icon } from "@/components/ui/Icon";
 

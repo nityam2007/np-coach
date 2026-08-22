@@ -4,6 +4,7 @@ import { PageHero } from "@/components/sections/PageHero";
 import { ButtonLink } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { Reveal } from "@/components/ui/motion";
+import { CmsHtml } from "@/components/ui/CmsHtml";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
@@ -46,7 +47,7 @@ export default async function AboutPage() {
           <Reveal>
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-accent">Our story</p>
             <h2 className="mt-3 font-display text-3xl font-bold text-navy sm:text-4xl">Local roots. Nationwide journeys.</h2>
-            <div className="prose mt-6 max-w-2xl" dangerouslySetInnerHTML={{ __html: page?.body ?? "" }} />
+            <CmsHtml className="prose mt-6 max-w-2xl" html={page?.body ?? ""} />
             <div className="mt-8 flex flex-wrap gap-3">
               <ButtonLink href="/get-a-quote">Plan a journey with us</ButtonLink>
               <a href={settings.phone.href} className="inline-flex items-center gap-2 rounded-xl border border-navy/15 bg-white px-6 py-3 font-semibold text-navy shadow-sm transition-colors hover:border-accent/40 hover:bg-navy hover:text-white"><Icon name="phone" className="h-4 w-4" /> {settings.phone.display}</a>

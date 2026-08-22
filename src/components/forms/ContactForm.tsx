@@ -7,6 +7,7 @@ import type { FormState } from "@/lib/forms";
 import { Turnstile } from "@/components/forms/Turnstile";
 import { Button } from "@/components/ui/Button";
 import { inputCls } from "@/components/ui/field";
+import { useFormErrors } from "@/components/forms/useFormErrors";
 
 const initial: FormState = { ok: false };
 
@@ -21,6 +22,7 @@ function SubmitButton() {
 
 export function ContactForm() {
   const [state, action] = useActionState(submitContact, initial);
+  const formRef = useFormErrors(state.errors);
 
   if (state.ok) {
     return (
@@ -32,7 +34,7 @@ export function ContactForm() {
   }
 
   return (
-    <form action={action} className="grid gap-4">
+    <form ref={formRef} action={action} className="grid gap-4">
       {state.message && <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{state.message}</p>}
 
       <label className="text-sm font-semibold text-navy">

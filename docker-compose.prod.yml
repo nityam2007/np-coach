@@ -43,6 +43,13 @@ services:
       DIRECTUS_URL: http://directus:8055
       DIRECTUS_SERVER_TOKEN: ${DIRECTUS_SERVER_TOKEN}
       AUTH_SECRET: ${AUTH_SECRET}
+      OTP_PEPPER: ${OTP_PEPPER}
+      RATE_LIMIT_PEPPER: ${RATE_LIMIT_PEPPER}
+      REVALIDATION_SECRET: ${REVALIDATION_SECRET}
+      MAINTENANCE_SECRET: ${MAINTENANCE_SECRET}
+      TICKET_SIGNING_SECRET: ${TICKET_SIGNING_SECRET}
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET}
+      DAILY_EXPRESS_BOOKINGS_ENABLED: ${DAILY_EXPRESS_BOOKINGS_ENABLED:-false}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
       TURNSTILE_SECRET: ${TURNSTILE_SECRET:-}
@@ -75,7 +82,7 @@ services:
       - traefik.http.services.web.loadbalancer.server.port=3000
 
   directus:
-    image: directus/directus:11 # pin a specific patch before go-live
+    image: directus/directus:12.1.0
     restart: unless-stopped
     depends_on:
       db:
@@ -83,6 +90,8 @@ services:
     environment:
       KEY: ${DIRECTUS_KEY}
       SECRET: ${DIRECTUS_SECRET}
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET}
+      EXTENSIONS_MUST_LOAD: "true"
       DB_CLIENT: mysql
       DB_HOST: db
       DB_PORT: "3306"
@@ -96,10 +105,12 @@ services:
       # Permit the public site and the client-review host to call the Directus API.
       # Directus' explicit array syntax avoids unintentionally enabling every origin.
       CORS_ORIGIN: "array:https://${SITE_HOST},https://${DEMO_HOST:-demo3000.nsheth.in}"
-      WEBSOCKETS_ENABLED: "true"
+      WEBSOCKETS_ENABLED: "false"
+      GRAPHQL_ENABLED: "false"
+      TUS_ENABLED: "false"
     volumes:
       - ./directus/uploads:/directus/uploads
-      - ./directus/extensions:/directus/extensions
+      - ./extensions:/directus/extensions:ro
     labels:
       - traefik.enable=true
       # Client-review alias for the same Directus instance.

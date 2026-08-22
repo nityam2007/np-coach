@@ -13,7 +13,8 @@ const COOKIE = "np_consent";
 const ONE_YEAR = 60 * 60 * 24 * 365;
 
 function setConsent(value: "accepted" | "rejected") {
-  document.cookie = `${COOKIE}=${value}; Max-Age=${ONE_YEAR}; Path=/; SameSite=Lax`;
+  const secure = location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${COOKIE}=${value}; Max-Age=${ONE_YEAR}; Path=/; SameSite=Lax${secure}`;
 }
 
 export function CookieConsent() {
@@ -28,7 +29,14 @@ export function CookieConsent() {
     setNeedsConsent(!chosen);
   }, []);
 
-  if (!needsConsent) return null;
+  if (needsConsent === null) return null;
+  if (!needsConsent) return (
+    <button
+      type="button"
+      onClick={() => setNeedsConsent(true)}
+      className="fixed bottom-3 left-3 z-50 rounded-full border border-greyblue/30 bg-white px-4 py-2 text-xs font-semibold text-navy shadow-md"
+    >Cookie settings</button>
+  );
 
   function choose(value: "accepted" | "rejected") {
     setConsent(value);

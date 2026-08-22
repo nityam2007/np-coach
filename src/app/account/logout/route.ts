@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { sessionCookieName } from "@/lib/auth";
+import { revokeSession, sessionCookieName } from "@/lib/auth-store";
 
 /** Full-page POST logout: clears the host-only session cookie and redirects safely. */
 export async function POST() {
+  await revokeSession();
   const response = new NextResponse(null, {
     status: 303,
     headers: { Location: "/account/login?signed_out=1" },

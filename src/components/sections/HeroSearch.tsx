@@ -63,7 +63,7 @@ export function HeroSearch({
     if (disabled) return;
     const params = new URLSearchParams({ from, to });
     if (date) params.set("date", date);
-    if (returnDate) params.set("trip", "return"); // a return date ⇒ round trip
+    if (returnDate) { params.set("trip", "return"); params.set("returnDate", returnDate); }
     router.push(`/daily-express-service/book?${params}`);
   }
 

@@ -2,6 +2,7 @@ import QRCode from "qrcode";
 import type { BookingRow } from "@/lib/stripe";
 import type { Stop } from "@/lib/site-config";
 
+import { signTicket } from "@/lib/ticket-token";
 /** Data the BoardingPass renders. Built server-side (includes a same-origin QR data URL). */
 export interface BoardingPassData {
   siteName: string;
@@ -25,10 +26,12 @@ export async function boardingPassFromBooking(
   booking: BookingRow,
   stops: Stop[],
   siteName: string,
+  siteUrl: string,
 ): Promise<BoardingPassData> {
   const fromName = stops.find((s) => s.code === booking.from_stop)?.name ?? booking.from_stop;
   const toName = stops.find((s) => s.code === booking.to_stop)?.name ?? booking.to_stop;
-  const payload = `NP-COACHES|${booking.reference}|${booking.from_stop}->${booking.to_stop}|${booking.trip_date ?? ""}`;
+  const token = signTicket({ reference: booking.reference, from: booking.from_stop, to: booking.to_stop, date: booking.trip_date });
+  const payload = `${siteUrl.replace(/\/$/, "")}/api/tickets/verify?token=${encodeURIComponent(token)}`;
   const qrDataUrl = await QRCode.toDataURL(payload, {
     margin: 1,
     width: 256,

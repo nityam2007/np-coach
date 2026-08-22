@@ -1,5 +1,5 @@
 # Directus database-bootstrap image. The packaged snapshot is only for an explicit,
 # backup-first maintenance migration; routine Coolify deploys never apply it.
-FROM directus/directus:12.0.2
+FROM directus/directus:12.1.0
 
 COPY --chown=node:node directus/schema-snapshot.yaml /directus/schema-snapshot.yaml

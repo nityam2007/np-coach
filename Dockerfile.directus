@@ -1,0 +1,5 @@
+# Production Directus image. Baking the repository extensions into the image
+# avoids Coolify directory mounts that can retain stale files across deploys.
+FROM directus/directus:12.1.0
+
+COPY --chown=node:node extensions /directus/extensions

@@ -1,7 +1,7 @@
 import Stripe from "stripe";
 import crypto from "node:crypto";
 import { getScheduledServices, getStops, getSettings } from "@/lib/directus";
-import { directusAtomicUpdate, directusServerRead, directusServerWrite } from "@/lib/directus-server";
+import { directusAtomicUpdate, directusCommitPaidBookingInventory, directusServerRead, directusServerWrite, type AtomicInventoryRun } from "@/lib/directus-server";
 import {
   sendBookingConfirmation,
   sendLostPropertyCustomerConfirmation,
@@ -61,9 +61,7 @@ export interface PricedBooking {
   returnDate: string | null;
   returnRouteSlug: string | null;
   returnDepartureTime: string | null;
-  outwardCapacity: number;
   returnArrivalTime: string | null;
-  returnCapacity: number | null;
 }
 
 /**
@@ -124,8 +122,6 @@ export async function priceBooking(
     returnServiceCode: inbound?.service.code ?? null,
     returnDepartureTime: inbound?.departureTime ?? null,
     returnArrivalTime: inbound?.arrivalTime ?? null,
-    outwardCapacity: outward.service.capacity,
-    returnCapacity: inbound?.service.capacity ?? null,
   };
 }
 
@@ -230,9 +226,6 @@ export async function createPendingBooking(data: {
   returnArrivalTime: string | null;
   name: string;
   email: string;
-  outwardRunId: number;
-  returnRunId: number | null;
-  inventoryStatus: "held";
   phone: string;
 }): Promise<BookingRow | null> {
   return (await directusServerWrite("/items/bookings", "POST", {
@@ -259,9 +252,9 @@ export async function createPendingBooking(data: {
     return_arrival_time: data.returnArrivalTime,
     name: data.name,
     email: data.email,
-    outward_run_id: data.outwardRunId,
-    return_run_id: data.returnRunId,
-    inventory_status: data.inventoryStatus,
+    outward_run_id: null,
+    return_run_id: null,
+    inventory_status: "unreserved",
     phone: data.phone,
     status: "pending",
   })) as BookingRow | null;
@@ -292,19 +285,21 @@ export async function failPendingOrder(collection: string, id: number): Promise<
   if (row.status === "paid" || row.status === "refunded" || row.status === "disputed") return true;
 
   if (row.status === "pending") {
-    const data = collection === "bookings" ? { status: "failed", inventory_status: "releasing" } : { status: "failed" };
+    const data = collection === "bookings"
+      ? { status: "failed", inventory_status: row.inventory_status === "held" ? "releasing" : (row.inventory_status ?? "unreserved") }
+      : { status: "failed" };
     const updated = await directusAtomicUpdate(collection, id, { status: "pending" }, data);
     if (updated !== true) return false;
     row = { ...row, ...data };
   }
 
   if (collection !== "bookings" || row.inventory_status === "released") return row.status === "failed";
+  if (row.inventory_status !== "held" && row.inventory_status !== "releasing") return row.status === "failed";
   if (!row.passengers || !row.outward_run_id) return false;
-  // Claim the release before decrementing. If the decrement response is lost, a
-  // retry must leak capacity for manual reconciliation rather than double-release
-  // seats and create an oversell.
+
+  // Compatibility cleanup for reservations created by earlier releases before paid-only inventory.
+  // Claim before decrementing so retries cannot release the same seats twice.
   const inventoryStatus = row.inventory_status;
-  if (inventoryStatus !== "held" && inventoryStatus !== "releasing") return false;
   const claimed = await directusAtomicUpdate(
     "bookings",
     id,
@@ -314,7 +309,6 @@ export async function failPendingOrder(collection: string, id: number): Promise<
   if (claimed !== true) return false;
   return releaseInventory(row.outward_run_id, row.return_run_id ?? null, row.passengers);
 }
-
 
 export async function failPendingBySession(
   collection: "bookings" | "pass_purchases",
@@ -457,6 +451,30 @@ async function deliverPaymentNotifications(
   return customerDelivered && staffDelivered;
 }
 
+async function paidBookingRuns(booking: BookingRow): Promise<AtomicInventoryRun[] | null> {
+  const snapshot = booking.journey_snapshot;
+  if (!snapshot || snapshot.passengers !== booking.passengers || booking.passengers < 1) return null;
+
+  const services = await getScheduledServices();
+  const legs = [snapshot.outward, snapshot.return].filter((leg): leg is BookingLegSnapshot => leg !== null);
+  const runs: AtomicInventoryRun[] = [];
+  for (const leg of legs) {
+    const service = services.find((candidate) => candidate.code === leg.serviceCode);
+    if (!service || service.salesMode !== "online" || service.routeSlug !== leg.routeSlug
+      || !Number.isInteger(service.capacity) || service.capacity < 1 || service.capacity > 500) {
+      return null;
+    }
+    runs.push({
+      routeSlug: leg.routeSlug,
+      serviceCode: leg.serviceCode,
+      serviceDate: leg.date,
+      departureTime: leg.departureTime,
+      capacity: service.capacity,
+    });
+  }
+  return runs.length >= 1 && runs.length <= 2 ? runs : null;
+}
+
 export async function markPaidBySession(
   collection: PaymentCollection,
   sessionId: string,
@@ -479,17 +497,54 @@ export async function markPaidBySession(
   const verifiedAmount = Number.isInteger(amountTotal) && amountTotal !== null && amountTotal >= 0 ? amountTotal : null;
   if (row.status !== "paid") {
     if (row.status !== "pending") return null;
-    const expected = collection === "bookings"
-      ? { status: "pending", inventory_status: "held" }
-      : { status: "pending" };
-    const data = {
-      status: "paid",
-      stripe_payment_intent: paymentIntent,
-      ...(collection === "bookings" ? { inventory_status: "committed" } : {}),
-      ...(verifiedAmount !== null ? { amount: verifiedAmount } : {}),
-    };
-    const updated = await directusAtomicUpdate(collection, row.id, expected, data);
-    if (updated !== true) return null;
+
+    if (collection === "bookings") {
+      const booking = await getBookingByReference(row.reference);
+      if (!booking) return null;
+
+      if (booking.inventory_status === "held" && booking.outward_run_id) {
+        // Complete checkout holds created before the paid-only inventory release without deducting twice.
+        const updated = await directusAtomicUpdate(
+          collection,
+          row.id,
+          { status: "pending", inventory_status: "held" },
+          {
+            status: "paid",
+            stripe_payment_intent: paymentIntent,
+            inventory_status: "committed",
+            ...(verifiedAmount !== null ? { amount: verifiedAmount } : {}),
+          },
+        );
+        if (updated !== true) return null;
+      } else {
+        const runs = await paidBookingRuns(booking);
+        if (!runs) return null;
+        const committed = await directusCommitPaidBookingInventory({
+          bookingId: row.id,
+          sessionId,
+          paymentIntent,
+          amountTotal: verifiedAmount,
+          runs,
+          seats: booking.passengers,
+        });
+        if (!committed.ok || committed.reference !== row.reference) {
+          console.error(`[stripe] paid booking inventory commit failed: ${committed.ok ? "reference mismatch" : committed.reason}`);
+          return null;
+        }
+      }
+    } else {
+      const updated = await directusAtomicUpdate(
+        collection,
+        row.id,
+        { status: "pending" },
+        {
+          status: "paid",
+          stripe_payment_intent: paymentIntent,
+          ...(verifiedAmount !== null ? { amount: verifiedAmount } : {}),
+        },
+      );
+      if (updated !== true) return null;
+    }
   }
 
   const emailsDelivered = await deliverPaymentNotifications(collection, row.reference);
@@ -498,7 +553,6 @@ export async function markPaidBySession(
   }
   return row.reference;
 }
-
 
 /** Verify the Checkout session with Stripe after redirect, never from a public reference. */
 export async function confirmCheckoutSession(sessionId: string, kind: "booking" | "pass"): Promise<string | null> {

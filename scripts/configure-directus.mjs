@@ -82,7 +82,7 @@ const COLLECTION_META = {
     archive_field: "status",
     archive_value: "cancelled",
     sort_field: "service_date",
-    note: "Required dated inventory ledger. A row is created automatically at first checkout so bookings cannot oversell. Adjust Capacity for an extra/larger bus on that date, or set Cancelled to stop sales; do not add rows by hand.",
+    note: "Required dated inventory ledger. A row is created automatically only after Stripe confirms payment; pending or abandoned checkouts do not appear here or use seats. Adjust Capacity for an extra/larger bus on that date, or set Cancelled to stop sales; do not add rows by hand.",
   },
   pass_purchases: {
     group: "grp_orders",

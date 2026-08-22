@@ -233,3 +233,10 @@ Append-only. Newest entries at the bottom. Never edit or delete past entries —
 - Made the availability API prove the authenticated inventory endpoint is ready and read dated inventory before exposing seat counts. Checkout now pauses with a truthful temporary-availability message for infrastructure failures; HTTP 409 alone means genuinely insufficient seats.
 - Kept `service_runs` as the required automatically-created dated inventory ledger for atomic booked-seat tracking, cancellation and per-date overrides. Scheduled-service default capacity and dated run capacity are CMS-editable from 1–500, supporting combined capacity for multiple or larger buses.
 - Baked repository extensions into the pinned Directus production image so Coolify does not depend on an unreliable source bind mount; added an authenticated readiness route and regression coverage.
+
+## 2026-08-22 — Paid-only Daily Express inventory
+
+- Changed new Daily Express checkout rows to `pending`/`unreserved`: opening or abandoning Stripe no longer creates a Service Run or reduces displayed seats.
+- Added an authenticated Directus transaction that, only after Stripe confirms payment, row-locks both journey legs, checks capacity, creates/updates dated Service Runs, increments booked seats, stores run ids and marks the booking paid together.
+- Kept paid processing idempotent across webhook and success-page retries, rolled back both booking and inventory on a capacity conflict, and retained release/paid compatibility for in-flight holds created by the previous release.
+- Customer accounts, tickets, QR validation and confirmations remain paid-only; Directus still keeps pending/failed booking records as abandoned-payment audit data.

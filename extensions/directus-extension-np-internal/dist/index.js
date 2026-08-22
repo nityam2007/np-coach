@@ -57,6 +57,55 @@ function validRun(run) {
 
 const runKey = (run) => `${run.serviceCode}:${run.serviceDate}`;
 
+function validInventoryRequest(runs, seats) {
+  return Array.isArray(runs) && runs.length >= 1 && runs.length <= 2 && runs.every(validRun)
+    && new Set(runs.map(runKey)).size === runs.length
+    && Number.isInteger(seats) && seats >= 1 && seats <= 100;
+}
+
+function validPaidCommit(body) {
+  return validObject(body)
+    && Number.isInteger(body.bookingId) && body.bookingId >= 1
+    && typeof body.sessionId === "string" && /^cs_[A-Za-z0-9_]{3,252}$/.test(body.sessionId)
+    && (body.paymentIntent === null
+      || (typeof body.paymentIntent === "string" && /^pi_[A-Za-z0-9_]{3,252}$/.test(body.paymentIntent)))
+    && (body.amountTotal === null
+      || (Number.isInteger(body.amountTotal) && body.amountTotal >= 0 && body.amountTotal <= 10_000_000))
+    && validInventoryRequest(body.runs, body.seats);
+}
+
+async function reserveRuns(trx, runs, seats) {
+  const keyed = runs.map((run) => ({ ...run, key: runKey(run) }));
+  for (const run of keyed) {
+    await trx("service_runs").insert({
+      run_key: run.key,
+      route_slug: run.routeSlug,
+      service_code: run.serviceCode,
+      service_date: run.serviceDate,
+      departure_time: run.departureTime,
+      capacity: run.capacity,
+      booked_seats: 0,
+      status: "scheduled",
+    }).onConflict("run_key").ignore();
+  }
+
+  const locked = new Map();
+  for (const run of [...keyed].sort((a, b) => a.key.localeCompare(b.key))) {
+    const row = await trx("service_runs").where({ run_key: run.key }).forUpdate().first();
+    if (!row || row.status !== "scheduled" || row.booked_seats + seats > row.capacity) {
+      const error = new Error("NO_CAPACITY");
+      error.code = "NO_CAPACITY";
+      throw error;
+    }
+    locked.set(run.key, row);
+  }
+
+  for (const row of locked.values()) {
+    await trx("service_runs").where({ id: row.id }).update({ booked_seats: row.booked_seats + seats });
+  }
+  return keyed.map((run) => locked.get(run.key).id);
+}
+
 const endpoint = {
   id: "np-internal",
   handler(router, { database, env, logger }) {
@@ -81,55 +130,58 @@ const endpoint = {
       }
     });
 
-    router.post("/inventory/reserve", async (req, res) => {
-      const runs = req.body?.runs;
-      const seats = req.body?.seats;
-      if (!Array.isArray(runs) || runs.length < 1 || runs.length > 2 || !runs.every(validRun)
-        || new Set(runs.map(runKey)).size !== runs.length
-        || !Number.isInteger(seats) || seats < 1 || seats > 100) {
-        return res.status(400).json({ error: "invalid payload" });
-      }
-
+    router.post("/inventory/commit-paid-booking", async (req, res) => {
+      if (!validPaidCommit(req.body)) return res.status(400).json({ error: "invalid payload" });
+      const { bookingId, sessionId, paymentIntent, amountTotal, runs, seats } = req.body;
       try {
-        const ids = await database.transaction(async (trx) => {
-          const keyed = runs.map((run) => ({ ...run, key: runKey(run) }));
-          for (const run of keyed) {
-            await trx("service_runs").insert({
-              run_key: run.key,
-              route_slug: run.routeSlug,
-              service_code: run.serviceCode,
-              service_date: run.serviceDate,
-              departure_time: run.departureTime,
-              capacity: run.capacity,
-              booked_seats: 0,
-              status: "scheduled",
-            }).onConflict("run_key").ignore();
+        const result = await database.transaction(async (trx) => {
+          const booking = await trx("bookings").where({ id: bookingId }).forUpdate().first();
+          if (!booking || booking.stripe_session_id !== sessionId) {
+            const error = new Error("BOOKING_CONFLICT");
+            error.code = "BOOKING_CONFLICT";
+            throw error;
+          }
+          if (booking.status === "paid" && booking.inventory_status === "committed") {
+            return {
+              reference: booking.reference,
+              runIds: [booking.outward_run_id, booking.return_run_id].filter(Number.isInteger),
+            };
+          }
+          if (booking.status !== "pending"
+            || (booking.inventory_status !== null && booking.inventory_status !== "unreserved")
+            || booking.outward_run_id !== null || booking.return_run_id !== null) {
+            const error = new Error("BOOKING_CONFLICT");
+            error.code = "BOOKING_CONFLICT";
+            throw error;
           }
 
-          const locked = new Map();
-          for (const run of [...keyed].sort((a, b) => a.key.localeCompare(b.key))) {
-            const row = await trx("service_runs").where({ run_key: run.key }).forUpdate().first();
-            if (!row || row.status !== "scheduled" || row.booked_seats + seats > row.capacity) {
-              const error = new Error("NO_CAPACITY");
-              error.code = "NO_CAPACITY";
-              throw error;
-            }
-            locked.set(run.key, row);
+          const runIds = await reserveRuns(trx, runs, seats);
+          const changes = {
+            status: "paid",
+            stripe_payment_intent: paymentIntent,
+            inventory_status: "committed",
+            outward_run_id: runIds[0],
+            return_run_id: runIds[1] ?? null,
+            ...(amountTotal !== null ? { amount: amountTotal } : {}),
+          };
+          const affected = await trx("bookings").where({ id: bookingId, status: "pending" }).update(changes);
+          if (affected !== 1) {
+            const error = new Error("BOOKING_CONFLICT");
+            error.code = "BOOKING_CONFLICT";
+            throw error;
           }
-
-          for (const row of locked.values()) {
-            await trx("service_runs").where({ id: row.id }).update({ booked_seats: row.booked_seats + seats });
-          }
-          return keyed.map((run) => locked.get(run.key).id);
+          return { reference: booking.reference, runIds };
         });
-        return res.json({ data: { runIds: ids } });
+        return res.json({ data: result });
       } catch (error) {
         if (error?.code === "NO_CAPACITY") return res.status(409).json({ error: "no capacity" });
-        logger.error(error, "NP inventory reservation failed");
-        return res.status(500).json({ error: "reservation failed" });
+        if (error?.code === "BOOKING_CONFLICT") return res.status(422).json({ error: "booking state conflict" });
+        logger.error(error, "NP paid booking inventory commit failed");
+        return res.status(500).json({ error: "paid booking commit failed" });
       }
     });
 
+    // Retained only to reconcile checkout holds created by older deployments.
     router.post("/inventory/release", async (req, res) => {
       const runIds = req.body?.runIds;
       const seats = req.body?.seats;

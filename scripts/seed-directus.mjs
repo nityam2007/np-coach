@@ -228,7 +228,7 @@ const CUSTOMER_SESSIONS_FIELDS = [
 ];
 
 // P4 — Daily Express bookings. Written ONLY by the server (server token, no public access):
-// the booking is created `pending` before payment, then set `paid` by the signed Stripe webhook.
+// the booking is created `pending` and unreserved before payment; the signed Stripe webhook atomically creates inventory and sets it `paid`.
 // `stripe_session_id` is unique → webhook idempotency. Amounts stored in pence, server-computed.
 // Atomic per-departure inventory. A unique run key represents route/date/time.
 const SERVICE_RUNS_FIELDS = [
@@ -523,7 +523,7 @@ async function run() {
   await ensureCollection("testimonials", { sort_field: "sort", icon: "format_quote", note: "Homepage testimonials" }, TESTIMONIALS_FIELDS);
   await ensureCollection("contact_submissions", { icon: "mail", note: "Contact form submissions (read in admin)" }, CONTACT_SUBMISSIONS_FIELDS);
   await ensureCollection("bookings", { icon: "confirmation_number", note: "Daily Express bookings (server-write only; Stripe)" }, BOOKINGS_FIELDS);
-  await ensureCollection("service_runs", { icon: "event_seat", note: "Daily Express departure inventory (server-reserved; operations may cancel/edit capacity)" }, SERVICE_RUNS_FIELDS);
+  await ensureCollection("service_runs", { icon: "event_seat", note: "Paid Daily Express departure inventory (created at payment confirmation; operations may cancel/edit capacity)" }, SERVICE_RUNS_FIELDS);
   await ensureCollection("quote_requests", { icon: "request_quote", note: "Coach-hire quote requests (read in admin)" }, QUOTE_REQUESTS_FIELDS);
   await ensureCollection("pass_purchases", { icon: "luggage", note: "Lost Property pass purchases (server-write only; Stripe)" }, PASS_PURCHASES_FIELDS);
   await ensureCollection("customers", { icon: "person", note: "Customer accounts (server-write only; passwordless)" }, CUSTOMERS_FIELDS);

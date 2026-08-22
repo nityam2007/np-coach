@@ -24,7 +24,6 @@ import { upsertCustomer } from "@/lib/account";
 import { getSettings } from "@/lib/directus";
 import { deliverLead } from "@/lib/lead-delivery";
 import { clientIp, rateLimited, rateLimitKey, RATE_LIMITS } from "@/lib/security";
-import { releaseInventory, reserveInventory } from "@/lib/inventory";
 
 
 export async function submitContact(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -83,8 +82,7 @@ export async function submitQuote(_prev: FormState, formData: FormData): Promise
 }
 
 export async function startBooking(_prev: FormState, formData: FormData): Promise<FormState> {
-  // Capacity is not yet modelled atomically per departure. Keep paid ticket sales
-  // fail-closed in production so concurrent checkouts cannot oversell a service.
+  // Keep paid ticket sales behind the production launch switch.
   if (process.env.NODE_ENV === "production" && process.env.DAILY_EXPRESS_BOOKINGS_ENABLED !== "true") {
     return { ok: false, message: "Online Daily Express booking is temporarily unavailable. Please call us to book." };
   }
@@ -119,31 +117,6 @@ export async function startBooking(_prev: FormState, formData: FormData): Promis
   if (!process.env.STRIPE_SECRET_KEY) {
     return { ok: false, message: "Online payments are not available at the moment. Please call us to book." };
   }
-  const inventoryResult = await reserveInventory(
-    {
-      routeSlug: priced.routeSlug,
-      serviceCode: priced.outwardServiceCode,
-      serviceDate: priced.travelDate,
-      departureTime: priced.departureTime,
-      capacity: priced.outwardCapacity,
-    },
-    priced.returnServiceCode && priced.returnRouteSlug && priced.returnDate && priced.returnDepartureTime && priced.returnCapacity
-      ? {
-          routeSlug: priced.returnRouteSlug,
-          serviceCode: priced.returnServiceCode,
-          serviceDate: priced.returnDate,
-          departureTime: priced.returnDepartureTime,
-          capacity: priced.returnCapacity,
-        }
-      : null,
-    priced.passengers,
-  );
-  if (!inventoryResult.ok) {
-    return inventoryResult.reason === "capacity"
-      ? { ok: false, message: "That departure no longer has enough seats available. Please choose another journey or call us." }
-      : { ok: false, message: "Live seat availability could not be confirmed, so no payment was taken. Please try again shortly or call us." };
-  }
-  const reservation = inventoryResult.reservation;
   const reference = bookingReference();
   // Persist the booking as `pending` BEFORE payment (data-safety rule).
   const booking = await createPendingBooking({
@@ -201,12 +174,8 @@ export async function startBooking(_prev: FormState, formData: FormData): Promis
     name: data.name,
     email: data.email,
     phone: data.phone,
-    outwardRunId: reservation.outwardRunId,
-    returnRunId: reservation.returnRunId,
-    inventoryStatus: "held",
   });
   if (!booking) {
-    await releaseInventory(reservation.outwardRunId, reservation.returnRunId, priced.passengers);
     return { ok: false, message: "Couldn't start your booking. Please try again or call us." };
   }
 

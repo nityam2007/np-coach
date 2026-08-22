@@ -108,45 +108,116 @@ test("compare-and-swap only updates the expected state once", async () => {
   assert.deepEqual((await request("/cas", payload)).body, { data: { updated: false } });
 });
 
-test("two-leg reservations and releases are transactional", async () => {
-  const database = mockDatabase();
-  const request = harness(database);
-  const runs = [
-    { serviceCode: "lm-morning", routeSlug: "outward", serviceDate: "2026-08-30", departureTime: "09:45", capacity: 2 },
-    { serviceCode: "ml-afternoon", routeSlug: "return", serviceDate: "2026-08-31", departureTime: "15:00", capacity: 2 },
-  ];
-  const reserved = await request("/inventory/reserve", { runs, seats: 2 });
-  assert.equal(reserved.status, 200);
-  assert.deepEqual(database.rows("service_runs").map((row) => row.run_key), ["lm-morning:2026-08-30", "ml-afternoon:2026-08-31"]);
-  assert.deepEqual(database.rows("service_runs").map((row) => row.service_code), ["lm-morning", "ml-afternoon"]);
-  assert.deepEqual(database.rows("service_runs").map((row) => row.booked_seats), [2, 2]);
-
-  const rejected = await request("/inventory/reserve", { runs, seats: 1 });
-  assert.equal(rejected.status, 409);
-  assert.deepEqual(database.rows("service_runs").map((row) => row.booked_seats), [2, 2]);
-
-  const released = await request("/inventory/release", { runIds: reserved.body.data.runIds, seats: 2 });
-  assert.equal(released.status, 200);
-  assert.deepEqual(database.rows("service_runs").map((row) => row.booked_seats), [0, 0]);
-});
-
-test("inventory accepts combined capacity above the old single-coach limit", async () => {
-  const database = mockDatabase();
-  const request = harness(database);
-  const result = await request("/inventory/reserve", {
-    runs: [{ serviceCode: "lm-morning", routeSlug: "outward", serviceDate: "2026-08-30", departureTime: "09:45", capacity: 240 }],
-    seats: 2,
+test("paid booking commit creates two-leg inventory and is idempotent", async () => {
+  const database = mockDatabase({
+    bookings: [{
+      id: 1,
+      reference: "NPC-PAID-1",
+      status: "pending",
+      stripe_session_id: "cs_test_paid_booking",
+      stripe_payment_intent: null,
+      inventory_status: "unreserved",
+      outward_run_id: null,
+      return_run_id: null,
+      amount: 1500,
+    }],
   });
-  assert.equal(result.status, 200);
+  const request = harness(database);
+  const payload = {
+    bookingId: 1,
+    sessionId: "cs_test_paid_booking",
+    paymentIntent: "pi_test_paid_booking",
+    amountTotal: 1200,
+    runs: [
+      { serviceCode: "lm-morning", routeSlug: "outward", serviceDate: "2026-08-30", departureTime: "09:45", capacity: 240 },
+      { serviceCode: "ml-afternoon", routeSlug: "return", serviceDate: "2026-08-31", departureTime: "15:00", capacity: 60 },
+    ],
+    seats: 1,
+  };
+
+  const committed = await request("/inventory/commit-paid-booking", payload);
+  assert.equal(committed.status, 200);
+  assert.deepEqual(committed.body, { data: { reference: "NPC-PAID-1", runIds: [1, 2] } });
+  assert.deepEqual(database.rows("service_runs").map((row) => row.booked_seats), [1, 1]);
   assert.equal(database.rows("service_runs")[0].capacity, 240);
-  assert.equal(database.rows("service_runs")[0].booked_seats, 2);
+  assert.deepEqual(database.rows("bookings")[0], {
+    id: 1,
+    reference: "NPC-PAID-1",
+    status: "paid",
+    stripe_session_id: "cs_test_paid_booking",
+    stripe_payment_intent: "pi_test_paid_booking",
+    inventory_status: "committed",
+    outward_run_id: 1,
+    return_run_id: 2,
+    amount: 1200,
+  });
+
+  const retried = await request("/inventory/commit-paid-booking", payload);
+  assert.equal(retried.status, 200);
+  assert.deepEqual(database.rows("service_runs").map((row) => row.booked_seats), [1, 1]);
 });
 
-test("inventory rejects capacity above the CMS limit", async () => {
-  const request = harness(mockDatabase());
-  const result = await request("/inventory/reserve", {
+test("failed paid commit rolls back inventory and leaves booking pending", async () => {
+  const database = mockDatabase({
+    bookings: [{
+      id: 1,
+      reference: "NPC-PAID-2",
+      status: "pending",
+      stripe_session_id: "cs_test_no_capacity",
+      inventory_status: "unreserved",
+      outward_run_id: null,
+      return_run_id: null,
+    }],
+    service_runs: [{
+      id: 1,
+      run_key: "lm-morning:2026-08-30",
+      service_code: "lm-morning",
+      status: "scheduled",
+      capacity: 1,
+      booked_seats: 1,
+    }],
+  });
+  const request = harness(database);
+  const result = await request("/inventory/commit-paid-booking", {
+    bookingId: 1,
+    sessionId: "cs_test_no_capacity",
+    paymentIntent: "pi_test_no_capacity",
+    amountTotal: 1500,
+    runs: [
+      { serviceCode: "lm-morning", routeSlug: "outward", serviceDate: "2026-08-30", departureTime: "09:45", capacity: 240 },
+      { serviceCode: "ml-afternoon", routeSlug: "return", serviceDate: "2026-08-31", departureTime: "15:00", capacity: 60 },
+    ],
+    seats: 1,
+  });
+
+  assert.equal(result.status, 409);
+  assert.equal(database.rows("service_runs")[0].booked_seats, 1);
+  assert.equal(database.rows("bookings")[0].status, "pending");
+  assert.equal(database.rows("bookings")[0].inventory_status, "unreserved");
+});
+
+test("paid inventory rejects capacity above the CMS limit", async () => {
+  const database = mockDatabase({
+    bookings: [{
+      id: 1,
+      reference: "NPC-PAID-3",
+      status: "pending",
+      stripe_session_id: "cs_test_invalid_capacity",
+      inventory_status: "unreserved",
+      outward_run_id: null,
+      return_run_id: null,
+    }],
+  });
+  const request = harness(database);
+  const result = await request("/inventory/commit-paid-booking", {
+    bookingId: 1,
+    sessionId: "cs_test_invalid_capacity",
+    paymentIntent: "pi_test_invalid_capacity",
+    amountTotal: 1500,
     runs: [{ serviceCode: "lm-morning", routeSlug: "outward", serviceDate: "2026-08-30", departureTime: "09:45", capacity: 501 }],
     seats: 1,
   });
   assert.equal(result.status, 400);
+  assert.deepEqual(database.rows("service_runs") ?? [], []);
+  assert.equal(database.rows("bookings")[0].status, "pending");
 });

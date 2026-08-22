@@ -129,19 +129,30 @@ export interface AtomicInventoryRun {
   capacity: number;
 }
 
-export type DirectusInventoryReservationResult =
-  | { ok: true; runIds: number[] }
+export interface PaidBookingInventoryCommit {
+  bookingId: number;
+  sessionId: string;
+  paymentIntent: string | null;
+  amountTotal: number | null;
+  runs: AtomicInventoryRun[];
+  seats: number;
+}
+
+export type DirectusPaidBookingCommitResult =
+  | { ok: true; reference: string; runIds: number[] }
   | { ok: false; reason: "capacity" | "unavailable" };
 
-export async function directusReserveInventory(
-  runs: AtomicInventoryRun[],
-  seats: number,
-): Promise<DirectusInventoryReservationResult> {
-  const result = await internalRequestResult<{ runIds: number[] }>("/inventory/reserve", { runs, seats });
+export async function directusCommitPaidBookingInventory(
+  commit: PaidBookingInventoryCommit,
+): Promise<DirectusPaidBookingCommitResult> {
+  const result = await internalRequestResult<{ reference: string; runIds: number[] }>(
+    "/inventory/commit-paid-booking",
+    commit,
+  );
   if (!result.ok) {
     return { ok: false, reason: result.status === 409 ? "capacity" : "unavailable" };
   }
-  return { ok: true, runIds: result.data.runIds };
+  return { ok: true, reference: result.data.reference, runIds: result.data.runIds };
 }
 
 export async function directusInventoryReady(): Promise<boolean> {

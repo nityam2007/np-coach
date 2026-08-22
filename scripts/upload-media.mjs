@@ -126,8 +126,9 @@ async function ensurePublicReadFiles() {
   );
   const permission = { fields: ["id", "title", "type", "width", "height", "description", "modified_on"], permissions: {}, validation: {} };
   if (existing.length) {
-    await api(`/permissions/${existing[0].id}`, { method: "PATCH", body: JSON.stringify(permission) });
-    console.log("✓ public file metadata restricted to display-safe fields");
+    // Directus 12.1 edition-gates field-level rules. Never replace a live file
+    // permission with a broader grant during an upgrade; preserve it unchanged.
+    console.log("• existing public file read permission preserved");
     return;
   }
   await api("/permissions", {

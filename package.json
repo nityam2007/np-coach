@@ -9,7 +9,7 @@
     "start": "next start -H 0.0.0.0 -p 3000",
     "lint": "eslint .",
     "test": "node --experimental-strip-types --test tests/*.test.*",
-    "verify:scripts": "node --check scripts/seed-directus.mjs && node --check extensions/directus-extension-np-internal/dist/index.js",
+    "verify:scripts": "node --check scripts/seed-directus.mjs && node --check scripts/upload-media.mjs && node --check extensions/directus-extension-np-internal/dist/index.js && node --check extensions/directus-extension-np-published/dist/index.js",
     "check": "npm run test && npm run verify:scripts && npx tsc --noEmit --incremental false && npm run lint && npm run build",
     "seed": "node scripts/seed-directus.mjs",
     "configure": "node scripts/configure-directus.mjs",

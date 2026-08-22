@@ -281,6 +281,17 @@ async function ensureField(collection, field) {
   console.log(`✓ added field "${collection}.${field.field}"`);
 }
 
+async function publishRowsWithoutStatus(collection) {
+  const rows = await api(`/items/${collection}?filter[status][_null]=true&fields=id&limit=-1`);
+  for (const row of rows) {
+    await api(`/items/${collection}/${row.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status: "published" }),
+    });
+  }
+  if (rows.length) console.log(`✓ published ${rows.length} existing "${collection}" rows`);
+}
+
 async function reconcileFieldMeta(collection, definition) {
   await api(`/fields/${collection}/${definition.field}`, {
     method: "PATCH",
@@ -288,12 +299,13 @@ async function reconcileFieldMeta(collection, definition) {
   });
 }
 
-async function ensurePublicRead(collection, publishedOnly = false) {
+async function ensurePublicRead(collection) {
   const policies = await api("/policies?limit=-1");
   const publicPolicy = policies.find((p) => p.name === "$t:public_label");
   if (!publicPolicy) throw new Error("public policy not found");
-  const permissions = publishedOnly ? { status: { _eq: "published" } } : {};
-  const payload = { policy: publicPolicy.id, collection, action: "read", fields: ["*"], permissions, validation: {} };
+  // Directus 12.1 edition-gates item/field rules. The NP published-content hook
+  // enforces status=published for every anonymous read at the API boundary.
+  const payload = { policy: publicPolicy.id, collection, action: "read", fields: ["*"], permissions: null, validation: null, presets: null };
   const existing = await api(`/permissions?filter[policy][_eq]=${publicPolicy.id}&filter[collection][_eq]=${collection}&filter[action][_eq]=read&limit=1`);
   if (existing.length) {
     await api(`/permissions/${existing[0].id}`, { method: "PATCH", body: JSON.stringify(payload) });
@@ -533,24 +545,24 @@ async function run() {
   const publishableCollections = ["services", "fleet", "pages", "tours", "routes", "stops", "school_routes", "blog_posts", "testimonials"];
   for (const collection of publishableCollections) {
     await ensureField(collection, publishedStatus);
-    await api(`/items/${collection}?filter[status][_null]=true`, { method: "PATCH", body: JSON.stringify({ status: "published" }) });
+    await publishRowsWithoutStatus(collection);
   }
 
   await ensurePublicRead("settings");
-  await ensurePublicRead("services", true);
-  await ensurePublicRead("fleet", true);
-  await ensurePublicRead("pages", true);
+  await ensurePublicRead("services");
+  await ensurePublicRead("fleet");
+  await ensurePublicRead("pages");
   await ensureUniqueField("bookings", "reference");
   await ensureUniqueField("pass_purchases", "reference");
   await ensureUniqueField("bookings", "stripe_payment_intent");
   await ensureUniqueField("service_runs", "run_key");
   await ensureUniqueField("pass_purchases", "stripe_payment_intent");
-  await ensurePublicRead("tours", true);
-  await ensurePublicRead("routes", true);
-  await ensurePublicRead("stops", true);
-  await ensurePublicRead("school_routes", true);
-  await ensurePublicRead("blog_posts", true);
-  await ensurePublicRead("testimonials", true);
+  await ensurePublicRead("tours");
+  await ensurePublicRead("routes");
+  await ensurePublicRead("stops");
+  await ensurePublicRead("school_routes");
+  await ensurePublicRead("blog_posts");
+  await ensurePublicRead("testimonials");
   for (const collection of ["contact_submissions", "quote_requests", "bookings", "service_runs", "pass_purchases", "customers", "otp_codes", "customer_sessions"]) {
     await revokePublicAccess(collection);
   }

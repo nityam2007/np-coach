@@ -349,7 +349,7 @@ function mergeSchoolLogos(blob: SchoolTransportBlob | null | undefined): SchoolT
 }
 
 export async function getServices(): Promise<ServiceCard[]> {
-  const rows = await fetchData<ServiceRow[]>("/items/services?sort=sort&limit=-1", "services");
+  const rows = await fetchData<ServiceRow[]>("/items/services?filter[status][_eq]=published&sort=sort&limit=-1", "services");
   if (rows === undefined) return siteConfig.services;
   return rows.map(({ title, blurb, href, icon, image, image_alt }) => ({
     title,
@@ -379,14 +379,14 @@ function toVehicle(row: FleetRow): FleetVehicle {
 }
 
 export async function getFleet(): Promise<FleetVehicle[]> {
-  const rows = await fetchData<FleetRow[]>("/items/fleet?sort=sort&limit=-1", "fleet");
+  const rows = await fetchData<FleetRow[]>("/items/fleet?filter[status][_eq]=published&sort=sort&limit=-1", "fleet");
   if (rows === undefined) return siteConfig.fleet;
   return rows.map(toVehicle);
 }
 
 export async function getFleetVehicle(slug: string): Promise<FleetVehicle | null> {
   const rows = await fetchData<FleetRow[]>(
-    `/items/fleet?filter[slug][_eq]=${encodeURIComponent(slug)}&limit=1`,
+    `/items/fleet?filter[slug][_eq]=${encodeURIComponent(slug)}&filter[status][_eq]=published&limit=1`,
     `fleet:${slug}`,
   );
   if (rows === undefined) return siteConfig.fleet.find((v) => v.slug === slug) ?? null;
@@ -421,14 +421,14 @@ function toPage(row: PageRow): Page {
 }
 
 export async function getPages(): Promise<Page[]> {
-  const rows = await fetchData<PageRow[]>("/items/pages?sort=sort&limit=-1", "pages");
+  const rows = await fetchData<PageRow[]>("/items/pages?filter[status][_eq]=published&sort=sort&limit=-1", "pages");
   if (rows === undefined) return siteConfig.pages;
   return rows.map(toPage);
 }
 
 export async function getPage(slug: string): Promise<Page | null> {
   const rows = await fetchData<PageRow[]>(
-    `/items/pages?filter[slug][_eq]=${encodeURIComponent(slug)}&limit=1`,
+    `/items/pages?filter[slug][_eq]=${encodeURIComponent(slug)}&filter[status][_eq]=published&limit=1`,
     `pages:${slug}`,
   );
   if (rows === undefined) return siteConfig.pages.find((p) => p.slug === slug) ?? null;
@@ -469,14 +469,14 @@ function toTour(row: TourRow): Tour {
 }
 
 export async function getTours(): Promise<Tour[]> {
-  const rows = await fetchData<TourRow[]>("/items/tours?sort=sort&limit=-1", "tours");
+  const rows = await fetchData<TourRow[]>("/items/tours?filter[status][_eq]=published&sort=sort&limit=-1", "tours");
   if (rows === undefined) return siteConfig.tours;
   return rows.map(toTour);
 }
 
 export async function getTour(slug: string): Promise<Tour | null> {
   const rows = await fetchData<TourRow[]>(
-    `/items/tours?filter[slug][_eq]=${encodeURIComponent(slug)}&limit=1`,
+    `/items/tours?filter[slug][_eq]=${encodeURIComponent(slug)}&filter[status][_eq]=published&limit=1`,
     `tours:${slug}`,
   );
   if (rows === undefined) return siteConfig.tours.find((t) => t.slug === slug) ?? null;
@@ -519,14 +519,14 @@ function toRoute(row: RouteRow): CoachRoute {
 }
 
 export async function getRoutes(): Promise<CoachRoute[]> {
-  const rows = await fetchData<RouteRow[]>("/items/routes?sort=sort&limit=-1", "routes");
+  const rows = await fetchData<RouteRow[]>("/items/routes?filter[status][_eq]=published&sort=sort&limit=-1", "routes");
   if (rows === undefined) return siteConfig.routes.map(withRouteStopCodes);
   return rows.map(toRoute).map(withRouteStopCodes);
 }
 
 export async function getRoute(slug: string): Promise<CoachRoute | null> {
   const rows = await fetchData<RouteRow[]>(
-    `/items/routes?filter[slug][_eq]=${encodeURIComponent(slug)}&limit=1`,
+    `/items/routes?filter[slug][_eq]=${encodeURIComponent(slug)}&filter[status][_eq]=published&limit=1`,
     `routes:${slug}`,
   );
   if (rows === undefined) return siteConfig.routes.find((r) => r.slug === slug) ? withRouteStopCodes(siteConfig.routes.find((r) => r.slug === slug)!) : null;
@@ -535,7 +535,7 @@ export async function getRoute(slug: string): Promise<CoachRoute | null> {
 
 // ---- stops (Daily Express corridor; stop-to-stop booking) ----
 export async function getStops(): Promise<Stop[]> {
-  const rows = await fetchData<Stop[]>("/items/stops?sort=sort&limit=-1", "stops");
+  const rows = await fetchData<Stop[]>("/items/stops?filter[status][_eq]=published&sort=sort&limit=-1", "stops");
   if (rows === undefined) return siteConfig.stops;
   return rows.map(({ code, name, detail }) => ({ code, name, detail }));
 }
@@ -555,7 +555,7 @@ function toSchoolRoute(row: SchoolRouteRow): SchoolRoute {
 
 export async function getSchoolRoutes(school?: string): Promise<SchoolRoute[]> {
   const filter = school ? `&filter[school][_eq]=${encodeURIComponent(school)}` : "";
-  const rows = await fetchData<SchoolRouteRow[]>(`/items/school_routes?sort=sort&limit=-1${filter}`, "school_routes");
+  const rows = await fetchData<SchoolRouteRow[]>(`/items/school_routes?filter[status][_eq]=published&sort=sort&limit=-1${filter}`, "school_routes");
   if (rows === undefined) {
     return school ? siteConfig.schoolRoutes.filter((r) => r.school === school) : siteConfig.schoolRoutes;
   }
@@ -590,14 +590,14 @@ function toBlogPost(row: BlogRow): BlogPost {
 }
 
 export async function getBlogPosts(): Promise<BlogPost[]> {
-  const rows = await fetchData<BlogRow[]>("/items/blog_posts?sort=-date&limit=-1", "blog_posts");
+  const rows = await fetchData<BlogRow[]>("/items/blog_posts?filter[status][_eq]=published&sort=-date&limit=-1", "blog_posts");
   if (rows === undefined) return siteConfig.blogPosts;
   return rows.map(toBlogPost);
 }
 
 export async function getBlogPost(slug: string): Promise<BlogPost | null> {
   const rows = await fetchData<BlogRow[]>(
-    `/items/blog_posts?filter[slug][_eq]=${encodeURIComponent(slug)}&limit=1`,
+    `/items/blog_posts?filter[slug][_eq]=${encodeURIComponent(slug)}&filter[status][_eq]=published&limit=1`,
     `blog_posts:${slug}`,
   );
   if (rows === undefined) return siteConfig.blogPosts.find((p) => p.slug === slug) ?? null;
@@ -617,7 +617,7 @@ interface TestimonialRow {
 }
 
 export async function getTestimonials(): Promise<Testimonial[]> {
-  const rows = await fetchData<TestimonialRow[]>("/items/testimonials?sort=sort&limit=-1", "testimonials");
+  const rows = await fetchData<TestimonialRow[]>("/items/testimonials?filter[status][_eq]=published&sort=sort&limit=-1", "testimonials");
   if (rows === undefined) return siteConfig.testimonials;
   return rows.map(({ quote, author, role, company, image, rating }) => ({
     quote,

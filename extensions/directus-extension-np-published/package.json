@@ -1,12 +1,12 @@
 {
-  "name": "directus-extension-np-internal",
+  "name": "directus-extension-np-published",
   "version": "1.0.0",
   "private": true,
   "type": "module",
   "main": "dist/index.js",
   "files": ["dist"],
   "directus:extension": {
-    "type": "endpoint",
+    "type": "hook",
     "path": "dist/index.js",
     "source": "dist/index.js",
     "host": "^12.1.0"

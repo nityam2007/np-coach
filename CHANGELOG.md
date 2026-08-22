@@ -154,3 +154,11 @@ Append-only. Newest entries at the bottom. Never edit or delete past entries —
 - Completed additional keyboard/focus/form-error controls, persistent carousel/video pause controls, reduced-motion and Save-Data handling, CMS-driven Open Graph imagery, richer Organization/BlogPosting data, and accurate Service schema for tours and scheduled routes.
 - Mounted the required extension read-only in Coolify, local development, and the standalone deployment alternative; pinned Directus 12.1.0 and documented the six independent audit secrets and hourly maintenance schedule. Transactional email remains the internal Postfix relay with real Microsoft 365 mailbox delivery as production acceptance.
 - Expanded automated coverage to six tests, including authenticated compare-and-swap and transactional two-leg reservation/release behavior. Unit tests, script syntax, TypeScript, ESLint, all 54 production routes, diff checks, Compose YAML parsing, and `npm audit --omit=dev --audit-level=high` pass; Docker-backed extension startup and restore testing remain operator checks because Docker is unavailable on this workstation.
+
+## 2026-08-22 — Directus 12.1 deployment hotfix
+
+- Added the required `source` field to the internal endpoint manifest and verified Directus 12.1 loads both repository extensions.
+- Replaced the Directus 12.1-incompatible filtered bulk item update with idempotent per-row status repairs; the exact production `services.status IS NULL` failure now completes successfully.
+- Added an API hook that forces `status=published` on every anonymous content query/read, plus matching filters on all website CMS reads, without relying on edition-gated custom permission rules.
+- Switched public content permission reconciliation to Directus's standard permission shape, preserved the existing public-file permission unchanged during upgrades, and stripped anonymous file API responses to display-safe metadata without breaking transformed asset delivery.
+- Verified the complete seed/configure/media bootstrap against a backed-up MariaDB volume on Directus 12.1, including a second idempotent run and direct anonymous draft/null leak tests.

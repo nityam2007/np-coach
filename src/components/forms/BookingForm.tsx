@@ -29,11 +29,11 @@ function formatGBP(pence: number) {
   return new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(pence / 100);
 }
 
-function SubmitButton({ total, available }: { total: number; available: boolean }) {
+function SubmitButton({ total, available, unavailableLabel }: { total: number; available: boolean; unavailableLabel: string }) {
   const { pending } = useFormStatus();
   return (
     <Button type="submit" disabled={pending || !available}>
-      {pending ? "Redirecting to payment…" : available ? `Pay ${formatGBP(total)} & book` : "Journey unavailable"}
+      {pending ? "Redirecting to payment…" : available ? `Pay ${formatGBP(total)} & book` : unavailableLabel}
     </Button>
   );
 }
@@ -48,6 +48,7 @@ export function BookingForm({
   defaultReturnDate,
   defaultTripType,
   cancelled,
+  bookingsEnabled,
 }: {
   stops: BookingStopOption[];
   routes: BookingRouteOption[];
@@ -58,6 +59,7 @@ export function BookingForm({
   defaultReturnDate?: string;
   defaultTripType?: "single" | "return";
   cancelled?: boolean;
+  bookingsEnabled: boolean;
 }) {
   const [state, action] = useActionState(startBooking, initial);
   const formRef = useFormErrors(state.errors);
@@ -75,11 +77,19 @@ export function BookingForm({
 
   const matchingRoute = routes.find((route) => {
     const fromIndex = route.stops.indexOf(from); const toIndex = route.stops.indexOf(to);
-    return fromIndex >= 0 && toIndex > fromIndex && route.capacity > 0;
+    return fromIndex >= 0 && toIndex > fromIndex;
   });
   const unit = matchingRoute ? (tripType === "return" ? matchingRoute.fareReturn : matchingRoute.fareSingle) : 0;
   const total = unit * (passengers > 0 ? passengers : 0);
   const sameStop = from === to;
+  const available = Boolean(bookingsEnabled && matchingRoute && matchingRoute.capacity > 0 && passengers <= matchingRoute.capacity);
+  const unavailableLabel = !matchingRoute
+    ? "Journey unavailable"
+    : !bookingsEnabled
+      ? "Online booking paused"
+      : matchingRoute.capacity < 1
+        ? "Online booking not open"
+        : "Not enough seats";
   const today = new Date().toISOString().slice(0, 10);
 
   return (
@@ -204,7 +214,12 @@ export function BookingForm({
         </span>
       </label>
 
-      <SubmitButton total={total} available={Boolean(matchingRoute && passengers <= matchingRoute.capacity)} />
+      {matchingRoute && (!bookingsEnabled || matchingRoute.capacity < 1) && (
+        <p className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-900" role="status">
+          Online booking is not open for this service yet. Please call us to book while availability is confirmed.
+        </p>
+      )}
+      <SubmitButton total={total} available={available} unavailableLabel={unavailableLabel} />
       <p className="text-xs text-navy/70">
         Payments are processed securely by Stripe. Discounted scheduled tickets are normally non-refundable, except where
         your statutory rights apply. Book at least 1 hour before departure and arrive 15 minutes early.

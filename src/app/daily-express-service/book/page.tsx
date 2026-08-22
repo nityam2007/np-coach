@@ -70,6 +70,7 @@ export default async function BookPage({
           defaultTripType={trip === "return" ? "return" : undefined}
           defaultReturnDate={returnDate && /^\d{4}-\d{2}-\d{2}$/.test(returnDate) ? returnDate : undefined}
           cancelled={cancelled === "1"}
+          bookingsEnabled={process.env.NODE_ENV !== "production" || process.env.DAILY_EXPRESS_BOOKINGS_ENABLED === "true"}
         />
       </section>
     </article>

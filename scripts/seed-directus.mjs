@@ -25,6 +25,27 @@ const json = (field) => ({ field, type: "json", meta: { interface: "input-code",
 const fileField = (field, note) => ({ field, type: "uuid", meta: { interface: "file-image", special: ["file"], note }, schema: {} });
 const anyFileField = (field, note) => ({ field, type: "uuid", meta: { interface: "file", special: ["file"], note }, schema: {} });
 
+const FILE_RELATIONS = [
+  ["settings", "logo"],
+  ["settings", "school_image"],
+  ["settings", "hero_image"],
+  ["settings", "hero_video"],
+  ["settings", "home_to_school_image"],
+  ["settings", "daily_express_image"],
+  ["settings", "page_hero_fallback_image_1"],
+  ["settings", "page_hero_fallback_image_2"],
+  ["settings", "page_hero_fallback_image_3"],
+  ["services", "image"],
+  ["fleet", "image"],
+  ["pages", "image"],
+  ["tours", "image"],
+  ["tours", "hero_image"],
+  ["tours", "card_image"],
+  ["routes", "image"],
+  ["blog_posts", "thumbnail"],
+  ["testimonials", "image"],
+];
+
 const SETTINGS_FIELDS = [
   pk("id"),
   str("name"), str("legal_name"), str("tagline"), text("subtitle"), text("description"), str("url"), int("founded"),
@@ -282,6 +303,27 @@ async function ensureField(collection, field) {
   console.log(`✓ added field "${collection}.${field.field}"`);
 }
 
+
+async function ensureFileRelations() {
+  const relations = await api("/relations?limit=-1");
+  const existing = new Set(relations.map((relation) => [relation.collection, relation.field].join(".")));
+
+  for (const [collection, field] of FILE_RELATIONS) {
+    const key = [collection, field].join(".");
+    if (existing.has(key)) continue;
+    await api("/relations", {
+      method: "POST",
+      body: JSON.stringify({
+        collection,
+        field,
+        related_collection: "directus_files",
+        schema: { on_delete: "SET NULL" },
+        meta: { one_field: null },
+      }),
+    });
+    console.log(`✓ connected file field "${key}" to the File Library`);
+  }
+}
 async function publishRowsWithoutStatus(collection) {
   const rows = await api(`/items/${collection}?filter[status][_null]=true&fields=id&limit=-1`);
   for (const row of rows) {
@@ -545,6 +587,7 @@ async function run() {
   await ensureField("settings", json("school_transport"));
 
   await ensureField("blog_posts", fileField("thumbnail", "Blog card and article preview image."));
+  await ensureFileRelations();
   const publishableCollections = ["services", "fleet", "pages", "tours", "routes", "stops", "school_routes", "blog_posts", "testimonials"];
   for (const collection of publishableCollections) {
     await ensureField(collection, publishedStatus);

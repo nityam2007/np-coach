@@ -120,7 +120,7 @@ export function ServiceCards({
                 aria-pressed={userPaused}
                 className="mt-4 rounded-full border border-navy/15 bg-white px-4 py-2 text-xs font-semibold text-navy hover:border-accent"
               >
-                {userPaused ? "Resume services" : "Pause services"}
+                {userPaused ? "Resume carousel" : "Pause carousel"}
               </button>
             )}
 

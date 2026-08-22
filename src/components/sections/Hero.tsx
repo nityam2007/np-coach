@@ -54,14 +54,21 @@ export function Hero({ settings, stops }: { settings: SiteSettings; stops: Stop[
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoPlaying, setVideoPlaying] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
   const saveData = useSyncExternalStore(subscribeToSaveData, saveDataSnapshot, saveDataServerSnapshot);
-  const displayVideo = Boolean(video && !reduce && !saveData);
+  const displayVideo = Boolean(video && !reduce && !saveData && !videoFailed);
 
   async function toggleVideo() {
     const element = videoRef.current;
     if (!element) return;
     if (element.paused) {
-      await element.play().catch(() => undefined);
+      try {
+        if (element.ended) element.currentTime = 0;
+        element.muted = true;
+        await element.play();
+      } catch {
+        setVideoFailed(true);
+      }
     } else {
       element.pause();
     }
@@ -140,6 +147,7 @@ export function Hero({ settings, stops }: { settings: SiteSettings; stops: Stop[
                     aria-hidden="true"
                     onPlay={() => setVideoPlaying(true)}
                     onPause={() => setVideoPlaying(false)}
+                    onError={() => setVideoFailed(true)}
                   >
                     <source src={video ?? undefined} type="video/mp4" />
                   </video>

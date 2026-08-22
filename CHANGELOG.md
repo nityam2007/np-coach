@@ -184,3 +184,11 @@ Append-only. Newest entries at the bottom. Never edit or delete past entries —
 - Moved the cookie-consent settings merge before its change detector after production exposed a temporal-dead-zone error during `cms-bootstrap`.
 - Confirmed the failed run had only added the two nullable settings fields before stopping; no customer, booking, payment, or uploaded-media records were altered.
 - Added a source-order verification alongside the existing seed syntax, script, and test checks before redeployment.
+
+## 2026-08-22 — CMS media, inventory guidance and booking-state repair
+
+- Repaired all 18 Directus image/video fields by idempotently creating their missing relations to `directus_files`; the fields previously rendered a File/Image interface without a real File Library relationship.
+- Kept `service_runs` visible and documented it as the automatically-created route/date/departure inventory ledger, with clearer field metadata and route-capacity guidance.
+- Decoupled fare display from sellable capacity so configured single/return prices remain visible while checkout accurately distinguishes a closed launch flag, zero capacity, an unsupported direction, and insufficient seats.
+- Hardened the hero video control with an explicit muted retry and poster fallback on media failure; renamed the homepage services motion control from “services” to “carousel”.
+- Ran the complete additive seed and Directus admin configuration against the local MariaDB-backed 12.3.0 stack; all 18 File Library relations were present, 15 existing dashboard panels were preserved, and protected record counts did not decrease.

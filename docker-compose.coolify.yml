@@ -118,6 +118,7 @@ services:
       REFRESH_TOKEN_COOKIE_SECURE: "true"
       SESSION_COOKIE_SECURE: "true"
       INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?}
+      WEB_INTERNAL_URL: http://web:3000
       EXTENSIONS_MUST_LOAD: "true"
     volumes:
       - directus_uploads:/directus/uploads

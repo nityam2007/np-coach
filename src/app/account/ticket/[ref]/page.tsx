@@ -18,9 +18,9 @@ export default async function TicketPage({ params }: { params: Promise<{ ref: st
   const { ref } = await params;
   const booking = await getBookingByReference(ref);
 
-  // Authorisation: the ticket must be paid AND owned by the signed-in customer.
+  // Authorisation: the ticket must have committed paid inventory AND be owned by the signed-in customer.
   // notFound() (not a message) so we never reveal whether a reference exists.
-  if (!booking || booking.status !== "paid" || booking.email.trim().toLowerCase() !== session.email) {
+  if (!booking || booking.status !== "paid" || booking.inventory_status !== "committed" || booking.email.trim().toLowerCase() !== session.email) {
     notFound();
   }
 

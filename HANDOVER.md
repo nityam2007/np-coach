@@ -80,7 +80,7 @@ Only `NEXT_PUBLIC_*` variables should be enabled as build variables. Treat every
 - Contact and quote forms pass Turnstile, create Directus records, notify staff, and acknowledge the customer.
 - Customer OTP/account flow delivers the code; a forced SMTP failure shows an error instead of false success.
 - A Stripe test/live booking and lost-property payment reaches `paid` through the signed webhook.
-- The booking email is sent once; lost property sends customer and staff messages once; Directus email status fields show `sent`.
+- The booking email is sent once; lost property sends customer and staff messages once; Directus email status fields show `sent`. Repeat this once through Stripe and once by changing a test record to Paid in Directus; neither path may duplicate email or inventory.
 - Cookie consent, security headers, sitemap, robots.txt, and llms.txt respond correctly.
 - GA4 makes no network request before explicit consent; accepting loads `G-3GXSRDBP55`, rejecting/withdrawing disables analytics and clears accessible first-party GA cookies.
 - Search Console verification, apex canonicals, root sitemap URLs, and the CMS-backed LocalBusiness/service JSON-LD are present after the domain cutover.
@@ -135,7 +135,7 @@ The code-level production-readiness remediation is complete; the authoritative c
 
 Release sequence:
 
-1. Keep `DAILY_EXPRESS_BOOKINGS_ENABLED=false`; deploy the baked Directus extension image and let the additive bootstrap add sessions, delivery leases, `service_runs`, unique constraints, and booking inventory fields. An unauthenticated `POST /np-internal/inventory/status` must return 401 (not 404), and the web availability API must report `inventoryReady: true` before sales are enabled.
+1. Keep `DAILY_EXPRESS_BOOKINGS_ENABLED=false`; deploy the baked Directus extension image and let the additive bootstrap add sessions, delivery leases, `service_runs`, unique constraints, and booking inventory fields. An unauthenticated `POST /np-internal/inventory/status` must return 401 (not 404), the web availability API must report `inventoryReady: true`, and Directus startup logs must show the payment-events hook before sales are enabled.
 2. Configure all six independent audit secrets, including `INTERNAL_API_SECRET` on both Directus and web, and optionally the revalidation Flow. Confirm the app token remains scoped, the internal endpoint rejects unauthorised calls, and public file metadata is restricted.
 3. Enter approved route capacities, schedule `POST /api/maintenance` hourly, run `npm run check`, parse `docker-compose.coolify.yml`, and concurrency-test single/return last-seat cases before deliberately enabling bookings.
 4. Configure and run encrypted off-site backup plus disposable restore, then complete live Stripe (including refund/dispute), Postfix relay!� M365 mailbox delivery, Cloudflare, legal/ICO, access-control, accessibility/mobile, SEO/redirect, and content/fare/timetable acceptance.

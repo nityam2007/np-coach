@@ -1,7 +1,7 @@
 import Stripe from "stripe";
 import crypto from "node:crypto";
 import { getScheduledServices, getStops, getSettings } from "@/lib/directus";
-import { directusAtomicUpdate, directusCommitPaidBookingInventory, directusServerRead, directusServerWrite, type AtomicInventoryRun } from "@/lib/directus-server";
+import { directusAtomicUpdate, directusCommitPaidBookingInventory, directusReconcilePaidBookingInventory, directusServerRead, directusServerWrite, type AtomicInventoryRun } from "@/lib/directus-server";
 import {
   sendBookingConfirmation,
   sendLostPropertyCustomerConfirmation,
@@ -554,6 +554,75 @@ export async function markPaidBySession(
   return row.reference;
 }
 
+/** Reconcile a CMS-paid order and send its transactional emails exactly once. */
+export async function reconcilePaidOrder(collection: PaymentCollection, id: number): Promise<boolean> {
+  if (!Number.isInteger(id) || id < 1) return false;
+
+  if (collection === "bookings") {
+    const booking = await getById<BookingRow>(collection, id);
+    if (!booking || booking.status !== "paid") return false;
+
+    if (booking.inventory_status === "held" && booking.outward_run_id) {
+      const committed = await directusAtomicUpdate(
+        collection,
+        booking.id,
+        { status: "paid", inventory_status: "held" },
+        { inventory_status: "committed" },
+      );
+      if (committed !== true) return false;
+    } else if (booking.inventory_status !== "committed") {
+      if ((booking.inventory_status !== null && booking.inventory_status !== "unreserved")
+        || booking.outward_run_id !== null || booking.return_run_id !== null) {
+        return false;
+      }
+      const runs = await paidBookingRuns(booking);
+      if (!runs) return false;
+      const committed = await directusReconcilePaidBookingInventory(booking.id, runs, booking.passengers);
+      if (!committed.ok || committed.reference !== booking.reference) {
+        console.error(`[email] manual paid booking reconciliation failed: ${committed.ok ? "reference mismatch" : committed.reason}`);
+        return false;
+      }
+    }
+    return deliverPaymentNotifications(collection, booking.reference);
+  }
+
+  const pass = await getById<PassPurchaseRow>(collection, id);
+  if (!pass || pass.status !== "paid") return false;
+  return deliverPaymentNotifications(collection, pass.reference);
+}
+
+/** Retry CMS-paid inventory reconciliation and unsent payment emails. */
+export async function retryPaidNotifications(limit = 500): Promise<boolean> {
+  const [bookings, passes] = await Promise.all([
+    directusServerRead<Array<{
+      id: number;
+      inventory_status: string | null;
+      confirmation_email_status: string | null;
+    }>>(`/items/bookings?filter[status][_eq]=paid&fields=id,inventory_status,confirmation_email_status&sort=-id&limit=${limit}`),
+    directusServerRead<Array<{
+      id: number;
+      confirmation_email_status: string | null;
+      staff_email_status: string | null;
+    }>>(`/items/pass_purchases?filter[status][_eq]=paid&fields=id,confirmation_email_status,staff_email_status&sort=-id&limit=${limit}`),
+  ]);
+  if (bookings === null || passes === null) return false;
+
+  const targets: Array<{ collection: PaymentCollection; id: number }> = [
+    ...bookings
+      .filter((row) => row.inventory_status !== "committed" || row.confirmation_email_status !== "sent")
+      .map((row) => ({ collection: "bookings" as const, id: row.id })),
+    ...passes
+      .filter((row) => row.confirmation_email_status !== "sent" || row.staff_email_status !== "sent")
+      .map((row) => ({ collection: "pass_purchases" as const, id: row.id })),
+  ];
+
+  let complete = true;
+  for (const target of targets) {
+    if (!(await reconcilePaidOrder(target.collection, target.id))) complete = false;
+  }
+  return complete;
+}
+
 /** Verify the Checkout session with Stripe after redirect, never from a public reference. */
 export async function confirmCheckoutSession(sessionId: string, kind: "booking" | "pass"): Promise<string | null> {
   if (!stripeConfigured() || !sessionId.startsWith("cs_")) return null;
@@ -577,6 +646,10 @@ export async function confirmCheckoutSession(sessionId: string, kind: "booking" 
     return null;
   }
 }
+async function getById<T>(collection: string, id: number): Promise<T | null> {
+  return directusServerRead<T>(`/items/${collection}/${id}`);
+}
+
 async function getByReference<T>(collection: string, reference: string): Promise<T | null> {
 /** Read a row by reference for the success page (server-side only). */
   const rows = await directusServerRead<T[]>(

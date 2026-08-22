@@ -1,0 +1,14 @@
+{
+  "name": "directus-extension-np-payment-events",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "files": ["dist"],
+  "directus:extension": {
+    "type": "hook",
+    "path": "dist/index.js",
+    "source": "dist/index.js",
+    "host": "^12.1.0"
+  }
+}

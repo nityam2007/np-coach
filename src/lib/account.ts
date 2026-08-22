@@ -160,7 +160,7 @@ export async function verifyOtp(email: string, code: string): Promise<boolean> {
 export async function getCustomerBookings(email: string): Promise<BookingRow[]> {
   const e = normalise(email);
   const rows = await directusServerRead<BookingRow[]>(
-    `/items/bookings?filter[email][_eq]=${encodeURIComponent(e)}&filter[status][_eq]=paid&sort=-id&limit=100`,
+    `/items/bookings?filter[email][_eq]=${encodeURIComponent(e)}&filter[status][_eq]=paid&filter[inventory_status][_eq]=committed&sort=-id&limit=100`,
   );
   return rows ?? [];
 }

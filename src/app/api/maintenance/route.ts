@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { directusServerWrite } from "@/lib/directus-server";
 import { retryLeadNotifications } from "@/lib/lead-delivery";
-import { failStalePendingOrders } from "@/lib/stripe";
+import { failStalePendingOrders, retryPaidNotifications } from "@/lib/stripe";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,8 +29,9 @@ export async function POST(request: Request) {
   ]);
 
   const leadsRetried = await retryLeadNotifications();
+  const paymentsRetried = await retryPaidNotifications();
   const ordersCleaned = await failStalePendingOrders(staleOrderCutoff);
-  if (!leadsRetried || !ordersCleaned || results.some((result) => result === null)) {
+  if (!leadsRetried || !paymentsRetried || !ordersCleaned || results.some((result) => result === null)) {
     return NextResponse.json({ error: "maintenance incomplete" }, { status: 503 });
   }
   return NextResponse.json({ ok: true, ranAt: new Date(now).toISOString() });

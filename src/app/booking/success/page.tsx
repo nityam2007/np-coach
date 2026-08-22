@@ -19,7 +19,7 @@ export default async function BookingSuccessPage({ searchParams }: { searchParam
   const booking = reference ? await getBookingByReference(reference) : null;
   const [stops, settings] = await Promise.all([getStops(), getSettings()]);
   const emailSent = booking?.confirmation_email_status === "sent";
-  const pass = booking?.status === "paid" ? await boardingPassFromBooking(booking, stops, settings.name, settings.url) : null;
+  const pass = booking?.status === "paid" && booking.inventory_status === "committed" ? await boardingPassFromBooking(booking, stops, settings.name, settings.url) : null;
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-16 sm:px-6">

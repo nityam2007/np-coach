@@ -155,6 +155,21 @@ export async function directusCommitPaidBookingInventory(
   return { ok: true, reference: result.data.reference, runIds: result.data.runIds };
 }
 
+export async function directusReconcilePaidBookingInventory(
+  bookingId: number,
+  runs: AtomicInventoryRun[],
+  seats: number,
+): Promise<DirectusPaidBookingCommitResult> {
+  const result = await internalRequestResult<{ reference: string; runIds: number[] }>(
+    "/inventory/reconcile-paid-booking",
+    { bookingId, runs, seats },
+  );
+  if (!result.ok) {
+    return { ok: false, reason: result.status === 409 ? "capacity" : "unavailable" };
+  }
+  return { ok: true, reference: result.data.reference, runIds: result.data.runIds };
+}
+
 export async function directusInventoryReady(): Promise<boolean> {
   const result = await internalRequestResult<{ ready: boolean }>("/inventory/status", {});
   return result.ok && result.data.ready === true;

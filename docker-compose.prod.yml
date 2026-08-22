@@ -97,6 +97,7 @@ services:
       KEY: ${DIRECTUS_KEY}
       SECRET: ${DIRECTUS_SECRET}
       INTERNAL_API_SECRET: ${INTERNAL_API_SECRET}
+      WEB_INTERNAL_URL: http://web:3000
       EXTENSIONS_MUST_LOAD: "true"
       DB_CLIENT: mysql
       DB_HOST: db

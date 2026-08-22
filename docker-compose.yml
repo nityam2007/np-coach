@@ -35,6 +35,7 @@ services:
       KEY: ${DIRECTUS_KEY:-dev-key-change-me}
       SECRET: ${DIRECTUS_SECRET:-dev-secret-change-me}
       INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:-dev-internal-secret-change-me-32}
+      WEB_INTERNAL_URL: ${WEB_INTERNAL_URL:-}
       EXTENSIONS_MUST_LOAD: "true"
       DB_CLIENT: mysql
       DB_HOST: db

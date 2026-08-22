@@ -240,3 +240,9 @@ Append-only. Newest entries at the bottom. Never edit or delete past entries —
 - Added an authenticated Directus transaction that, only after Stripe confirms payment, row-locks both journey legs, checks capacity, creates/updates dated Service Runs, increments booked seats, stores run ids and marks the booking paid together.
 - Kept paid processing idempotent across webhook and success-page retries, rolled back both booking and inventory on a capacity conflict, and retained release/paid compatibility for in-flight holds created by the previous release.
 - Customer accounts, tickets, QR validation and confirmations remain paid-only; Directus still keeps pending/failed booking records as abandoned-payment audit data.
+## 2026-08-22 — CMS-paid transactional email reconciliation
+
+- Confirmed existing delivery coverage: OTP is immediate/fail-visible; contact and quote send customer + staff messages; Stripe-paid bookings send the customer ticket email; Stripe-paid lost-property passes send customer + staff messages.
+- Added a Directus create/update hook for `bookings` and `pass_purchases` status changes to `paid`. It calls a secret-protected internal web endpoint over the private Compose network.
+- Manual CMS-paid bookings now atomically reconcile dated inventory before the ticket email is claimed; manual CMS-paid lost-property records trigger both payment emails. Delivery leases and stable message ids prevent duplicates with Stripe webhooks and success-page checks.
+- Extended hourly maintenance to retry incomplete paid inventory/email reconciliation, and required `inventory_status=committed` before account tickets, success tickets or QR verification are exposed.

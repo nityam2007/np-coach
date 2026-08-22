@@ -157,6 +157,35 @@ test("paid booking commit creates two-leg inventory and is idempotent", async ()
   assert.deepEqual(database.rows("service_runs").map((row) => row.booked_seats), [1, 1]);
 });
 
+test("CMS-paid booking reconciliation creates inventory once", async () => {
+  const database = mockDatabase({
+    bookings: [{
+      id: 1,
+      reference: "NPC-MANUAL-1",
+      status: "paid",
+      stripe_session_id: null,
+      inventory_status: "unreserved",
+      outward_run_id: null,
+      return_run_id: null,
+    }],
+  });
+  const request = harness(database);
+  const payload = {
+    bookingId: 1,
+    runs: [{ serviceCode: "lm-morning", routeSlug: "outward", serviceDate: "2026-08-30", departureTime: "09:45", capacity: 60 }],
+    seats: 2,
+  };
+
+  const reconciled = await request("/inventory/reconcile-paid-booking", payload);
+  assert.equal(reconciled.status, 200);
+  assert.deepEqual(reconciled.body, { data: { reference: "NPC-MANUAL-1", runIds: [1] } });
+  assert.equal(database.rows("service_runs")[0].booked_seats, 2);
+  assert.equal(database.rows("bookings")[0].inventory_status, "committed");
+
+  const retried = await request("/inventory/reconcile-paid-booking", payload);
+  assert.equal(retried.status, 200);
+  assert.equal(database.rows("service_runs")[0].booked_seats, 2);
+});
 test("failed paid commit rolls back inventory and leaves booking pending", async () => {
   const database = mockDatabase({
     bookings: [{

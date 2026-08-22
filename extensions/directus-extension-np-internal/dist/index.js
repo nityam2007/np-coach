@@ -74,6 +74,12 @@ function validPaidCommit(body) {
     && validInventoryRequest(body.runs, body.seats);
 }
 
+function validPaidReconciliation(body) {
+  return validObject(body)
+    && Number.isInteger(body.bookingId) && body.bookingId >= 1
+    && validInventoryRequest(body.runs, body.seats);
+}
+
 async function reserveRuns(trx, runs, seats) {
   const keyed = runs.map((run) => ({ ...run, key: runKey(run) }));
   for (const run of keyed) {
@@ -127,6 +133,52 @@ const endpoint = {
       } catch (error) {
         logger.error(error, "NP internal CAS failed");
         return res.status(500).json({ error: "update failed" });
+      }
+    });
+
+    router.post("/inventory/reconcile-paid-booking", async (req, res) => {
+      if (!validPaidReconciliation(req.body)) return res.status(400).json({ error: "invalid payload" });
+      const { bookingId, runs, seats } = req.body;
+      try {
+        const result = await database.transaction(async (trx) => {
+          const booking = await trx("bookings").where({ id: bookingId }).forUpdate().first();
+          if (!booking || booking.status !== "paid") {
+            const error = new Error("BOOKING_CONFLICT");
+            error.code = "BOOKING_CONFLICT";
+            throw error;
+          }
+          if (booking.inventory_status === "committed") {
+            return {
+              reference: booking.reference,
+              runIds: [booking.outward_run_id, booking.return_run_id].filter(Number.isInteger),
+            };
+          }
+          if ((booking.inventory_status !== null && booking.inventory_status !== "unreserved")
+            || booking.outward_run_id !== null || booking.return_run_id !== null) {
+            const error = new Error("BOOKING_CONFLICT");
+            error.code = "BOOKING_CONFLICT";
+            throw error;
+          }
+
+          const runIds = await reserveRuns(trx, runs, seats);
+          const affected = await trx("bookings").where({ id: bookingId, status: "paid" }).update({
+            inventory_status: "committed",
+            outward_run_id: runIds[0],
+            return_run_id: runIds[1] ?? null,
+          });
+          if (affected !== 1) {
+            const error = new Error("BOOKING_CONFLICT");
+            error.code = "BOOKING_CONFLICT";
+            throw error;
+          }
+          return { reference: booking.reference, runIds };
+        });
+        return res.json({ data: result });
+      } catch (error) {
+        if (error?.code === "NO_CAPACITY") return res.status(409).json({ error: "no capacity" });
+        if (error?.code === "BOOKING_CONFLICT") return res.status(422).json({ error: "booking state conflict" });
+        logger.error(error, "NP manual paid booking inventory reconciliation failed");
+        return res.status(500).json({ error: "paid booking reconciliation failed" });
       }
     });
 

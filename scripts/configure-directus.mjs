@@ -71,7 +71,7 @@ const COLLECTION_META = {
     archive_field: "status",
     archive_value: "failed",
     sort_field: "created_at",
-    note: "Daily Express ticket orders. PAID = money received. PENDING = customer started but hasn't paid yet (an abandoned cart if it stays pending). Created automatically — don't add rows by hand.",
+    note: "Daily Express ticket orders. PAID = money received. PENDING = customer started but hasn't paid yet (an abandoned cart if it stays pending). Setting Paid in CMS commits dated inventory and sends the customer ticket email once. Created automatically — don't add rows by hand.",
   },
   service_runs: {
     group: "grp_orders",
@@ -82,7 +82,7 @@ const COLLECTION_META = {
     archive_field: "status",
     archive_value: "cancelled",
     sort_field: "service_date",
-    note: "Required dated inventory ledger. A row is created automatically only after Stripe confirms payment; pending or abandoned checkouts do not appear here or use seats. Adjust Capacity for an extra/larger bus on that date, or set Cancelled to stop sales; do not add rows by hand.",
+    note: "Required dated inventory ledger. A row is created automatically only after Stripe confirms payment or an admin marks the booking Paid; pending or abandoned checkouts do not appear here or use seats. Adjust Capacity for an extra/larger bus on that date, or set Cancelled to stop sales; do not add rows by hand.",
   },
   pass_purchases: {
     group: "grp_orders",
@@ -93,7 +93,7 @@ const COLLECTION_META = {
     archive_field: "status",
     archive_value: "failed",
     sort_field: "created_at",
-    note: "Lost-property pass payments (£5 admin fee). PAID = received. PENDING = started, not paid. Created automatically.",
+    note: "Lost-property pass payments (£5 admin fee). PAID = received. PENDING = started, not paid. Setting Paid in CMS sends the customer and staff emails once. Created automatically.",
   },
   // Leads
   contact_submissions: { group: "grp_leads", sort: 1, icon: "mail", display_template: "{{name}} — {{subject}}", sort_field: "created_at", note: "Messages from the Contact and Get-a-Quote forms. Reply by email or phone." },
@@ -120,7 +120,7 @@ const STATUS_CHOICES = [
 const FIELD_META = {
   bookings: [
     { field: "reference", meta: { width: "half", readonly: true, note: "Auto-generated booking reference (NPX-…)." } },
-    { field: "status", meta: { width: "half", interface: "select-dropdown", display: "labels", options: { choices: STATUS_CHOICES }, display_options: { choices: STATUS_CHOICES, showAsDot: true } } },
+    { field: "status", meta: { width: "half", interface: "select-dropdown", display: "labels", note: "Set Paid only after money is received. This commits inventory and sends the customer ticket email once.", options: { choices: STATUS_CHOICES }, display_options: { choices: STATUS_CHOICES, showAsDot: true } } },
     { field: "from_stop", meta: { width: "half", note: "Origin stop code." } },
     { field: "to_stop", meta: { width: "half", note: "Destination stop code." } },
     { field: "route_label", meta: { width: "full", readonly: true } },
@@ -141,6 +141,9 @@ const FIELD_META = {
     { field: "arrival_time", meta: { width: "half", readonly: true } },
     { field: "return_arrival_time", meta: { width: "half", readonly: true } },
     { field: "journey_snapshot", meta: { width: "full", readonly: true, note: "Immutable issued journey and fare snapshot." } },
+    { field: "outward_run_id", meta: { hidden: true, readonly: true } },
+    { field: "return_run_id", meta: { hidden: true, readonly: true } },
+    { field: "inventory_status", meta: { hidden: true, readonly: true, note: "Internal paid inventory reconciliation state." } },
   ],
   service_runs: [
     { field: "run_key", meta: { hidden: true, readonly: true, note: "Unique internal route/date/departure key." } },
@@ -154,7 +157,7 @@ const FIELD_META = {
   ],
   pass_purchases: [
     { field: "reference", meta: { width: "half", readonly: true } },
-    { field: "status", meta: { width: "half", interface: "select-dropdown", display: "labels", options: { choices: STATUS_CHOICES }, display_options: { choices: STATUS_CHOICES, showAsDot: true } } },
+    { field: "status", meta: { width: "half", interface: "select-dropdown", display: "labels", note: "Set Paid only after money is received. This sends the customer and staff emails once.", options: { choices: STATUS_CHOICES }, display_options: { choices: STATUS_CHOICES, showAsDot: true } } },
     { field: "item_description", meta: { width: "full", note: "What the customer lost." } },
     { field: "amount", meta: { width: "half", readonly: true, note: "Fee charged, in pence (incl. VAT)." } },
     { field: "school_route", meta: { width: "half", interface: "boolean" } },

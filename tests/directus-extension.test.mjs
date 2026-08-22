@@ -195,6 +195,50 @@ test("email delivery overview tracks attempts and final state without collection
   assert.ok(database.rows("email_logs")[0].sent_at);
 });
 
+test("payment email delivery claims pending state and records SMTP completion atomically", async () => {
+  const database = mockDatabase({
+    bookings: [{
+      id: 16,
+      status: "paid",
+      confirmation_email_status: "pending",
+      confirmation_email_started_at: null,
+      confirmation_email_sent_at: null,
+    }],
+  });
+  const request = harness(database);
+  const lease = "2026-08-22T17:00:00.654Z";
+
+  assert.deepEqual((await request("/email-delivery/claim", {
+    collection: "bookings",
+    id: 16,
+    statusField: "confirmation_email_status",
+    lease,
+    staleBefore: "2026-08-22T16:50:00.000Z",
+  })).body, { data: { claimed: true, completed: false } });
+  assert.equal(database.rows("bookings")[0].confirmation_email_status, "sending");
+  // Production MariaDB may store timestamp fields without fractional seconds.
+  database.rows("bookings")[0].confirmation_email_started_at = "2026-08-22T17:00:00.000Z";
+
+  assert.deepEqual((await request("/email-delivery/finish", {
+    collection: "bookings",
+    id: 16,
+    statusField: "confirmation_email_status",
+    lease,
+    delivered: true,
+  })).body, { data: { updated: true } });
+  assert.equal(database.rows("bookings")[0].confirmation_email_status, "sent");
+  assert.equal(database.rows("bookings")[0].confirmation_email_started_at, null);
+  assert.ok(database.rows("bookings")[0].confirmation_email_sent_at);
+
+  assert.deepEqual((await request("/email-delivery/claim", {
+    collection: "bookings",
+    id: 16,
+    statusField: "confirmation_email_status",
+    lease: "2026-08-22T17:01:00.000Z",
+    staleBefore: "2026-08-22T16:51:00.000Z",
+  })).body, { data: { claimed: false, completed: true } });
+});
+
 test("CMS-paid booking reconciliation creates inventory once", async () => {
   const database = mockDatabase({
     bookings: [{

@@ -107,6 +107,32 @@ function validEmailLogFinish(body) {
     && validShortText(body.errorCode, 100);
 }
 
+const PAYMENT_EMAIL_FIELDS = {
+  bookings: new Set(["confirmation_email_status"]),
+  pass_purchases: new Set(["confirmation_email_status", "staff_email_status"]),
+};
+
+function validDeliveryClaim(body) {
+  return validObject(body)
+    && PAYMENT_EMAIL_FIELDS[body.collection]?.has(body.statusField)
+    && Number.isInteger(body.id) && body.id >= 1
+    && typeof body.lease === "string" && Number.isFinite(Date.parse(body.lease))
+    && typeof body.staleBefore === "string" && Number.isFinite(Date.parse(body.staleBefore));
+}
+
+function validDeliveryFinish(body) {
+  return validObject(body)
+    && PAYMENT_EMAIL_FIELDS[body.collection]?.has(body.statusField)
+    && Number.isInteger(body.id) && body.id >= 1
+    && typeof body.lease === "string" && Number.isFinite(Date.parse(body.lease))
+    && typeof body.delivered === "boolean";
+}
+
+function deliveryTimestampFields(statusField) {
+  const prefix = statusField.replace(/_status$/, "");
+  return { startedField: `${prefix}_started_at`, sentField: `${prefix}_sent_at` };
+}
+
 async function reserveRuns(trx, runs, seats) {
   const keyed = runs.map((run) => ({ ...run, key: runKey(run) }));
   for (const run of keyed) {
@@ -207,6 +233,60 @@ const endpoint = {
       } catch (error) {
         logger.error(error, "email log finish failed");
         return res.status(503).json({ error: "email log unavailable" });
+      }
+    });
+
+    router.post("/email-delivery/claim", async (req, res) => {
+      if (!validDeliveryClaim(req.body)) return res.status(400).json({ error: "invalid payload" });
+      const { collection, id, statusField, lease, staleBefore } = req.body;
+      const { startedField } = deliveryTimestampFields(statusField);
+      try {
+        const data = await database.transaction(async (trx) => {
+          const row = await trx(collection).where({ id }).forUpdate().first();
+          if (!row || row.status !== "paid") return { claimed: false, completed: false };
+          if (row[statusField] === "sent") return { claimed: false, completed: true };
+          const startedAt = Date.parse(String(row[startedField] ?? ""));
+          const staleSending = row[statusField] === "sending"
+            && (!Number.isFinite(startedAt) || startedAt < Date.parse(staleBefore));
+          const eligible = row[statusField] === null || row[statusField] === "pending"
+            || row[statusField] === "failed" || staleSending;
+          if (!eligible) return { claimed: false, completed: false };
+          const updated = await trx(collection).where({ id }).update({ [statusField]: "sending", [startedField]: lease });
+          return { claimed: updated === 1, completed: false };
+        });
+        return res.json({ data });
+      } catch (error) {
+        logger.error(error, "payment email claim failed");
+        return res.status(503).json({ error: "email delivery unavailable" });
+      }
+    });
+
+    router.post("/email-delivery/finish", async (req, res) => {
+      if (!validDeliveryFinish(req.body)) return res.status(400).json({ error: "invalid payload" });
+      const { collection, id, statusField, lease, delivered } = req.body;
+      const { startedField, sentField } = deliveryTimestampFields(statusField);
+      try {
+        const updated = await database.transaction(async (trx) => {
+          const row = await trx(collection).where({ id }).forUpdate().first();
+          const storedLease = Date.parse(String(row?.[startedField] ?? ""));
+          // MariaDB timestamp columns may normalize away milliseconds. A one-second
+          // window preserves ownership while still rejecting a stale worker after
+          // the ten-minute lease timeout and re-claim.
+          if (!row || row[statusField] !== "sending" || !Number.isFinite(storedLease)
+            || Math.abs(storedLease - Date.parse(lease)) >= 1_000) {
+            return false;
+          }
+          const affected = await trx(collection).where({ id }).update({
+            [statusField]: delivered ? "sent" : "failed",
+            [sentField]: delivered ? new Date().toISOString() : null,
+            [startedField]: null,
+          });
+          return affected === 1;
+        });
+        return res.json({ data: { updated } });
+      } catch (error) {
+        logger.error(error, "payment email finish failed");
+        return res.status(503).json({ error: "email delivery unavailable" });
       }
     });
 

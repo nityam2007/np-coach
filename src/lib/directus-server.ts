@@ -205,6 +205,27 @@ export async function directusFinishEmailLog(
   return result?.updated ?? false;
 }
 
+export async function directusClaimPaymentEmail(input: {
+  collection: "bookings" | "pass_purchases";
+  id: number;
+  statusField: "confirmation_email_status" | "staff_email_status";
+  lease: string;
+  staleBefore: string;
+}): Promise<{ claimed: boolean; completed: boolean } | null> {
+  return internalRequest<{ claimed: boolean; completed: boolean }>("/email-delivery/claim", input);
+}
+
+export async function directusFinishPaymentEmail(input: {
+  collection: "bookings" | "pass_purchases";
+  id: number;
+  statusField: "confirmation_email_status" | "staff_email_status";
+  lease: string;
+  delivered: boolean;
+}): Promise<boolean> {
+  const result = await internalRequest<{ updated: boolean }>("/email-delivery/finish", input);
+  return result?.updated ?? false;
+}
+
 export async function directusReleaseInventory(runIds: number[], seats: number): Promise<boolean> {
   if (runIds.length === 0) return true;
   const result = await internalRequest<{ released: boolean }>("/inventory/release", { runIds, seats });

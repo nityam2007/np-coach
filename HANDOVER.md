@@ -109,6 +109,7 @@ For an application rollback, select the last known-good Git commit in Coolify an
 - The August client media revision is guarded by settings.client_media_revision = client-review-2026-08-20-v2: its 23 committed assets are assigned once, and subsequent deploys preserve client-edited Directus media.
 - `DIRECTUS_SERVER_TOKEN` may be blank for the infrastructure bootstrap, but protected application writes remain disabled until a scoped token is configured.
 - `email_logs` is written through the secret-protected internal Directus endpoint, so the scoped app role does not need direct collection create/update permission. CMS staff may read the overview according to their Directus role.
+- Paid booking/pass email status is also claimed and completed through the private Directus extension. After deployment, a paid row stuck at `pending` should move through `sending` to `sent` when its Stripe return page, authenticated ticket, CMS Paid hook or hourly maintenance retry runs.
 
 ## CMS operations
 

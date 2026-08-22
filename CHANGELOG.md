@@ -262,3 +262,10 @@ Append-only. Newest entries at the bottom. Never edit or delete past entries —
 - The success resolver now falls back by the high-entropy Checkout Session id and returns only an already-paid record; Daily Express additionally requires `inventory_status=committed`. It cannot mark a pending record paid, deduct seats or trust a public booking reference. Lost-property 100% Checkout uses the same paid-only fallback.
 - Fixed paid tickets appearing in My Account but returning the generic 404 from View Ticket. The detail page now applies normalized owner email, reference, paid status and committed inventory in one server-side Directus query—the same proven scope as the account list—while preserving non-disclosing authorization for other customers.
 - Retried an unsent ticket email immediately when the paid Checkout-session fallback succeeds or the authenticated owner opens that ticket. Both paths use the existing atomic delivery lease, so they cooperate safely with Stripe webhooks, CMS Paid hooks and maintenance without making ticket visibility depend on SMTP.
+
+## 2026-08-22 — Paid email lease transaction repair
+
+- Diagnosed live booking 16 as paid with committed inventory but `confirmation_email_status=pending`: the notification had not reached SMTP because its generic nullable-field CAS never acquired the delivery lease.
+- Added dedicated secret-protected Directus claim/finish endpoints. They row-lock the paid order, atomically claim pending/failed/stale delivery, record sent/failed completion, and treat already-sent delivery as complete. Completion tolerates MariaDB truncating timestamp milliseconds without allowing a stale worker to overwrite a later lease.
+- After Stripe verifies the Checkout Session, return-page recovery now prefers Stripe's server-authored metadata reference before falling back to a session-id filter. This avoids field-scope limitations while still refusing pending orders and requiring committed inventory for tickets.
+- Added regression coverage for the exact paid + pending → sending → sent lifecycle and repeated completed claim.

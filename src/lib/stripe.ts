@@ -1,7 +1,7 @@
 import Stripe from "stripe";
 import crypto from "node:crypto";
 import { getScheduledServices, getStops, getSettings } from "@/lib/directus";
-import { directusAtomicUpdate, directusCommitPaidBookingInventory, directusReconcilePaidBookingInventory, directusServerRead, directusServerWrite, type AtomicInventoryRun } from "@/lib/directus-server";
+import { directusAtomicUpdate, directusClaimPaymentEmail, directusCommitPaidBookingInventory, directusFinishPaymentEmail, directusReconcilePaidBookingInventory, directusServerRead, directusServerWrite, type AtomicInventoryRun } from "@/lib/directus-server";
 import {
   sendBookingConfirmation,
   sendLostPropertyCustomerConfirmation,
@@ -350,48 +350,26 @@ export async function failStalePendingOrders(cutoff: string): Promise<boolean> {
 // fallback cooperate without intentionally sending duplicates.
 type PaymentCollection = "bookings" | "pass_purchases";
 type DeliveryStatusField = "confirmation_email_status" | "staff_email_status";
-type DeliverySentAtField = "confirmation_email_sent_at" | "staff_email_sent_at";
-type DeliveryStartedAtField = "confirmation_email_started_at" | "staff_email_started_at";
-
-const sentAtField: Record<DeliveryStatusField, DeliverySentAtField> = {
-  confirmation_email_status: "confirmation_email_sent_at",
-  staff_email_status: "staff_email_sent_at",
-};
-const startedAtField: Record<DeliveryStatusField, DeliveryStartedAtField> = {
-  confirmation_email_status: "confirmation_email_started_at",
-  staff_email_status: "staff_email_started_at",
-};
 
 
 async function claimEmailDelivery(
   collection: PaymentCollection,
   id: number,
   statusField: DeliveryStatusField,
-): Promise<string | false | null> {
+): Promise<string | "complete" | "busy" | null> {
   const now = new Date();
   const lease = now.toISOString();
   const staleBefore = new Date(now.getTime() - 10 * 60_000).toISOString();
-  const startedField = startedAtField[statusField];
-  const current = await directusServerRead<Record<string, string | null>>(
-    `/items/${collection}/${id}?fields=status,${statusField},${startedField}`,
-  );
-  if (!current) return null;
-
-  const currentStatus = current[statusField];
-  const currentStarted = current[startedField];
-  const staleSending = currentStatus === "sending" && (!currentStarted || currentStarted < staleBefore);
-  const eligible = current.status === "paid"
-    && (currentStatus === null || currentStatus === "pending" || currentStatus === "failed" || staleSending);
-  if (!eligible) return false;
-
-  const updated = await directusAtomicUpdate(
+  const result = await directusClaimPaymentEmail({
     collection,
     id,
-    { status: "paid", [statusField]: currentStatus, [startedField]: currentStarted },
-    { [statusField]: "sending", [startedField]: lease },
-  );
-  if (updated === null) return null;
-  return updated ? lease : false;
+    statusField,
+    lease,
+    staleBefore,
+  });
+  if (!result) return null;
+  if (result.completed) return "complete";
+  return result.claimed ? lease : "busy";
 }
 
 async function finishEmailDelivery(
@@ -401,16 +379,13 @@ async function finishEmailDelivery(
   lease: string,
   delivered: boolean,
 ): Promise<boolean> {
-  return (await directusAtomicUpdate(
+  return directusFinishPaymentEmail({
     collection,
     id,
-    { [statusField]: "sending", [startedAtField[statusField]]: lease },
-    {
-      [statusField]: delivered ? "sent" : "failed",
-      [sentAtField[statusField]]: delivered ? new Date().toISOString() : null,
-      [startedAtField[statusField]]: null,
-    },
-  )) === true;
+    statusField,
+    lease,
+    delivered,
+  });
 }
 
 async function deliverOnce(
@@ -421,7 +396,8 @@ async function deliverOnce(
 ): Promise<boolean> {
   const lease = await claimEmailDelivery(collection, id, statusField);
   if (lease === null) return false;
-  if (lease === false) return true;
+  if (lease === "complete") return true;
+  if (lease === "busy") return false;
 
   let result: EmailResult;
   try {
@@ -655,10 +631,13 @@ export async function confirmCheckoutSession(sessionId: string, kind: "booking" 
   // A Checkout Session id is high entropy; it may reveal only an order that the
   // authoritative webhook/CMS reconciliation has already marked paid. It never
   // promotes a pending row or commits inventory here.
-  const paidWebhookResult = async (): Promise<string | null> => {
+  const paidWebhookResult = async (verifiedReference?: string | null): Promise<string | null> => {
     const fields = collection === "bookings" ? "reference,status,inventory_status" : "reference,status";
+    const filter = verifiedReference
+      ? `filter[reference][_eq]=${encodeURIComponent(verifiedReference)}`
+      : `filter[stripe_session_id][_eq]=${encodeURIComponent(sessionId)}`;
     const rows = await directusServerRead<Array<{ reference: string; status: string; inventory_status?: string | null }>>(
-      `/items/${collection}?filter[stripe_session_id][_eq]=${encodeURIComponent(sessionId)}&fields=${fields}&limit=2`,
+      `/items/${collection}?${filter}&fields=${fields}&limit=2`,
     );
     if (!rows || rows.length !== 1 || rows[0].status !== "paid") return null;
     if (collection === "bookings" && rows[0].inventory_status !== "committed") return null;
@@ -674,6 +653,7 @@ export async function confirmCheckoutSession(sessionId: string, kind: "booking" 
 
   if (!stripeConfigured()) return paidWebhookResult();
 
+  let verifiedReference: string | null = null;
   try {
     const session = await getStripe().checkout.sessions.retrieve(sessionId);
     if (
@@ -682,6 +662,7 @@ export async function confirmCheckoutSession(sessionId: string, kind: "booking" 
     ) {
       return null;
     }
+    verifiedReference = session.metadata?.reference ?? null;
     const reference = await markPaidBySession(
       collection,
       session.id,
@@ -693,10 +674,10 @@ export async function confirmCheckoutSession(sessionId: string, kind: "booking" 
         reference: session.metadata?.reference,
       },
     );
-    return reference ?? paidWebhookResult();
+    return reference ?? paidWebhookResult(verifiedReference);
   } catch (error) {
     console.error("[stripe] Checkout return verification failed; checking paid webhook state", error);
-    return paidWebhookResult();
+    return paidWebhookResult(verifiedReference);
   }
 }
 async function getById<T>(collection: string, id: number): Promise<T | null> {

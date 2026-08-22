@@ -4,6 +4,7 @@ import { getScheduledServices, getStops, getSettings } from "@/lib/directus";
 import { directusAtomicUpdate, directusClaimPaymentEmail, directusCommitPaidBookingInventory, directusFinishPaymentEmail, directusReconcilePaidBookingInventory, directusServerRead, directusServerWrite, type AtomicInventoryRun } from "@/lib/directus-server";
 import {
   sendBookingConfirmation,
+  sendBookingStaffNotification,
   sendLostPropertyCustomerConfirmation,
   sendLostPropertyStaffNotification,
 } from "@/lib/notifications";
@@ -203,6 +204,8 @@ export interface BookingRow {
   inventory_status: string | null;
   confirmation_email_status: string | null;
   confirmation_email_sent_at: string | null;
+  staff_email_status: string | null;
+  staff_email_sent_at: string | null;
 }
 
 /** Create a `pending` booking before redirecting to payment. Returns the row (with id) or null. */
@@ -414,19 +417,30 @@ async function deliverOnce(
 async function deliverPaymentNotifications(
   collection: PaymentCollection,
   reference: string,
+  id?: number,
 ): Promise<boolean> {
   const settings = await getSettings();
 
   if (collection === "bookings") {
-    const booking = await getByReference<BookingRow>(collection, reference);
+    const booking = id
+      ? await getById<BookingRow>(collection, id)
+      : await getByReference<BookingRow>(collection, reference);
     if (!booking) return false;
     const publicUrl = siteUrl(settings.url);
-    return deliverOnce(collection, booking.id, "confirmation_email_status", () =>
-      sendBookingConfirmation(settings, booking, publicUrl),
-    );
+    const [customerDelivered, staffDelivered] = await Promise.all([
+      deliverOnce(collection, booking.id, "confirmation_email_status", () =>
+        sendBookingConfirmation(settings, booking, publicUrl),
+      ),
+      deliverOnce(collection, booking.id, "staff_email_status", () =>
+        sendBookingStaffNotification(settings, booking),
+      ),
+    ]);
+    return customerDelivered && staffDelivered;
   }
 
-  const pass = await getByReference<PassPurchaseRow>(collection, reference);
+  const pass = id
+    ? await getById<PassPurchaseRow>(collection, id)
+    : await getByReference<PassPurchaseRow>(collection, reference);
   if (!pass) return false;
   const [customerDelivered, staffDelivered] = await Promise.all([
     deliverOnce(collection, pass.id, "confirmation_email_status", () =>
@@ -547,7 +561,7 @@ export async function markPaidBySession(
     }
   }
 
-  const emailsDelivered = await deliverPaymentNotifications(collection, row.reference);
+  const emailsDelivered = await deliverPaymentNotifications(collection, row.reference, row.id);
   if (!emailsDelivered) console.error(`[email] transactional delivery queued for retry: ${collection}/${row.reference}`);
   return row.reference;
 }
@@ -581,12 +595,12 @@ export async function reconcilePaidOrder(collection: PaymentCollection, id: numb
         return false;
       }
     }
-    return deliverPaymentNotifications(collection, booking.reference);
+    return deliverPaymentNotifications(collection, booking.reference, booking.id);
   }
 
   const pass = await getById<PassPurchaseRow>(collection, id);
   if (!pass || pass.status !== "paid") return false;
-  return deliverPaymentNotifications(collection, pass.reference);
+  return deliverPaymentNotifications(collection, pass.reference, pass.id);
 }
 
 /** Retry CMS-paid inventory reconciliation and unsent payment emails. */
@@ -596,7 +610,8 @@ export async function retryPaidNotifications(limit = 500): Promise<boolean> {
       id: number;
       inventory_status: string | null;
       confirmation_email_status: string | null;
-    }>>(`/items/bookings?filter[status][_eq]=paid&fields=id,inventory_status,confirmation_email_status&sort=-id&limit=${limit}`),
+      staff_email_status: string | null;
+    }>>(`/items/bookings?filter[status][_eq]=paid&fields=id,inventory_status,confirmation_email_status,staff_email_status&sort=-id&limit=${limit}`),
     directusServerRead<Array<{
       id: number;
       confirmation_email_status: string | null;
@@ -607,7 +622,7 @@ export async function retryPaidNotifications(limit = 500): Promise<boolean> {
 
   const targets: Array<{ collection: PaymentCollection; id: number }> = [
     ...bookings
-      .filter((row) => row.inventory_status !== "committed" || row.confirmation_email_status !== "sent")
+      .filter((row) => row.inventory_status !== "committed" || row.confirmation_email_status !== "sent" || row.staff_email_status !== "sent")
       .map((row) => ({ collection: "bookings" as const, id: row.id })),
     ...passes
       .filter((row) => row.confirmation_email_status !== "sent" || row.staff_email_status !== "sent")
@@ -632,17 +647,17 @@ export async function confirmCheckoutSession(sessionId: string, kind: "booking" 
   // authoritative webhook/CMS reconciliation has already marked paid. It never
   // promotes a pending row or commits inventory here.
   const paidWebhookResult = async (verifiedReference?: string | null): Promise<string | null> => {
-    const fields = collection === "bookings" ? "reference,status,inventory_status" : "reference,status";
+    const fields = collection === "bookings" ? "id,reference,status,inventory_status" : "id,reference,status";
     const filter = verifiedReference
       ? `filter[reference][_eq]=${encodeURIComponent(verifiedReference)}`
       : `filter[stripe_session_id][_eq]=${encodeURIComponent(sessionId)}`;
-    const rows = await directusServerRead<Array<{ reference: string; status: string; inventory_status?: string | null }>>(
+    const rows = await directusServerRead<Array<{ id: number; reference: string; status: string; inventory_status?: string | null }>>(
       `/items/${collection}?${filter}&fields=${fields}&limit=2`,
     );
     if (!rows || rows.length !== 1 || rows[0].status !== "paid") return null;
     if (collection === "bookings" && rows[0].inventory_status !== "committed") return null;
     try {
-      await deliverPaymentNotifications(collection, rows[0].reference);
+      await deliverPaymentNotifications(collection, rows[0].reference, rows[0].id);
     } catch (error) {
       // The paid order remains authoritative; maintenance and authenticated
       // ticket access can retry this same idempotent notification channel.
@@ -694,6 +709,29 @@ async function getByReference<T>(collection: string, reference: string): Promise
 
 export function getBookingByReference(reference: string): Promise<BookingRow | null> {
   return getByReference<BookingRow>("bookings", reference);
+}
+
+async function getPaidOrderByCheckoutSession<T extends { id: number; reference: string; status: string; inventory_status?: string | null }>(
+  collection: PaymentCollection,
+  sessionId: string,
+): Promise<T | null> {
+  if (!/^cs_[A-Za-z0-9_]+$/.test(sessionId)) return null;
+  const rows = await directusServerRead<T[]>(
+    `/items/${collection}?filter[stripe_session_id][_eq]=${encodeURIComponent(sessionId)}&filter[status][_eq]=paid&limit=2`,
+  );
+  if (!rows || rows.length !== 1) return null;
+  if (collection === "bookings" && rows[0].inventory_status !== "committed") return null;
+  try {
+    await deliverPaymentNotifications(collection, rows[0].reference, rows[0].id);
+  } catch (error) {
+    console.error("[email] paid success-page notification retry failed", error);
+  }
+  return rows[0];
+}
+
+/** Last-resort success-page recovery: reads only an already-paid, committed ticket. */
+export function getPaidBookingByCheckoutSession(sessionId: string): Promise<BookingRow | null> {
+  return getPaidOrderByCheckoutSession<BookingRow>("bookings", sessionId);
 }
 
 // ---- Lost Property pass purchases (P5) ----
@@ -761,4 +799,9 @@ export async function createPendingPassPurchase(data: {
 
 export function getPassPurchaseByReference(reference: string): Promise<PassPurchaseRow | null> {
   return getByReference<PassPurchaseRow>("pass_purchases", reference);
+}
+
+/** Last-resort success-page recovery: reads only an already-paid pass purchase. */
+export function getPaidPassByCheckoutSession(sessionId: string): Promise<PassPurchaseRow | null> {
+  return getPaidOrderByCheckoutSession<PassPurchaseRow>("pass_purchases", sessionId);
 }

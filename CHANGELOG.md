@@ -269,3 +269,11 @@ Append-only. Newest entries at the bottom. Never edit or delete past entries —
 - Added dedicated secret-protected Directus claim/finish endpoints. They row-lock the paid order, atomically claim pending/failed/stale delivery, record sent/failed completion, and treat already-sent delivery as complete. Completion tolerates MariaDB truncating timestamp milliseconds without allowing a stale worker to overwrite a later lease.
 - After Stripe verifies the Checkout Session, return-page recovery now prefers Stripe's server-authored metadata reference before falling back to a session-id filter. This avoids field-scope limitations while still refusing pending orders and requiring committed inventory for tickets.
 - Added regression coverage for the exact paid + pending → sending → sent lifecycle and repeated completed claim.
+
+## 2026-08-22 — Booking customer and staff delivery repair
+
+- Added a separately tracked Daily Express staff notification for every paid booking, sent to environment-configurable `BOOKING_TO` with the CMS bookings address as fallback. Its subject/body remain editable in Directus settings.
+- Added independent booking staff status/start/sent fields and Directus delivery leases. Customer-ticket and staff-operation messages now have distinct Email Logs keys, retries, message ids and completion states.
+- Made Stripe webhooks, 100%-coupon return recovery, CMS-paid reconciliation, ticket access and maintenance deliver against the already-known Directus item id, removing a redundant reference-filter lookup that could leave paid messages pending.
+- Added a final Checkout Session-bound lookup at both payment success pages. It renders only an already-paid record (and for a booking, only committed inventory) when the primary verifier fails transiently, then retries the same leased notification channels.
+- Extended the private Directus claim allowlist and regression test to cover both booking delivery channels. Verified 30 tests, TypeScript, ESLint and repository script syntax checks.

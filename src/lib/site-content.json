@@ -44,6 +44,13 @@
       "footer": "Please arrive at least 15 minutes before departure and keep your booking reference available.",
       "ctaLabel": "View my tickets"
     },
+    "bookingStaff": {
+      "subject": "New paid Daily Express booking — {{reference}}",
+      "eyebrow": "New paid booking",
+      "heading": "A Daily Express ticket has been issued",
+      "intro": "Payment is confirmed. The customer and journey details are below and the booking is available in Directus.",
+      "footer": "This is an automatic operational notification. Replying to this email will reply directly to the customer."
+    },
     "lostPropertyCustomer": {
       "subject": "Lost property request received — {{reference}}",
       "eyebrow": "Request confirmed",

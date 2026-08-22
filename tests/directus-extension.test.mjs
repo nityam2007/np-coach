@@ -203,6 +203,9 @@ test("payment email delivery claims pending state and records SMTP completion at
       confirmation_email_status: "pending",
       confirmation_email_started_at: null,
       confirmation_email_sent_at: null,
+      staff_email_status: "pending",
+      staff_email_started_at: null,
+      staff_email_sent_at: null,
     }],
   });
   const request = harness(database);
@@ -237,6 +240,26 @@ test("payment email delivery claims pending state and records SMTP completion at
     lease: "2026-08-22T17:01:00.000Z",
     staleBefore: "2026-08-22T16:51:00.000Z",
   })).body, { data: { claimed: false, completed: true } });
+
+  const staffLease = "2026-08-22T17:02:00.000Z";
+  assert.deepEqual((await request("/email-delivery/claim", {
+    collection: "bookings",
+    id: 16,
+    statusField: "staff_email_status",
+    lease: staffLease,
+    staleBefore: "2026-08-22T16:52:00.000Z",
+  })).body, { data: { claimed: true, completed: false } });
+  assert.equal(database.rows("bookings")[0].staff_email_status, "sending");
+
+  assert.deepEqual((await request("/email-delivery/finish", {
+    collection: "bookings",
+    id: 16,
+    statusField: "staff_email_status",
+    lease: staffLease,
+    delivered: true,
+  })).body, { data: { updated: true } });
+  assert.equal(database.rows("bookings")[0].staff_email_status, "sent");
+  assert.ok(database.rows("bookings")[0].staff_email_sent_at);
 });
 
 test("CMS-paid booking reconciliation creates inventory once", async () => {

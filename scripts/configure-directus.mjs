@@ -132,7 +132,7 @@ const EMAIL_STATUS_CHOICES = [
 const FIELD_META = {
   bookings: [
     { field: "reference", meta: { width: "half", readonly: true, note: "Auto-generated booking reference (NPX-…)." } },
-    { field: "status", meta: { width: "half", interface: "select-dropdown", display: "labels", note: "Set Paid only after money is received. This commits inventory and sends the customer ticket email once.", options: { choices: STATUS_CHOICES }, display_options: { choices: STATUS_CHOICES, showAsDot: true } } },
+    { field: "status", meta: { width: "half", interface: "select-dropdown", display: "labels", note: "Set Paid only after money is received. This commits inventory and sends the customer and staff emails once.", options: { choices: STATUS_CHOICES }, display_options: { choices: STATUS_CHOICES, showAsDot: true } } },
     { field: "from_stop", meta: { width: "half", note: "Origin stop code." } },
     { field: "to_stop", meta: { width: "half", note: "Destination stop code." } },
     { field: "route_label", meta: { width: "full", readonly: true } },
@@ -161,6 +161,9 @@ const FIELD_META = {
     { field: "confirmation_email_status", meta: { hidden: false, readonly: true, width: "half", display: "labels", options: { choices: EMAIL_STATUS_CHOICES }, display_options: { choices: EMAIL_STATUS_CHOICES, showAsDot: true }, note: "Pending/failed messages are retried by maintenance." } },
     { field: "confirmation_email_started_at", meta: { hidden: false, readonly: true, width: "half" } },
     { field: "confirmation_email_sent_at", meta: { hidden: false, readonly: true, width: "half" } },
+    { field: "staff_email_status", meta: { hidden: false, readonly: true, width: "half", display: "labels", options: { choices: EMAIL_STATUS_CHOICES }, display_options: { choices: EMAIL_STATUS_CHOICES, showAsDot: true }, note: "Independent operational copy sent to the booking inbox." } },
+    { field: "staff_email_started_at", meta: { hidden: false, readonly: true, width: "half" } },
+    { field: "staff_email_sent_at", meta: { hidden: false, readonly: true, width: "half" } },
     { field: "created_at", meta: { hidden: false, readonly: true, width: "half" } },
   ],
   service_runs: [

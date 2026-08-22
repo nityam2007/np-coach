@@ -293,6 +293,9 @@ const BOOKINGS_FIELDS = [
   deliveryStatus("confirmation_email_status"),
   deliveryStartedAt("confirmation_email_started_at"),
   deliverySentAt("confirmation_email_sent_at"),
+  deliveryStatus("staff_email_status"),
+  deliveryStartedAt("staff_email_started_at"),
+  deliverySentAt("staff_email_sent_at"),
   uniqueStr("stripe_payment_intent"),
   datetimeCreated,
 ];
@@ -644,6 +647,9 @@ async function run() {
   await ensureField("bookings", deliveryStatus("confirmation_email_status"));
   await ensureField("bookings", deliveryStartedAt("confirmation_email_started_at"));
   await ensureField("bookings", deliverySentAt("confirmation_email_sent_at"));
+  await ensureField("bookings", deliveryStatus("staff_email_status"));
+  await ensureField("bookings", deliveryStartedAt("staff_email_started_at"));
+  await ensureField("bookings", deliverySentAt("staff_email_sent_at"));
   await ensureField("pass_purchases", deliveryStatus("confirmation_email_status"));
   await ensureField("pass_purchases", deliveryStartedAt("confirmation_email_started_at"));
   await ensureField("pass_purchases", deliverySentAt("confirmation_email_sent_at"));

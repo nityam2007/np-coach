@@ -59,6 +59,7 @@ export interface BookingEmailData {
   currency: string;
   name: string;
   email: string;
+  phone: string;
 }
 
 export interface PassEmailData {
@@ -225,6 +226,41 @@ export function bookingConfirmationEmail(
     ],
     ctaHref: `${siteUrl.replace(/\/$/, "")}/account/login`,
     messageId: messageId("booking", booking.reference, settings),
+  });
+}
+
+export function bookingStaffEmail(
+  settings: SiteSettings,
+  booking: BookingEmailData,
+  to: string,
+): EmailInput {
+  const subtotal = booking.subtotal_amount ?? issuedBookingAmount(booking.journey_snapshot) ?? booking.amount;
+  const discount = booking.discount_amount ?? Math.max(0, subtotal - booking.amount);
+  return buildEmail(settings, to, {
+    copy: settings.emailTemplates.bookingStaff,
+    variables: { reference: booking.reference, name: booking.name },
+    rows: [
+      { label: "Booking reference", value: booking.reference },
+      { label: "Customer", value: booking.name },
+      { label: "Email", value: booking.email },
+      { label: "Phone", value: booking.phone },
+      { label: "Journey", value: booking.route_label },
+      { label: "Travel date", value: formatDate(booking.trip_date) },
+      { label: "Outward service", value: booking.outward_service_name },
+      { label: "Outward time", value: `${booking.departure_time}–${booking.arrival_time}` },
+      { label: "Return date", value: booking.return_date ? formatDate(booking.return_date) : null },
+      { label: "Return service", value: booking.return_service_name },
+      { label: "Return time", value: booking.return_departure_time && booking.return_arrival_time
+        ? `${booking.return_departure_time}–${booking.return_arrival_time}`
+        : null },
+      { label: "Ticket", value: booking.trip_type === "return" ? "Return" : "Single" },
+      { label: "Passengers", value: booking.passengers },
+      { label: "Fare", value: formatMoney(subtotal, booking.currency) },
+      { label: "Promotion discount", value: discount > 0 ? `−${formatMoney(discount, booking.currency)}` : null },
+      { label: "Paid", value: formatMoney(booking.amount, booking.currency) },
+    ],
+    replyTo: booking.email,
+    messageId: messageId("booking-staff", booking.reference, settings),
   });
 }
 

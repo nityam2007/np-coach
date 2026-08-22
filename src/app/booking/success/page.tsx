@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { confirmCheckoutSession, getBookingByReference } from "@/lib/stripe";
+import { confirmCheckoutSession, getBookingByReference, getPaidBookingByCheckoutSession } from "@/lib/stripe";
 import { getStops, getSettings } from "@/lib/directus";
 import { boardingPassFromBooking } from "@/lib/ticket";
 import { BoardingPass } from "@/components/account/BoardingPass";
@@ -17,7 +17,11 @@ export const metadata: Metadata = {
 export default async function BookingSuccessPage({ searchParams }: { searchParams: Promise<{ session_id?: string }> }) {
   const { session_id } = await searchParams;
   const reference = session_id ? await confirmCheckoutSession(session_id, "booking") : null;
-  const booking = reference ? await getBookingByReference(reference) : null;
+  const booking = reference
+    ? await getBookingByReference(reference)
+    : session_id
+      ? await getPaidBookingByCheckoutSession(session_id)
+      : null;
   const [stops, settings] = await Promise.all([getStops(), getSettings()]);
   const emailSent = booking?.confirmation_email_status === "sent";
   const pass = booking?.status === "paid" && booking.inventory_status === "committed"

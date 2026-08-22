@@ -366,6 +366,7 @@ export interface EmailTemplateCopy {
 export interface EmailTemplates {
   otp: EmailTemplateCopy;
   bookingConfirmation: EmailTemplateCopy;
+  bookingStaff: EmailTemplateCopy;
   lostPropertyCustomer: EmailTemplateCopy;
   lostPropertyStaff: EmailTemplateCopy;
   contactCustomer: EmailTemplateCopy;

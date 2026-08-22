@@ -208,6 +208,7 @@ services:
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_FROM: ${SMTP_FROM:-noreply@np-coaches.co.uk}
       SMTP_FROM_NAME: ${SMTP_FROM_NAME:-NP Coaches}
+      BOOKING_TO: ${BOOKING_TO:-bookings@np-coaches.co.uk}
       CONTACT_TO: ${CONTACT_TO:-info@np-coaches.co.uk}
       QUOTE_TO: ${QUOTE_TO:-bookings@np-coaches.co.uk}
       LOST_PROPERTY_TO: ${LOST_PROPERTY_TO:-info@np-coaches.co.uk}

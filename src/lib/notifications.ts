@@ -2,6 +2,7 @@ import type { SiteSettings } from "./directus";
 import { sendEmail, type EmailResult } from "./email";
 import {
   bookingConfirmationEmail,
+  bookingStaffEmail,
   contactCustomerEmail,
   contactStaffEmail,
   lostPropertyCustomerEmail,
@@ -68,6 +69,20 @@ export function sendBookingConfirmation(
     {
       ...bookingConfirmationEmail(settings, booking, siteUrl),
       tracking: { idempotencyKey: `booking:${booking.id}:customer`, type: "booking_confirmation", sourceCollection: "bookings", sourceId: booking.id, reference: booking.reference },
+    },
+  );
+}
+
+export function sendBookingStaffNotification(
+  settings: SiteSettings,
+  booking: BookingEmailData,
+): Promise<EmailResult> {
+  const staffTo = process.env.BOOKING_TO?.trim() || settings.email.bookings || settings.email.general;
+  return deliver(
+    `booking staff notification ${booking.reference}`,
+    {
+      ...bookingStaffEmail(settings, booking, staffTo),
+      tracking: { idempotencyKey: `booking:${booking.id}:staff`, type: "booking_staff", sourceCollection: "bookings", sourceId: booking.id, reference: booking.reference },
     },
   );
 }

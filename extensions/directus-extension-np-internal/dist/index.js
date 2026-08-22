@@ -108,7 +108,7 @@ function validEmailLogFinish(body) {
 }
 
 const PAYMENT_EMAIL_FIELDS = {
-  bookings: new Set(["confirmation_email_status"]),
+  bookings: new Set(["confirmation_email_status", "staff_email_status"]),
   pass_purchases: new Set(["confirmation_email_status", "staff_email_status"]),
 };
 

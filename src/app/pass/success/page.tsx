@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { confirmCheckoutSession, getPassPurchaseByReference } from "@/lib/stripe";
+import { confirmCheckoutSession, getPaidPassByCheckoutSession, getPassPurchaseByReference } from "@/lib/stripe";
 import { ButtonLink } from "@/components/ui/Button";
 
 export const metadata: Metadata = {
@@ -15,7 +15,11 @@ function formatGBP(pence: number) {
 export default async function PassSuccessPage({ searchParams }: { searchParams: Promise<{ session_id?: string }> }) {
   const { session_id } = await searchParams;
   const reference = session_id ? await confirmCheckoutSession(session_id, "pass") : null;
-  const pass = reference ? await getPassPurchaseByReference(reference) : null;
+  const pass = reference
+    ? await getPassPurchaseByReference(reference)
+    : session_id
+      ? await getPaidPassByCheckoutSession(session_id)
+      : null;
   const emailSent = pass?.confirmation_email_status === "sent";
 
   return (

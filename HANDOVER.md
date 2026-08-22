@@ -80,7 +80,7 @@ Only `NEXT_PUBLIC_*` variables should be enabled as build variables. Treat every
 - Contact and quote forms pass Turnstile, create Directus records, notify staff, and acknowledge the customer.
 - Customer OTP/account flow delivers the code; a forced SMTP failure shows an error instead of false success.
 - A Stripe test/live booking and lost-property payment reaches `paid` through the signed webhook.
-- The booking email is sent once; lost property sends customer and staff messages once; Directus parent email fields and the matching **Email Logs** rows show `sent`. Repeat this once through Stripe, once with a 100% coupon/no PaymentIntent, and once by changing a test record to Paid in Directus; neither path may duplicate email or inventory.
+- Booking sends customer and staff messages once; lost property also sends customer and staff messages once. Directus parent email fields and the matching **Email Logs** rows must all show `sent`. Repeat this once through Stripe, once with a 100% coupon/no PaymentIntent, and once by changing a test record to Paid in Directus; neither path may duplicate email or inventory.
 - Force one SMTP failure and confirm Email Logs shows `failed` with an attempt count and safe error code, then run maintenance and confirm the same logical row becomes `sent` without duplicating the paid order or inventory.
 - Cookie consent, security headers, sitemap, robots.txt, and llms.txt respond correctly.
 - GA4 makes no network request before explicit consent; accepting loads `G-3GXSRDBP55`, rejecting/withdrawing disables analytics and clears accessible first-party GA cookies.

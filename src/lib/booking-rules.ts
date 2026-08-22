@@ -42,6 +42,7 @@ export interface JourneyOption {
   fare: ScheduledServiceFare;
   departureTime: string;
   arrivalTime: string;
+  durationMinutes: number;
 }
 
 function serviceTimeMinutes(value: string): number | null {
@@ -90,14 +91,17 @@ export function resolveJourneyOptions(
     if (!from.boarding || !to.dropping) return [];
 
     const departure = serviceTimeMinutes(from.time);
-    if (departure === null || serviceTimeMinutes(to.time) === null) return [];
+    const arrival = serviceTimeMinutes(to.time);
+    if (departure === null || arrival === null) return [];
     if (date === today && departure < londonMinutes(now) + 60) return [];
 
     const fare = service.fares.find((row) => row.from === fromCode && row.to === toCode);
     if (!fare || ![fare.adult, fare.child, fare.infant].every((amount) => Number.isInteger(amount) && amount > 0)) {
       return [];
     }
-    return [{ service, fare, departureTime: from.time, arrivalTime: to.time }];
+    const durationMinutes = (arrival >= departure ? arrival : arrival + 24 * 60) - departure;
+    if (durationMinutes < 1) return [];
+    return [{ service, fare, departureTime: from.time, arrivalTime: to.time, durationMinutes }];
   }).sort((a, b) => a.departureTime.localeCompare(b.departureTime));
 }
 

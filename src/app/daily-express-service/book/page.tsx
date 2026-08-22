@@ -18,7 +18,7 @@ export default async function BookPage({
 }) {
   const { from, to, date, returnDate, pax, trip, cancelled } = await searchParams;
   const [stops, services, settings] = await Promise.all([getOnlineStops(), getScheduledServices(), getSettings()]);
-  const options: BookingStopOption[] = stops.map((s) => ({ code: s.code, name: s.name }));
+  const options: BookingStopOption[] = stops.map((s) => ({ code: s.code, name: s.name, detail: s.detail }));
 
   const heroFallback = selectPageHeroFallback(settings, "/daily-express-service/book");
 

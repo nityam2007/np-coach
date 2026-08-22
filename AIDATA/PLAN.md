@@ -106,6 +106,6 @@ Implemented in code and fallback data:
 - key dated inventory by stable service code and keep the existing fail-closed/atomic Stripe protections;
 - show complete outward/return details in confirmations, accounts, and tickets.
 
-Do not enable `DAILY_EXPRESS_BOOKINGS_ENABLED` until NP Coaches approves the conflicting times, supplies the complete fare matrix, confirms passenger/return/inventory rules, and the live concurrency/payment/email acceptance gate passes.
+Do not enable `DAILY_EXPRESS_BOOKINGS_ENABLED` until NP Coaches approves the conflicting times, confirms the return/inventory rules, and the live concurrency/payment/email acceptance gate passes. Online sales are restricted to the seven fare rows confirmed on 22 August 2026; all other stop pairs fail closed.
 
-Production deployment/data approval remains gated by the authoritative brief. The seeded fare matrix is intentionally incomplete and fails closed; the guarded Directus schema snapshot was not regenerated in this code-only pass.
+Production deployment/data approval remains gated by the authoritative brief. The seeded fare allowlist is intentionally limited to the seven approved online rows and fails closed everywhere else; the guarded Directus schema snapshot was not regenerated in this code-only pass.

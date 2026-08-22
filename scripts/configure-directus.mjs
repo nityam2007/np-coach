@@ -239,9 +239,9 @@ const FIELD_META = {
     { field: "label", meta: { width: "half", note: "Short customer-facing departure label." } },
     { field: "sales_mode", meta: { width: "half", note: "Driver only services never appear in online search or Stripe." } },
     { field: "operating_days", meta: { width: "half", note: "ISO weekdays as JSON: Monday=1 … Sunday=7." } },
-    { field: "capacity", meta: { width: "half", note: "Approved sellable seats. The four online services are expected to be 60 after sign-off." } },
+    { field: "capacity", meta: { width: "half", note: "Approved sellable seats. Each of the four online buses is confirmed at 60 seats." } },
     { field: "stops", meta: { width: "full", note: "Ordered JSON rows: code, HH:mm time, boarding, dropping." } },
-    { field: "fares", meta: { width: "full", note: "Explicit stop-pair fares in pence. Missing row = not sold online." } },
+    { field: "fares", meta: { width: "full", note: "Numeric WordPress stop-pair fares in pence. Blank placeholder rows remain omitted and are not sold online." } },
     { field: "notice", meta: { width: "full" } },
   ],
   stops: [
@@ -297,6 +297,7 @@ const FIELD_META = {
     { field: "accreditation_logos", meta: { width: "full", note: "Accreditation label to Directus file ID mapping." } },
     { field: "email_templates", meta: { width: "full", interface: "input-code", options: { language: "json" }, note: "Customer and staff transactional email copy. Keep all {{variable}} placeholders intact." } },
     { field: "client_media_revision", meta: { hidden: true, readonly: true, note: "Internal deployment marker; editors should not change it." } },
+    { field: "scheduled_services_revision", meta: { hidden: true, readonly: true, note: "Internal four-bus seed marker; editors should not change it." } },
   ],
 };
 

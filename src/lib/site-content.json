@@ -975,8 +975,24 @@
         { "code": "birmingham-smethwick", "time": "13:30", "boarding": true, "dropping": true },
         { "code": "wolverhampton", "time": "14:00", "boarding": false, "dropping": true }
       ],
-      "fares": [],
-      "notice": "Timetable pending final operator approval. Missing fare rows are not sold online."
+      "fares": [
+        { "from": "southall", "to": "slough", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "southall", "to": "coventry", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "southall", "to": "birmingham-soho", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "southall", "to": "birmingham-smethwick", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "southall", "to": "wolverhampton", "adult": 1800, "child": 1800, "infant": 1800 },
+        { "from": "slough", "to": "coventry", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "slough", "to": "birmingham-soho", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "slough", "to": "birmingham-smethwick", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "slough", "to": "wolverhampton", "adult": 1800, "child": 1800, "infant": 1800 },
+        { "from": "coventry", "to": "birmingham-soho", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "coventry", "to": "birmingham-smethwick", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "coventry", "to": "wolverhampton", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "birmingham-soho", "to": "birmingham-smethwick", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "birmingham-soho", "to": "wolverhampton", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "birmingham-smethwick", "to": "wolverhampton", "adult": 1500, "child": 1500, "infant": 1500 }
+      ],
+      "notice": "All numeric fares and timetable details mirror the approved morning bus record."
     },
     {
       "code": "lm-evening",
@@ -995,9 +1011,20 @@
         { "code": "wolverhampton", "time": "18:45", "boarding": false, "dropping": true }
       ],
       "fares": [
-        { "from": "southall", "to": "wolverhampton", "adult": 1800, "child": 1800, "infant": 1800 }
+        { "from": "southall", "to": "slough", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "southall", "to": "coventry", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "southall", "to": "birmingham-soho", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "southall", "to": "birmingham-smethwick", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "southall", "to": "wolverhampton", "adult": 1800, "child": 1800, "infant": 1800 },
+        { "from": "slough", "to": "coventry", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "slough", "to": "birmingham-soho", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "slough", "to": "birmingham-smethwick", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "slough", "to": "wolverhampton", "adult": 1800, "child": 1800, "infant": 1800 },
+        { "from": "coventry", "to": "birmingham-soho", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "coventry", "to": "birmingham-smethwick", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "coventry", "to": "wolverhampton", "adult": 1500, "child": 1500, "infant": 1500 }
       ],
-      "notice": "Timetable pending final operator approval. Only the documented fare row is available."
+      "notice": "Only numeric fares from the approved evening bus record are sold online; blank price rows remain unavailable."
     },
     {
       "code": "ml-afternoon",
@@ -1015,8 +1042,24 @@
         { "code": "slough", "time": "17:45", "boarding": true, "dropping": true },
         { "code": "southall", "time": "18:15", "boarding": false, "dropping": true }
       ],
-      "fares": [],
-      "notice": "Timetable pending final operator approval. Missing fare rows are not sold online."
+      "fares": [
+        { "from": "wolverhampton", "to": "birmingham-smethwick", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "wolverhampton", "to": "birmingham-soho", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "wolverhampton", "to": "coventry", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "wolverhampton", "to": "slough", "adult": 1800, "child": 1800, "infant": 1800 },
+        { "from": "wolverhampton", "to": "southall", "adult": 1800, "child": 1800, "infant": 1800 },
+        { "from": "birmingham-smethwick", "to": "birmingham-soho", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "birmingham-smethwick", "to": "coventry", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "birmingham-smethwick", "to": "slough", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "birmingham-smethwick", "to": "southall", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "birmingham-soho", "to": "coventry", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "birmingham-soho", "to": "slough", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "birmingham-soho", "to": "southall", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "coventry", "to": "slough", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "coventry", "to": "southall", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "slough", "to": "southall", "adult": 1500, "child": 1500, "infant": 1500 }
+      ],
+      "notice": "All numeric fares and timetable details mirror the approved afternoon bus record."
     },
     {
       "code": "ml-evening",
@@ -1041,7 +1084,7 @@
         { "from": "wolverhampton", "to": "slough", "adult": 1800, "child": 1800, "infant": 1800 },
         { "from": "wolverhampton", "to": "southall", "adult": 1800, "child": 1800, "infant": 1800 }
       ],
-      "notice": "This service does not call at Coventry. Timetable pending final operator approval."
+      "notice": "Only numeric fares from the approved evening bus record are sold online; blank price rows remain unavailable."
     },
     {
       "code": "london-leicester-morning",

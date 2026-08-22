@@ -84,13 +84,13 @@ Use a distinct collection name per task so seed/content blocks don't overlap. Tw
 
 Authoritative brief: [IMP-22-8-26.md](IMP-22-8-26.md).
 
-- [ ] Obtain NP Coaches approval for the seven documented timetable conflicts.
-- [x] Lock online sales to the seven confirmed fare rows only; Adult/Child/Infant share the supplied price and every other stop pair fails closed.
+- [x] Use the four supplied WordPress bus admin schedules as authoritative; all previously documented timetable conflicts are resolved to those records.
+- [x] Seed all 48 numeric fare rows across the four online buses; Adult/Child/Infant share each supplied price and blank “Ex: 10” placeholders remain unavailable.
 - [ ] Confirm the return-pricing policy; current code sums two separately confirmed single-leg fares.
 - [x] Add the additive `scheduled_services` CMS/fallback model; preserve `routes` as direction/SEO pages and retain legacy fields during cutover.
 - [x] Exclude Friday–Monday Leicester driver-sale services from online selectors, inventory, Stripe, and online Offer schema.
 - [x] Replace first-route matching with explicit outward/return scheduled-service selection and fail-closed fare resolution.
 - [x] Key atomic dated inventory by stable service code; keep whole-service capacity for launch unless segment reuse is separately approved.
 - [x] Persist immutable leg/fare snapshots and show both legs in email, account, boarding pass, and QR verification.
-- [ ] Complete the remaining return/output acceptance tests from the brief. The suite now reads the real fallback data and enforces the exact seven-row allowlist, durations, cutoff, Leicester exclusion and atomic inventory.
+- [ ] Complete the remaining return/output acceptance tests from the brief. The suite enforces all four 60-seat timetables, the 15/12/15/6 numeric fare matrices, blank-row exclusions, cutoff, Leicester exclusion and atomic inventory.
 - [ ] Deploy additively with bookings disabled; enter approved CMS data and complete the full concurrency/Stripe/email/accessibility acceptance gate before enabling sales.

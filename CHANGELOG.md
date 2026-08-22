@@ -211,9 +211,18 @@ Append-only. Newest entries at the bottom. Never edit or delete past entries —
 - Excluded driver-only Leicester from homepage/book selectors, inventory, Stripe and online Offer schema while keeping its timetable/SEO pages and driver-sale notice. Route pages and the Daily Express hub now show every child service.
 - Expanded deterministic resolver and Directus extension coverage; 17 tests, TypeScript, ESLint, seed/configure syntax checks and `git diff --check` pass.
 - Kept `DAILY_EXPRESS_BOOKINGS_ENABLED=false`. No production CMS data, Stripe configuration, schema snapshot or launch flag was changed; the complete fare matrix, timetable approval, passenger/return rules and live acceptance gate remain required.
+
 ## 2026-08-22 — Daily Express departure-card booking UX
 
 - Locked the online fare allowlist to the seven operator-confirmed rows: Southall→Wolverhampton (£18); Birmingham Soho/Smethwick→Slough/Southall (£15); Wolverhampton→Slough/Southall (£18). Adult, child and infant values match; all other stop pairs fail closed.
 - Rebuilt the booking choices as dated departure/return cards showing CMS service name, local departure/arrival times, calculated duration, fare per seat, CMS boarding/drop-off addresses and selection state.
 - Added a no-store server endpoint that exposes only remaining seats per service/date from private service_runs; unavailable inventory falls back to a clearly labelled coach capacity and checkout retains the authoritative atomic reservation.
 - Updated fare tests to read the real fallback CMS source and enforce the exact allowlist and duration. TypeScript, 18 tests and ESLint pass.
+
+## 2026-08-22 — Complete four-bus timetable and fare seed
+
+- Accepted the four supplied WordPress bus admin records as authoritative for the London–Midlands services and retained their exact stop times.
+- Expanded fallback/seed data from 7 to 48 numeric fare rows: 15 London morning, 12 London evening, 15 Midlands afternoon and 6 Midlands evening. Adult/Child/Infant values match; “Ex: 10” placeholders remain omitted.
+- Confirmed all four online scheduled buses at 60 seats.
+- Added a one-time settings revision that updates existing Directus scheduled-service records with the approved schedules, fares and capacities, while preserving later CMS edits on subsequent bootstrap runs.
+- Verified 19 tests, seed/configure syntax, TypeScript, ESLint and git diff whitespace checks. Local seed execution was unavailable because neither Docker nor a Directus service is present on this workstation.

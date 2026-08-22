@@ -10,6 +10,7 @@ const EMAIL = process.env.DIRECTUS_ADMIN_EMAIL ?? "admin@np-coaches.co.uk";
 const PASSWORD = process.env.DIRECTUS_ADMIN_PASSWORD ?? "change-me";
 const STATIC_TOKEN = process.env.DIRECTUS_ADMIN_TOKEN;
 const LEGAL_POLICY_REVISION = "google-analytics-2026-08-22-v1";
+const SCHEDULED_SERVICES_REVISION = "wordpress-four-bus-data-2026-08-22-v1";
 
 const directus = createDirectusApi({ base: BASE, token: STATIC_TOKEN });
 const api = directus.request;
@@ -487,6 +488,20 @@ async function assertProtectedDataPreserved(before) {
   console.log(`✓ protected data preserved: ${JSON.stringify(after)}`);
 }
 
+function scheduledServicePayload(service) {
+  return {
+    route_slug: service.routeSlug,
+    name: service.name,
+    label: service.label,
+    sales_mode: service.salesMode,
+    operating_days: service.operatingDays,
+    capacity: service.capacity,
+    stops: service.stops,
+    fares: service.fares,
+    notice: service.notice,
+  };
+}
+
 async function run() {
   console.log(`Seeding Directus at ${BASE} ...`);
   if (!directus.hasToken()) {
@@ -525,6 +540,7 @@ async function run() {
   await ensureField("settings", json("email_templates"));
   await ensureField("settings", json("cookie_consent"));
   await ensureField("settings", str("legal_policy_revision"));
+  await ensureField("settings", str("scheduled_services_revision"));
   await ensureField("settings", json("coverage"));
   await ensureField("settings", json("faqs"));
   await ensureField("settings", json("pricing")); // configurable fees + per-fee VAT rates
@@ -970,8 +986,8 @@ async function run() {
     console.log(`✓ backfilled fares for route "${route.slug}"`);
   }
 
-  // Scheduled services — additive by immutable code; never replace editor-approved data.
-  const existingScheduledServices = await api("/items/scheduled_services?fields=code,sort&limit=-1");
+  // Scheduled services — additive by immutable code. Approved source data is applied once below.
+  const existingScheduledServices = await api("/items/scheduled_services?fields=id,code,sort&limit=-1");
   const existingServiceCodes = new Set(existingScheduledServices.map((service) => service.code));
   const missingScheduledServices = content.scheduledServices.filter((service) => !existingServiceCodes.has(service.code));
   if (missingScheduledServices.length) {
@@ -979,21 +995,35 @@ async function run() {
       method: "POST",
       body: JSON.stringify(missingScheduledServices.map((service, index) => ({
         code: service.code,
-        route_slug: service.routeSlug,
-        name: service.name,
-        label: service.label,
-        sales_mode: service.salesMode,
-        operating_days: service.operatingDays,
-        capacity: service.capacity,
-        stops: service.stops,
-        fares: service.fares,
-        notice: service.notice,
+        ...scheduledServicePayload(service),
         sort: existingScheduledServices.length + index + 1,
       }))),
     });
     console.log(`✓ seeded ${missingScheduledServices.length} missing scheduled services`);
   } else {
     console.log("• all scheduled services present — skipped");
+  }
+
+  // Apply the operator-approved WordPress data exactly once. The revision marker
+  // lets later Directus editor changes win on every subsequent bootstrap.
+  if (currentSettings?.scheduled_services_revision !== SCHEDULED_SERVICES_REVISION) {
+    const rows = await api("/items/scheduled_services?fields=id,code&limit=-1");
+    const idByCode = new Map(rows.map((service) => [service.code, service.id]));
+    const approvedServices = content.scheduledServices.filter((service) => service.salesMode === "online");
+    for (const service of approvedServices) {
+      const id = idByCode.get(service.code);
+      if (!id) throw new Error("Scheduled service missing after seed: " + service.code);
+      await api("/items/scheduled_services/" + id, {
+        method: "PATCH",
+        body: JSON.stringify(scheduledServicePayload(service)),
+      });
+      console.log("✓ scheduled service " + service.code + ": approved timetable, fares and 60-seat capacity applied");
+    }
+    await api("/items/settings", {
+      method: "PATCH",
+      body: JSON.stringify({ scheduled_services_revision: SCHEDULED_SERVICES_REVISION }),
+    });
+    console.log("✓ scheduled-services revision " + SCHEDULED_SERVICES_REVISION + " recorded");
   }
 
   // Stops — add missing codes without changing existing CMS rows.

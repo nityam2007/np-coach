@@ -106,6 +106,6 @@ Implemented in code and fallback data:
 - key dated inventory by stable service code and keep the existing fail-closed/atomic Stripe protections;
 - show complete outward/return details in confirmations, accounts, and tickets.
 
-Do not enable `DAILY_EXPRESS_BOOKINGS_ENABLED` until NP Coaches approves the conflicting times, confirms the return/inventory rules, and the live concurrency/payment/email acceptance gate passes. Online sales are restricted to the seven fare rows confirmed on 22 August 2026; all other stop pairs fail closed.
+Do not enable DAILY_EXPRESS_BOOKINGS_ENABLED until the return/inventory rules are confirmed and the live concurrency/payment/email acceptance gate passes. The four WordPress bus admin timetables, all 48 numeric fare rows, and 60-seat capacity per online bus are now mirrored; blank placeholder prices still fail closed.
 
-Production deployment/data approval remains gated by the authoritative brief. The seeded fare allowlist is intentionally limited to the seven approved online rows and fails closed everywhere else; the guarded Directus schema snapshot was not regenerated in this code-only pass.
+Production enablement remains gated by the authoritative brief. A one-time revision-guarded seed applies the approved four-bus timetable, 48 numeric fares and 60-seat capacities to existing Directus records, then preserves later CMS edits. The guarded Directus schema snapshot was not regenerated in this code-only pass.

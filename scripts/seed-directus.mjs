@@ -587,6 +587,7 @@ async function run() {
   // Fleet listing/detail shared copy follows the same preserve-editor-edits strategy.
   const mergedFleetPage = { ...content.fleetPage, ...(currentSettings?.fleet_page ?? {}) };
   const mergedTourPage = { ...content.tourPage, ...(currentSettings?.tour_page ?? {}) };
+  const mergedCookieConsent = { ...content.cookieConsent, ...(currentSettings?.cookie_consent ?? {}) };
   const socialLinksMissing = !Array.isArray(currentSettings?.social_links) || currentSettings.social_links.length === 0;
   const homepageChanged = JSON.stringify(mergedHomepage) !== JSON.stringify(currentSettings?.homepage ?? null);
   const emailTemplatesChanged = JSON.stringify(mergedEmailTemplates) !== JSON.stringify(currentSettings?.email_templates ?? null);
@@ -595,7 +596,6 @@ async function run() {
   const tourPageChanged = JSON.stringify(mergedTourPage) !== JSON.stringify(currentSettings?.tour_page ?? null);
 
   // Seed the singleton only once. After that, Directus is the source of truth:
-  const mergedCookieConsent = { ...content.cookieConsent, ...(currentSettings?.cookie_consent ?? {}) };
   // routine deploys may add missing nested keys but never reset editor-managed values.
   const settingsDefaults = {
       name: content.name,

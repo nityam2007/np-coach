@@ -178,3 +178,9 @@ Append-only. Newest entries at the bottom. Never edit or delete past entries —
 - Fixed the failed 12.3 deployment where `schema-migrate` exited with `/bin/sh: npx: not found`; Directus 12.3's slim runtime image no longer includes npm/npx.
 - Replaced every container-side `npx directus` invocation with the image's verified `node /directus/cli.js` entrypoint, including the guarded manual snapshot/apply helper.
 - Ran the exact replacement `node /directus/cli.js bootstrap` command against a disposable SQLite database in the pinned 12.3.0 image; all system migrations completed and the process exited successfully.
+
+## 2026-08-22 — CMS consent seed ordering hotfix
+
+- Moved the cookie-consent settings merge before its change detector after production exposed a temporal-dead-zone error during `cms-bootstrap`.
+- Confirmed the failed run had only added the two nullable settings fields before stopping; no customer, booking, payment, or uploaded-media records were altered.
+- Added a source-order verification alongside the existing seed syntax, script, and test checks before redeployment.

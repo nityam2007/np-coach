@@ -96,7 +96,15 @@ export async function createAndSendOtp(
   })) as { id: number } | null;
   if (!row) return { ok: false };
 
-  const result = await sendEmail(otpEmail(settings, e, code));
+  const result = await sendEmail({
+    ...otpEmail(settings, e, code),
+    tracking: {
+      idempotencyKey: `otp:${row.id}`,
+      type: "account_otp",
+      sourceCollection: "otp_codes",
+      sourceId: row.id,
+    },
+  });
   if (!result.ok || (!result.delivered && process.env.NODE_ENV === "production")) {
     await directusServerWrite(`/items/otp_codes/${row.id}`, "PATCH", { consumed: true });
     return { ok: false };

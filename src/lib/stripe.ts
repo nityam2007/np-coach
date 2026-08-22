@@ -10,6 +10,7 @@ import {
 import type { EmailResult } from "@/lib/email";
 import type { Stop } from "@/lib/site-config";
 import { findJourneyByCode } from "@/lib/booking-rules";
+import { siteUrl } from "@/lib/site-url";
 
 import { releaseInventory } from "@/lib/inventory";
 /**
@@ -173,6 +174,8 @@ export interface BookingRow {
   reference: string;
   status: string;
   amount: number;
+  subtotal_amount: number | null;
+  discount_amount: number | null;
   currency: string;
   from_stop: string;
   to_stop: string;
@@ -245,6 +248,8 @@ export async function createPendingBooking(data: {
     journey_snapshot: data.journeySnapshot,
     trip_type: data.tripType,
     passengers: data.passengers,
+    subtotal_amount: data.amount,
+    discount_amount: 0,
     amount: data.amount,
     currency: "gbp",
     return_service_code: data.returnServiceCode,
@@ -418,7 +423,14 @@ async function deliverOnce(
   if (lease === null) return false;
   if (lease === false) return true;
 
-  const result = await send();
+  let result: EmailResult;
+  try {
+    result = await send();
+  } catch (error) {
+    console.error("[email] transactional template/delivery failed", error);
+    await finishEmailDelivery(collection, id, statusField, lease, false);
+    return false;
+  }
   const recorded = await finishEmailDelivery(collection, id, statusField, lease, result.delivered);
   return result.delivered && recorded;
 }
@@ -432,9 +444,9 @@ async function deliverPaymentNotifications(
   if (collection === "bookings") {
     const booking = await getByReference<BookingRow>(collection, reference);
     if (!booking) return false;
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? settings.url;
+    const publicUrl = siteUrl(settings.url);
     return deliverOnce(collection, booking.id, "confirmation_email_status", () =>
-      sendBookingConfirmation(settings, booking, siteUrl),
+      sendBookingConfirmation(settings, booking, publicUrl),
     );
   }
 
@@ -480,7 +492,7 @@ export async function markPaidBySession(
   sessionId: string,
   paymentIntent: string | null,
   amountTotal: number | null,
-  options: { requireEmailDelivery?: boolean; reference?: string } = {},
+  options: { amountSubtotal?: number | null; amountDiscount?: number | null; reference?: string } = {},
 ): Promise<string | null> {
   let rows = await directusServerRead<Array<{ id: number; status: string; reference: string }>>(
     `/items/${collection}?filter[stripe_session_id][_eq]=${encodeURIComponent(sessionId)}&limit=2`,
@@ -495,6 +507,12 @@ export async function markPaidBySession(
   const row = rows[0];
 
   const verifiedAmount = Number.isInteger(amountTotal) && amountTotal !== null && amountTotal >= 0 ? amountTotal : null;
+  const verifiedSubtotal = Number.isInteger(options.amountSubtotal) && options.amountSubtotal !== null && Number(options.amountSubtotal) >= 0
+    ? Number(options.amountSubtotal)
+    : null;
+  const verifiedDiscount = Number.isInteger(options.amountDiscount) && options.amountDiscount !== null && Number(options.amountDiscount) >= 0
+    ? Number(options.amountDiscount)
+    : null;
   if (row.status !== "paid") {
     if (row.status !== "pending") return null;
 
@@ -512,6 +530,8 @@ export async function markPaidBySession(
             status: "paid",
             stripe_payment_intent: paymentIntent,
             inventory_status: "committed",
+            ...(verifiedSubtotal !== null ? { subtotal_amount: verifiedSubtotal } : {}),
+            ...(verifiedDiscount !== null ? { discount_amount: verifiedDiscount } : {}),
             ...(verifiedAmount !== null ? { amount: verifiedAmount } : {}),
           },
         );
@@ -524,6 +544,8 @@ export async function markPaidBySession(
           sessionId,
           paymentIntent,
           amountTotal: verifiedAmount,
+          amountSubtotal: verifiedSubtotal,
+          amountDiscount: verifiedDiscount,
           runs,
           seats: booking.passengers,
         });
@@ -540,6 +562,8 @@ export async function markPaidBySession(
         {
           status: "paid",
           stripe_payment_intent: paymentIntent,
+          ...(verifiedSubtotal !== null ? { subtotal_amount: verifiedSubtotal } : {}),
+          ...(verifiedDiscount !== null ? { discount_amount: verifiedDiscount } : {}),
           ...(verifiedAmount !== null ? { amount: verifiedAmount } : {}),
         },
       );
@@ -548,9 +572,7 @@ export async function markPaidBySession(
   }
 
   const emailsDelivered = await deliverPaymentNotifications(collection, row.reference);
-  if (!emailsDelivered && options.requireEmailDelivery) {
-    throw new Error(`Transactional email delivery failed for ${collection}/${row.reference}`);
-  }
+  if (!emailsDelivered) console.error(`[email] transactional delivery queued for retry: ${collection}/${row.reference}`);
   return row.reference;
 }
 
@@ -640,7 +662,11 @@ export async function confirmCheckoutSession(sessionId: string, kind: "booking" 
       session.id,
       typeof session.payment_intent === "string" ? session.payment_intent : (session.payment_intent?.id ?? null),
       session.amount_total,
-      { reference: session.metadata?.reference },
+      {
+        amountSubtotal: session.amount_subtotal,
+        amountDiscount: session.total_details?.amount_discount ?? null,
+        reference: session.metadata?.reference,
+      },
     );
   } catch {
     return null;
@@ -668,6 +694,8 @@ export interface PassPurchaseRow {
   reference: string;
   status: string;
   amount: number;
+  subtotal_amount: number | null;
+  discount_amount: number | null;
   currency: string;
   name: string;
   email: string;
@@ -704,6 +732,8 @@ export async function createPendingPassPurchase(data: {
 }): Promise<PassPurchaseRow | null> {
   return (await directusServerWrite("/items/pass_purchases", "POST", {
     reference: data.reference,
+    subtotal_amount: data.amount,
+    discount_amount: 0,
     amount: data.amount,
     currency: "gbp",
     name: data.name,

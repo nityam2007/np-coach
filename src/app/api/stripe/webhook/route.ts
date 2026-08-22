@@ -41,7 +41,8 @@ export async function POST(req: Request) {
         const collection = kind === "pass" ? "pass_purchases" : "bookings";
         try {
           const reference = await markPaidBySession(collection, session.id, paymentIntent, session.amount_total, {
-            requireEmailDelivery: true,
+            amountSubtotal: session.amount_subtotal,
+            amountDiscount: session.total_details?.amount_discount ?? null,
             reference: session.metadata?.reference,
           });
           if (!reference) throw new Error(`No unique order found for Checkout Session ${session.id}`);
@@ -84,6 +85,8 @@ export async function POST(req: Request) {
     }
   }
 
-  // Acknowledge only after payment state and required transactional emails succeed.
+  // Payment state/inventory is authoritative here. Email delivery is logged and
+  // retried independently, so a temporary SMTP issue never makes Stripe retry a
+  // payment that has already been safely reconciled.
   return NextResponse.json({ received: true });
 }

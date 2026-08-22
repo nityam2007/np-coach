@@ -134,6 +134,8 @@ export interface PaidBookingInventoryCommit {
   sessionId: string;
   paymentIntent: string | null;
   amountTotal: number | null;
+  amountSubtotal: number | null;
+  amountDiscount: number | null;
   runs: AtomicInventoryRun[];
   seats: number;
 }
@@ -173,6 +175,34 @@ export async function directusReconcilePaidBookingInventory(
 export async function directusInventoryReady(): Promise<boolean> {
   const result = await internalRequestResult<{ ready: boolean }>("/inventory/status", {});
   return result.ok && result.data.ready === true;
+}
+
+export interface DirectusEmailLogInput {
+  idempotencyKey: string;
+  emailType: string | null;
+  recipient: string | null;
+  subject: string | null;
+  sourceCollection: string | null;
+  sourceId: number | null;
+  reference: string | null;
+  messageId: string | null;
+}
+
+export async function directusBeginEmailLog(input: DirectusEmailLogInput): Promise<{ id: number; attempts: number } | null> {
+  return internalRequest<{ id: number; attempts: number }>("/email-log/begin", input);
+}
+
+export async function directusFinishEmailLog(
+  idempotencyKey: string,
+  delivered: boolean,
+  errorCode: string | null,
+): Promise<boolean> {
+  const result = await internalRequest<{ updated: boolean }>("/email-log/finish", {
+    idempotencyKey,
+    delivered,
+    errorCode,
+  });
+  return result?.updated ?? false;
 }
 
 export async function directusReleaseInventory(runIds: number[], seats: number): Promise<boolean> {

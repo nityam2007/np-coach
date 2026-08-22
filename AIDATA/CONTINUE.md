@@ -73,7 +73,7 @@ Directus collection → seed (`scripts/seed-directus.mjs`) → typed in `src/lib
 
 **Payments (P4/P5 — reuse for any new paid flow):**
 - Price **always computed server-side** from Directus (`src/lib/stripe.ts` — `priceBooking`, `priceLostPropertyPass`, `computeGross`). Client never sends an amount.
-- Persist a `pending` row **before** redirecting → **Stripe Checkout** with customer-entered promotion codes → `/api/stripe/webhook` (raw body, `constructEvent` signature verify, **idempotent** `pending→paid` keyed by unique `stripe_session_id`, routed by `metadata.kind`). The verified `amount_total` replaces the pre-discount amount before emails/tickets are produced; no-payment checkouts are also accepted. Daily Express pending rows stay `unreserved`: only verified payment atomically creates/updates `service_runs`, deducts seats and marks the booking paid. Paid-email channels use atomic Directus delivery claims/status timestamps so Stripe webhooks, success-page verification, manual CMS Paid hooks, and maintenance retries cooperate without intentional duplicates.
+- Persist a `pending` row **before** redirecting → **Stripe Checkout** with customer-entered promotion codes → `/api/stripe/webhook` (raw body, `constructEvent` signature verify, **idempotent** `pending→paid` keyed by unique `stripe_session_id`, routed by `metadata.kind`). Stripe's verified `amount_subtotal`, promotion discount and `amount_total` are persisted before emails/tickets are produced; no-payment checkouts are accepted without requiring a PaymentIntent. Daily Express pending rows stay `unreserved`: only verified payment atomically creates/updates `service_runs`, deducts seats and marks the booking paid. Paid-email channels use atomic Directus delivery claims/status timestamps so Stripe webhooks, success-page verification, manual CMS Paid hooks, and maintenance retries cooperate without intentional duplicates. SMTP failure does not undo the payment or hide the ticket.
 - Order collections (`bookings`, `pass_purchases`) are **server-write only** (no public read/create); written with `DIRECTUS_SERVER_TOKEN` (dev falls back to admin login).
 - Graceful "being set up" notice when `STRIPE_SECRET_KEY` is unset.
 
@@ -93,7 +93,7 @@ Grouped (via `npm run configure`):
 - **Daily Express:** `routes` (direction/SEO pages; legacy timetable/fare fields retained), `scheduled_services` (individual departures, ordered stops, explicit fares and sales mode), `stops` (online selectors derive only from online services), `school_routes` (home-to-school timetables)
 - **Bookings & Payments:** `bookings`, `pass_purchases`, `service_runs` (server-write only; transactional inventory uses the private Directus extension)
 - **Leads:** `contact_submissions`, `quote_requests` (server-token create, no anonymous access)
-- **Accounts:** `customers`, `otp_codes`, `customer_sessions` (server-only; HMAC OTPs and opaque revocable sessions)
+- **Accounts:** `customers`, `otp_codes`, `customer_sessions`, `email_logs` (server-only authentication records plus a metadata-only delivery overview after Customer Sessions)
 - **Settings** (singleton): site config, nav (grouped/dropdown), footer, `pricing`, `coverage`, `faqs`, `fleet_page`, `school_transport` (schools list + `logos` by slug), and `email_templates` copy.
 
 **Routes/URLs of note:** stop-to-stop booking at `/daily-express-service/book`; school pages at `/home-to-school/<slug>`; `/[slug]` resolves fleet vehicle OR content page OR Daily Express route; coded routes `/contact-us`, `/get-a-quote`, `/booking/success`, `/pass/success`, `/lost-property/claim`.
@@ -140,3 +140,9 @@ The additive application implementation includes the scheduled-services model, e
 Keep DAILY_EXPRESS_BOOKINGS_ENABLED=false. The four supplied WordPress bus admin records are authoritative: all four online buses have 60 seats, their exact schedules are mirrored, and 48 numeric Adult/Child/Infant fare rows are seeded (15/12/15/6 by service). Blank “Ex: 10” placeholders are omitted and fail closed. A revision marker applies this data once to existing Directus records and preserves later CMS edits.
 
 Before enablement, confirm the return-pricing policy (the implementation currently sums two selected legs), run the additive seed twice, refresh the guarded schema snapshot if required for manual migration, and complete the production concurrency/Stripe/email/accessibility acceptance gate in IMP-22-8-26.md.
+
+## 10. Payment email and CMS detail correction — 22 August 2026
+
+All Directus singular item pages now expose their complete safe record. Operational/system fields are read-only except explicit controls such as order status and Service Run capacity/status; `otp_codes.code_hash` and `customer_sessions.token_hash` stay hidden. **Email Logs** is placed immediately after Customer Sessions and tracks each logical customer/staff message by stable key, status, attempts, source record and safe transport error without storing the body.
+
+Stripe confirmation persists subtotal, promotion discount and actual paid total for bookings and lost-property purchases. This includes 100% coupons (`amount=0`, no PaymentIntent), 95%, 90% and future valid Stripe promotion codes. Payment/inventory completion no longer depends on SMTP success: the ticket remains available for a paid/committed booking while failed delivery stays queued for maintenance retry. Public links, redirects, QR codes and structured data resolve from `SITE_URL`/`NEXT_PUBLIC_SITE_URL` before the CMS fallback, so demo, www and apex moves do not require code changes.

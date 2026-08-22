@@ -5,12 +5,12 @@ const CAS_FIELDS = {
   contact_submissions: new Set(["email_status", "email_started_at", "email_sent_at"]),
   quote_requests: new Set(["email_status", "email_started_at", "email_sent_at"]),
   bookings: new Set([
-    "status", "stripe_session_id", "stripe_payment_intent", "amount", "inventory_status",
+    "status", "stripe_session_id", "stripe_payment_intent", "subtotal_amount", "discount_amount", "amount", "inventory_status",
     "confirmation_email_status", "confirmation_email_started_at", "confirmation_email_sent_at",
     "staff_email_status", "staff_email_started_at", "staff_email_sent_at",
   ]),
   pass_purchases: new Set([
-    "status", "stripe_session_id", "stripe_payment_intent", "amount",
+    "status", "stripe_session_id", "stripe_payment_intent", "subtotal_amount", "discount_amount", "amount",
     "confirmation_email_status", "confirmation_email_started_at", "confirmation_email_sent_at",
     "staff_email_status", "staff_email_started_at", "staff_email_sent_at",
   ]),
@@ -71,6 +71,10 @@ function validPaidCommit(body) {
       || (typeof body.paymentIntent === "string" && /^pi_[A-Za-z0-9_]{3,252}$/.test(body.paymentIntent)))
     && (body.amountTotal === null
       || (Number.isInteger(body.amountTotal) && body.amountTotal >= 0 && body.amountTotal <= 10_000_000))
+    && (body.amountSubtotal === null
+      || (Number.isInteger(body.amountSubtotal) && body.amountSubtotal >= 0 && body.amountSubtotal <= 10_000_000))
+    && (body.amountDiscount === null
+      || (Number.isInteger(body.amountDiscount) && body.amountDiscount >= 0 && body.amountDiscount <= 10_000_000))
     && validInventoryRequest(body.runs, body.seats);
 }
 
@@ -78,6 +82,29 @@ function validPaidReconciliation(body) {
   return validObject(body)
     && Number.isInteger(body.bookingId) && body.bookingId >= 1
     && validInventoryRequest(body.runs, body.seats);
+}
+
+function validShortText(value, max = 255) {
+  return value === null || (typeof value === "string" && value.length >= 1 && value.length <= max);
+}
+
+function validEmailLogBegin(body) {
+  return validObject(body)
+    && validShortText(body.idempotencyKey, 200) && body.idempotencyKey !== null
+    && validShortText(body.emailType, 100)
+    && validShortText(body.recipient)
+    && validShortText(body.subject)
+    && validShortText(body.sourceCollection, 100)
+    && (body.sourceId === null || (Number.isInteger(body.sourceId) && body.sourceId >= 1))
+    && validShortText(body.reference, 100)
+    && validShortText(body.messageId);
+}
+
+function validEmailLogFinish(body) {
+  return validObject(body)
+    && validShortText(body.idempotencyKey, 200) && body.idempotencyKey !== null
+    && typeof body.delivered === "boolean"
+    && validShortText(body.errorCode, 100);
 }
 
 async function reserveRuns(trx, runs, seats) {
@@ -122,6 +149,65 @@ const endpoint = {
 
     router.post("/inventory/status", (_req, res) => {
       return res.json({ data: { ready: true } });
+    });
+
+    router.post("/email-log/begin", async (req, res) => {
+      if (!validEmailLogBegin(req.body)) return res.status(400).json({ error: "invalid payload" });
+      const body = req.body;
+      try {
+        const data = await database.transaction(async (trx) => {
+          let row = await trx("email_logs").where({ idempotency_key: body.idempotencyKey }).forUpdate().first();
+          if (!row) {
+            await trx("email_logs").insert({
+              idempotency_key: body.idempotencyKey,
+              email_type: body.emailType,
+              recipient: body.recipient,
+              subject: body.subject,
+              status: "queued",
+              attempts: 0,
+              source_collection: body.sourceCollection,
+              source_id: body.sourceId,
+              reference: body.reference,
+              message_id: body.messageId,
+              error_code: null,
+              last_attempt_at: null,
+              sent_at: null,
+            }).onConflict("idempotency_key").ignore();
+            row = await trx("email_logs").where({ idempotency_key: body.idempotencyKey }).forUpdate().first();
+          }
+          if (!row) throw new Error("EMAIL_LOG_CREATE_FAILED");
+          const attempts = Number.isInteger(row.attempts) ? row.attempts + 1 : 1;
+          await trx("email_logs").where({ id: row.id }).update({
+            status: "sending",
+            attempts,
+            recipient: body.recipient,
+            subject: body.subject,
+            message_id: body.messageId,
+            error_code: null,
+            last_attempt_at: new Date().toISOString(),
+          });
+          return { id: row.id, attempts };
+        });
+        return res.json({ data });
+      } catch (error) {
+        logger.error(error, "email log begin failed");
+        return res.status(503).json({ error: "email log unavailable" });
+      }
+    });
+
+    router.post("/email-log/finish", async (req, res) => {
+      if (!validEmailLogFinish(req.body)) return res.status(400).json({ error: "invalid payload" });
+      try {
+        const updated = await database("email_logs").where({ idempotency_key: req.body.idempotencyKey }).update({
+          status: req.body.delivered ? "sent" : "failed",
+          error_code: req.body.delivered ? null : req.body.errorCode,
+          sent_at: req.body.delivered ? new Date().toISOString() : null,
+        });
+        return res.json({ data: { updated: updated === 1 } });
+      } catch (error) {
+        logger.error(error, "email log finish failed");
+        return res.status(503).json({ error: "email log unavailable" });
+      }
     });
 
     router.post("/cas", async (req, res) => {
@@ -184,7 +270,7 @@ const endpoint = {
 
     router.post("/inventory/commit-paid-booking", async (req, res) => {
       if (!validPaidCommit(req.body)) return res.status(400).json({ error: "invalid payload" });
-      const { bookingId, sessionId, paymentIntent, amountTotal, runs, seats } = req.body;
+      const { bookingId, sessionId, paymentIntent, amountTotal, amountSubtotal, amountDiscount, runs, seats } = req.body;
       try {
         const result = await database.transaction(async (trx) => {
           const booking = await trx("bookings").where({ id: bookingId }).forUpdate().first();
@@ -214,6 +300,8 @@ const endpoint = {
             inventory_status: "committed",
             outward_run_id: runIds[0],
             return_run_id: runIds[1] ?? null,
+            ...(amountSubtotal !== null ? { subtotal_amount: amountSubtotal } : {}),
+            ...(amountDiscount !== null ? { discount_amount: amountDiscount } : {}),
             ...(amountTotal !== null ? { amount: amountTotal } : {}),
           };
           const affected = await trx("bookings").where({ id: bookingId, status: "pending" }).update(changes);

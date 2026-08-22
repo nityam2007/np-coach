@@ -39,6 +39,7 @@ export interface QuoteEmailData {
 }
 
 export interface BookingEmailData {
+  id: number;
   reference: string;
   route_label: string;
   trip_date: string | null;
@@ -53,14 +54,19 @@ export interface BookingEmailData {
   trip_type: string;
   passengers: number;
   amount: number;
+  subtotal_amount?: number | null;
+  discount_amount?: number | null;
   currency: string;
   name: string;
   email: string;
 }
 
 export interface PassEmailData {
+  id: number;
   reference: string;
   amount: number;
+  subtotal_amount?: number | null;
+  discount_amount?: number | null;
   currency: string;
   name: string;
   email: string;
@@ -109,8 +115,15 @@ function formatMoney(amount: number, currency = "gbp"): string {
   }).format(amount / 100);
 }
 
+function issuedBookingAmount(snapshot: unknown): number | null {
+  if (!snapshot || typeof snapshot !== "object" || Array.isArray(snapshot) || !("amount" in snapshot)) return null;
+  const amount = (snapshot as { amount?: unknown }).amount;
+  return Number.isInteger(amount) && Number(amount) >= 0 ? Number(amount) : null;
+}
+
 function messageId(kind: string, key: string, settings: SiteSettings): string {
-  const host = new URL(settings.url).hostname.replace(/^www\./, "");
+  const emailHost = settings.email.general.split("@").at(-1)?.trim().toLowerCase();
+  const host = emailHost && /^[a-z0-9.-]+$/.test(emailHost) ? emailHost : "localhost";
   const safe = `${kind}-${key}`.toLowerCase().replace(/[^a-z0-9._-]/g, "-");
   return `<${safe}@${host}>`;
 }
@@ -188,6 +201,8 @@ export function bookingConfirmationEmail(
   booking: BookingEmailData,
   siteUrl: string,
 ): EmailInput {
+  const subtotal = booking.subtotal_amount ?? issuedBookingAmount(booking.journey_snapshot) ?? booking.amount;
+  const discount = booking.discount_amount ?? Math.max(0, subtotal - booking.amount);
   return buildEmail(settings, booking.email, {
     copy: settings.emailTemplates.bookingConfirmation,
     variables: { reference: booking.reference, name: booking.name },
@@ -204,6 +219,8 @@ export function bookingConfirmationEmail(
         : null },
       { label: "Ticket", value: booking.trip_type === "return" ? "Return" : "Single" },
       { label: "Passengers", value: booking.passengers },
+      { label: "Fare", value: formatMoney(subtotal, booking.currency) },
+      { label: "Promotion discount", value: discount > 0 ? `−${formatMoney(discount, booking.currency)}` : null },
       { label: "Paid", value: formatMoney(booking.amount, booking.currency) },
     ],
     ctaHref: `${siteUrl.replace(/\/$/, "")}/account/login`,
@@ -212,6 +229,8 @@ export function bookingConfirmationEmail(
 }
 
 export function lostPropertyCustomerEmail(settings: SiteSettings, pass: PassEmailData): EmailInput {
+  const subtotal = pass.subtotal_amount ?? pass.amount;
+  const discount = pass.discount_amount ?? Math.max(0, subtotal - pass.amount);
   return buildEmail(settings, pass.email, {
     copy: settings.emailTemplates.lostPropertyCustomer,
     variables: { reference: pass.reference, name: pass.name },
@@ -221,7 +240,9 @@ export function lostPropertyCustomerEmail(settings: SiteSettings, pass: PassEmai
       { label: "Travel date", value: formatDate(pass.travel_date) },
       { label: "Travel time", value: pass.travel_time },
       { label: "Where it was left", value: pass.where_left },
-      { label: "Fee paid", value: formatMoney(pass.amount, pass.currency) },
+      { label: "Fee", value: formatMoney(subtotal, pass.currency) },
+      { label: "Promotion discount", value: discount > 0 ? `−${formatMoney(discount, pass.currency)}` : null },
+      { label: "Paid", value: formatMoney(pass.amount, pass.currency) },
     ],
     messageId: messageId("lost-property-customer", pass.reference, settings),
   });

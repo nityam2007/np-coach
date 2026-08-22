@@ -97,9 +97,12 @@ const COLLECTION_META = {
   },
   // Leads
   contact_submissions: { group: "grp_leads", sort: 1, icon: "mail", display_template: "{{name}} — {{subject}}", sort_field: "created_at", note: "Messages from the Contact and Get-a-Quote forms. Reply by email or phone." },
+  quote_requests: { group: "grp_leads", sort: 2, icon: "request_quote", display_template: "{{name}} · {{pickup}} → {{destination}}", sort_field: "created_at", note: "Private-hire quote requests. Delivery fields show whether customer and staff email handling completed." },
   // Accounts
   customers: { group: "grp_accounts", sort: 1, icon: "person", display_template: "{{name}} — {{email}}", note: "Customer accounts (created automatically at checkout / login). No passwords are stored." },
   otp_codes: { group: "grp_accounts", sort: 2, icon: "password", display_template: "{{email}}", note: "One-time login codes. Technical — you never need to open this." },
+  customer_sessions: { group: "grp_accounts", sort: 3, icon: "key", display_template: "{{email}} · {{expires_at}}", sort_field: "created_at", note: "Revocable passwordless customer sessions. Token hashes are never usable as plaintext login tokens." },
+  email_logs: { group: "grp_accounts", sort: 4, icon: "mark_email_read", color: "#2563eb", display_template: "{{email_type}} · {{recipient}} · {{status}}", sort_field: "created_at", note: "Email delivery overview. One row per logical message, with attempt count and safe error code; message bodies are not stored." },
   // Settings stays top-level (singleton)
   settings: { sort: 10, icon: "settings", note: "Global site content: contact details, navigation, homepage copy, prices, FAQs and transactional email copy." },
 };
@@ -115,6 +118,15 @@ const STATUS_CHOICES = [
   { text: "Pending", value: "pending", color: "#d97706" },
   { text: "Paid", value: "paid", color: "#16a34a" },
   { text: "Failed", value: "failed", color: "#dc2626" },
+  { text: "Refunded", value: "refunded", color: "#6b7280" },
+  { text: "Disputed", value: "disputed", color: "#dc2626" },
+];
+
+const EMAIL_STATUS_CHOICES = [
+  { text: "Queued", value: "queued", color: "#d97706" },
+  { text: "Sending", value: "sending", color: "#2563eb" },
+  { text: "Sent", value: "sent", color: "#16a34a" },
+  { text: "Failed", value: "failed", color: "#dc2626" },
 ];
 
 const FIELD_META = {
@@ -126,14 +138,16 @@ const FIELD_META = {
     { field: "route_label", meta: { width: "full", readonly: true } },
     { field: "trip_type", meta: { width: "half", interface: "select-dropdown", options: { choices: [{ text: "Single", value: "single" }, { text: "Return", value: "return" }] } } },
     { field: "passengers", meta: { width: "half" } },
-    { field: "amount", meta: { width: "half", readonly: true, note: "Total charged, in pence (server-computed)." } },
+    { field: "subtotal_amount", meta: { width: "half", readonly: true, note: "Fare before Stripe promotion codes, in pence." } },
+    { field: "discount_amount", meta: { width: "half", readonly: true, note: "Stripe promotion-code discount, in pence." } },
+    { field: "amount", meta: { width: "half", readonly: true, note: "Actual total charged by Stripe, in pence. A valid 100% coupon produces 0." } },
     { field: "currency", meta: { width: "half", readonly: true } },
     { field: "name", meta: { width: "half" } },
     { field: "email", meta: { width: "half" } },
     { field: "phone", meta: { width: "half" } },
     { field: "stripe_session_id", meta: { width: "half", readonly: true, note: "Stripe Checkout Session id (unique — webhook idempotency)." } },
     { field: "stripe_payment_intent", meta: { width: "half", readonly: true } },
-    { field: "route_slug", meta: { hidden: true, note: "Legacy — superseded by from_stop/to_stop." } },
+    { field: "route_slug", meta: { hidden: false, readonly: true, note: "Issued outward route identifier." } },
     { field: "outward_service_code", meta: { width: "half", readonly: true } },
     { field: "return_service_code", meta: { width: "half", readonly: true } },
     { field: "outward_service_name", meta: { width: "half", readonly: true } },
@@ -141,12 +155,16 @@ const FIELD_META = {
     { field: "arrival_time", meta: { width: "half", readonly: true } },
     { field: "return_arrival_time", meta: { width: "half", readonly: true } },
     { field: "journey_snapshot", meta: { width: "full", readonly: true, note: "Immutable issued journey and fare snapshot." } },
-    { field: "outward_run_id", meta: { hidden: true, readonly: true } },
-    { field: "return_run_id", meta: { hidden: true, readonly: true } },
-    { field: "inventory_status", meta: { hidden: true, readonly: true, note: "Internal paid inventory reconciliation state." } },
+    { field: "outward_run_id", meta: { hidden: false, readonly: true } },
+    { field: "return_run_id", meta: { hidden: false, readonly: true } },
+    { field: "inventory_status", meta: { hidden: false, readonly: true, note: "Internal paid inventory reconciliation state." } },
+    { field: "confirmation_email_status", meta: { hidden: false, readonly: true, width: "half", display: "labels", options: { choices: EMAIL_STATUS_CHOICES }, display_options: { choices: EMAIL_STATUS_CHOICES, showAsDot: true }, note: "Pending/failed messages are retried by maintenance." } },
+    { field: "confirmation_email_started_at", meta: { hidden: false, readonly: true, width: "half" } },
+    { field: "confirmation_email_sent_at", meta: { hidden: false, readonly: true, width: "half" } },
+    { field: "created_at", meta: { hidden: false, readonly: true, width: "half" } },
   ],
   service_runs: [
-    { field: "run_key", meta: { hidden: true, readonly: true, note: "Unique internal route/date/departure key." } },
+    { field: "run_key", meta: { hidden: false, readonly: true, note: "Unique internal route/date/departure key." } },
     { field: "route_slug", meta: { width: "half", readonly: true } },
     { field: "service_date", meta: { width: "half", readonly: true } },
     { field: "service_code", meta: { width: "half", readonly: true, note: "Immutable scheduled-service code." } },
@@ -159,9 +177,35 @@ const FIELD_META = {
     { field: "reference", meta: { width: "half", readonly: true } },
     { field: "status", meta: { width: "half", interface: "select-dropdown", display: "labels", note: "Set Paid only after money is received. This sends the customer and staff emails once.", options: { choices: STATUS_CHOICES }, display_options: { choices: STATUS_CHOICES, showAsDot: true } } },
     { field: "item_description", meta: { width: "full", note: "What the customer lost." } },
-    { field: "amount", meta: { width: "half", readonly: true, note: "Fee charged, in pence (incl. VAT)." } },
+    { field: "subtotal_amount", meta: { width: "half", readonly: true, note: "Fee before Stripe promotion codes, in pence." } },
+    { field: "discount_amount", meta: { width: "half", readonly: true, note: "Stripe promotion-code discount, in pence." } },
+    { field: "amount", meta: { width: "half", readonly: true, note: "Actual total charged by Stripe, in pence." } },
     { field: "school_route", meta: { width: "half", interface: "boolean" } },
     { field: "stripe_session_id", meta: { hidden: false, readonly: true } },
+    { field: "stripe_payment_intent", meta: { hidden: false, readonly: true } },
+    { field: "confirmation_email_status", meta: { hidden: false, readonly: true, width: "half", display: "labels", options: { choices: EMAIL_STATUS_CHOICES }, display_options: { choices: EMAIL_STATUS_CHOICES, showAsDot: true } } },
+    { field: "confirmation_email_started_at", meta: { hidden: false, readonly: true, width: "half" } },
+    { field: "confirmation_email_sent_at", meta: { hidden: false, readonly: true, width: "half" } },
+    { field: "staff_email_status", meta: { hidden: false, readonly: true, width: "half", display: "labels", options: { choices: EMAIL_STATUS_CHOICES }, display_options: { choices: EMAIL_STATUS_CHOICES, showAsDot: true } } },
+    { field: "staff_email_started_at", meta: { hidden: false, readonly: true, width: "half" } },
+    { field: "staff_email_sent_at", meta: { hidden: false, readonly: true, width: "half" } },
+    { field: "created_at", meta: { hidden: false, readonly: true, width: "half" } },
+  ],
+  email_logs: [
+    { field: "idempotency_key", meta: { readonly: true, width: "full", note: "Stable logical-message key; prevents duplicate overview rows." } },
+    { field: "email_type", meta: { readonly: true, width: "half" } },
+    { field: "status", meta: { readonly: true, width: "half", display: "labels", options: { choices: EMAIL_STATUS_CHOICES }, display_options: { choices: EMAIL_STATUS_CHOICES, showAsDot: true } } },
+    { field: "recipient", meta: { readonly: true, width: "half" } },
+    { field: "subject", meta: { readonly: true, width: "half" } },
+    { field: "attempts", meta: { readonly: true, width: "half" } },
+    { field: "error_code", meta: { readonly: true, width: "half", note: "Safe transport error category; no message body or credentials are recorded." } },
+    { field: "source_collection", meta: { readonly: true, width: "half" } },
+    { field: "source_id", meta: { readonly: true, width: "half" } },
+    { field: "reference", meta: { readonly: true, width: "half" } },
+    { field: "message_id", meta: { readonly: true, width: "full" } },
+    { field: "last_attempt_at", meta: { readonly: true, width: "half" } },
+    { field: "sent_at", meta: { readonly: true, width: "half" } },
+    { field: "created_at", meta: { readonly: true, width: "half" } },
   ],
   services: [
     { field: "title", meta: { width: "half", note: "Homepage card heading." } },
@@ -313,6 +357,36 @@ async function applyFieldMeta(collection, fields) {
   console.log(`✓ ${collection}: field UX applied`);
 }
 
+// Item pages expose the complete operational record. The only exceptions are
+// authentication hashes, which must remain hidden even from routine CMS views.
+// Transactional/system fields are read-only unless listed as an operator control.
+const OPERATIONAL_EDITABLE_FIELDS = {
+  bookings: new Set(["status"]),
+  service_runs: new Set(["capacity", "status"]),
+  pass_purchases: new Set(["status"]),
+  contact_submissions: new Set(),
+  quote_requests: new Set(),
+  customers: new Set(["name"]),
+  otp_codes: new Set(),
+  customer_sessions: new Set(["revoked_at"]),
+  email_logs: new Set(),
+};
+const SENSITIVE_HIDDEN_FIELDS = new Set(["otp_codes.code_hash", "customer_sessions.token_hash"]);
+
+async function applyCompleteItemVisibility(collection) {
+  const fields = await api(`/fields/${collection}`);
+  const editable = OPERATIONAL_EDITABLE_FIELDS[collection];
+  for (const field of fields) {
+    const sensitive = SENSITIVE_HIDDEN_FIELDS.has(`${collection}.${field.field}`);
+    const readonly = field.field === "id" || (editable ? !editable.has(field.field) : false);
+    await api(`/fields/${collection}/${field.field}`, {
+      method: "PATCH",
+      body: JSON.stringify({ meta: { hidden: sensitive, ...(readonly ? { readonly: true } : {}) } }),
+    });
+  }
+  console.log(`✓ ${collection}: complete safe item detail visibility applied`);
+}
+
 // ---- Insights dashboard ----
 // A rich, plain-English board for a non-technical admin: revenue + counts across
 // today / 7-day / all-time, an "abandoned cart" row (checkouts started but never
@@ -404,6 +478,11 @@ async function run() {
   for (const [collection, fields] of Object.entries(FIELD_META)) {
     if (!existing.has(collection)) continue;
     await applyFieldMeta(collection, fields);
+  }
+
+  for (const collection of Object.keys(COLLECTION_META)) {
+    if (!existing.has(collection)) continue;
+    await applyCompleteItemVisibility(collection);
   }
 
   await ensureDashboard();

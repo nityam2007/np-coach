@@ -6,6 +6,7 @@ import { BoardingPass } from "@/components/account/BoardingPass";
 import { TicketActions } from "@/components/account/TicketActions";
 import { Icon } from "@/components/ui/Icon";
 import { ButtonLink } from "@/components/ui/Button";
+import { siteUrl } from "@/lib/site-url";
 
 export const metadata: Metadata = {
   title: "Booking confirmed",
@@ -19,7 +20,9 @@ export default async function BookingSuccessPage({ searchParams }: { searchParam
   const booking = reference ? await getBookingByReference(reference) : null;
   const [stops, settings] = await Promise.all([getStops(), getSettings()]);
   const emailSent = booking?.confirmation_email_status === "sent";
-  const pass = booking?.status === "paid" && booking.inventory_status === "committed" ? await boardingPassFromBooking(booking, stops, settings.name, settings.url) : null;
+  const pass = booking?.status === "paid" && booking.inventory_status === "committed"
+    ? await boardingPassFromBooking(booking, stops, settings.name, siteUrl(settings.url))
+    : null;
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-16 sm:px-6">

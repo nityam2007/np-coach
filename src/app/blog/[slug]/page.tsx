@@ -7,6 +7,7 @@ import { Icon } from "@/components/ui/Icon";
 import { Reveal } from "@/components/ui/motion";
 import { CmsHtml } from "@/components/ui/CmsHtml";
 import { assetUrl, getBlogPost, getBlogPosts, getSettings } from "@/lib/directus";
+import { siteUrl } from "@/lib/site-url";
 
 export async function generateStaticParams() {
   const posts = await getBlogPosts();
@@ -36,6 +37,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   if (!post) notFound();
 
   const settings = await getSettings();
+  const publicUrl = siteUrl(settings.url);
   const thumbnail = assetUrl(post.thumbnail);
   const logo = assetUrl(settings.logo);
   const articleDate = formatDate(post.date);
@@ -48,11 +50,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     author: { "@type": "Organization", name: post.author },
     publisher: {
       "@type": "Organization",
-      "@id": `${settings.url}/#organization`,
+      "@id": `${publicUrl}/#organization`,
       name: settings.name,
       logo: logo ? { "@type": "ImageObject", url: logo } : undefined,
     },
-    mainEntityOfPage: { "@type": "WebPage", "@id": `${settings.url}/blog/${post.slug}` },
+    mainEntityOfPage: { "@type": "WebPage", "@id": `${publicUrl}/blog/${post.slug}` },
     image: thumbnail ?? undefined,
   };
 

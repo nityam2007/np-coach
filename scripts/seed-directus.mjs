@@ -170,9 +170,9 @@ const SCHOOL_ROUTES_FIELDS = [
 // T6 — form submissions (server-write only; public may CREATE the allowlisted fields, never READ).
 // `created_at` is filled by Directus on insert; submissions are read by staff in the admin panel.
 const datetimeCreated = { field: "created_at", type: "timestamp", meta: { interface: "datetime", readonly: true, special: ["date-created"] }, schema: {} };
-const deliveryStatus = (field) => ({ field, type: "string", meta: { hidden: true, readonly: true }, schema: { default_value: "pending" } });
-const deliverySentAt = (field) => ({ field, type: "timestamp", meta: { interface: "datetime", hidden: true, readonly: true }, schema: {} });
-const deliveryStartedAt = (field) => ({ field, type: "timestamp", meta: { interface: "datetime", hidden: true, readonly: true }, schema: {} });
+const deliveryStatus = (field) => ({ field, type: "string", meta: { hidden: false, readonly: true }, schema: { default_value: "pending" } });
+const deliverySentAt = (field) => ({ field, type: "timestamp", meta: { interface: "datetime", hidden: false, readonly: true }, schema: {} });
+const deliveryStartedAt = (field) => ({ field, type: "timestamp", meta: { interface: "datetime", hidden: false, readonly: true }, schema: {} });
 const publishedStatus = { field: "status", type: "string", meta: { interface: "select-dropdown", options: { choices: [{ text: "Draft", value: "draft" }, { text: "Published", value: "published" }] } }, schema: { default_value: "published" } };
 
 const CONTACT_SUBMISSIONS_FIELDS = [
@@ -227,6 +227,26 @@ const CUSTOMER_SESSIONS_FIELDS = [
   datetimeCreated,
 ];
 
+// Delivery audit trail for every customer/staff email. Content/body is deliberately
+// not stored; staff get operational status without duplicating sensitive messages.
+const EMAIL_LOGS_FIELDS = [
+  pk("id"),
+  uniqueStr("idempotency_key"),
+  str("email_type"),
+  str("recipient"),
+  str("subject"),
+  str("status"),
+  int("attempts"),
+  str("source_collection"),
+  int("source_id"),
+  str("reference"),
+  str("message_id"),
+  str("error_code"),
+  { field: "last_attempt_at", type: "timestamp", meta: { interface: "datetime", readonly: true }, schema: {} },
+  { field: "sent_at", type: "timestamp", meta: { interface: "datetime", readonly: true }, schema: {} },
+  datetimeCreated,
+];
+
 // P4 — Daily Express bookings. Written ONLY by the server (server token, no public access):
 // the booking is created `pending` and unreserved before payment; the signed Stripe webhook atomically creates inventory and sets it `paid`.
 // `stripe_session_id` is unique → webhook idempotency. Amounts stored in pence, server-computed.
@@ -260,7 +280,9 @@ const BOOKINGS_FIELDS = [
   str("return_route_slug"),
   str("return_departure_time"),
   int("passengers"),
-  int("amount"), // total in pence
+  int("subtotal_amount"), // list total before Stripe promotion codes
+  int("discount_amount"), // Stripe promotion-code discount
+  int("amount"), // actual total charged in pence
   str("currency"),
   str("name"), str("email"), str("phone"),
   int("outward_run_id"),
@@ -280,7 +302,7 @@ const BOOKINGS_FIELDS = [
 const PASS_PURCHASES_FIELDS = [
   pk("id"),
   uniqueStr("reference"),
-  int("amount"), str("currency"),
+  int("subtotal_amount"), int("discount_amount"), int("amount"), str("currency"),
   str("name"), str("email"), str("phone"),
   { field: "travel_date", type: "date", meta: { interface: "datetime" }, schema: {} },
   str("travel_time"),
@@ -452,6 +474,7 @@ const PROTECTED_DATA_COLLECTIONS = [
   "pass_purchases",
   "contact_submissions",
   "quote_requests",
+  "email_logs",
 ];
 
 async function itemCount(collection) {
@@ -529,6 +552,7 @@ async function run() {
   await ensureCollection("customers", { icon: "person", note: "Customer accounts (server-write only; passwordless)" }, CUSTOMERS_FIELDS);
   await ensureCollection("otp_codes", { icon: "password", note: "Login OTP codes (server-write only; hashed, single-use)" }, OTP_FIELDS);
   await ensureCollection("customer_sessions", { icon: "key", note: "Opaque customer sessions (server-only; revocable)" }, CUSTOMER_SESSIONS_FIELDS);
+  await ensureCollection("email_logs", { icon: "mark_email_read", note: "Transactional email delivery overview (metadata only; message bodies are not stored)" }, EMAIL_LOGS_FIELDS);
 
   const protectedBefore = await protectedDataCounts();
 
@@ -597,6 +621,10 @@ async function run() {
   await ensureField("bookings", str("return_service_name"));
   await ensureField("bookings", str("return_arrival_time"));
   await ensureField("bookings", json("journey_snapshot"));
+  await ensureField("bookings", int("subtotal_amount"));
+  await ensureField("bookings", int("discount_amount"));
+  await ensureField("pass_purchases", int("subtotal_amount"));
+  await ensureField("pass_purchases", int("discount_amount"));
   await ensureField("service_runs", str("service_code"));
 
 
@@ -660,7 +688,8 @@ async function run() {
   await ensurePublicRead("scheduled_services");
   await ensurePublicRead("blog_posts");
   await ensurePublicRead("testimonials");
-  for (const collection of ["contact_submissions", "quote_requests", "bookings", "service_runs", "pass_purchases", "customers", "otp_codes", "customer_sessions"]) {
+  await ensureUniqueField("email_logs", "idempotency_key");
+  for (const collection of ["contact_submissions", "quote_requests", "bookings", "service_runs", "pass_purchases", "customers", "otp_codes", "customer_sessions", "email_logs"]) {
     await revokePublicAccess(collection);
   }
   // Pricing: merge in any keys missing from the live row (e.g. newly-added fares),

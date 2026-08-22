@@ -67,7 +67,7 @@ export async function deliverLead(collection: LeadCollection, id: number): Promi
   let delivered = false;
   if (collection === "contact_submissions") {
     const row = await directusServerRead<ContactRow>(`/items/${collection}/${id}`);
-    if (row) delivered = await sendContactNotifications(settings, row);
+    if (row) delivered = await sendContactNotifications(settings, row, row.id);
   } else {
     const row = await directusServerRead<QuoteRow>(`/items/${collection}/${id}`);
     if (row) {
@@ -82,7 +82,7 @@ export async function deliverLead(collection: LeadCollection, id: number): Promi
         passengers: row.passengers,
         coachSize: row.coach_size,
         journeyDetails: row.journey_details,
-      });
+      }, row.id);
     }
   }
 

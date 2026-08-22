@@ -9,6 +9,7 @@ import { Reveal } from "@/components/ui/motion";
 import { CmsHtml } from "@/components/ui/CmsHtml";
 import { ButtonLink, buttonCls } from "@/components/ui/Button";
 import { assetUrl, getTour, getTours, getSettings, selectPageHeroFallback } from "@/lib/directus";
+import { siteUrl } from "@/lib/site-url";
 
 export async function generateStaticParams() {
   const tours = await getTours();
@@ -27,6 +28,7 @@ export default async function TourPage({ params }: { params: Promise<{ destinati
   const tour = await getTour(destination);
   if (!tour) notFound();
   const settings = await getSettings();
+  const publicUrl = siteUrl(settings.url);
   const heroFallback = selectPageHeroFallback(settings, `uk-tours/${destination}`);
   const hero = assetUrl(tour.heroImage ?? tour.image ?? heroFallback?.image);
   const heroAlt = tour.heroImageAlt ?? tour.imageAlt ?? heroFallback?.imageAlt ?? "";
@@ -38,9 +40,9 @@ export default async function TourPage({ params }: { params: Promise<{ destinati
     serviceType: "Coach hire and UK tours",
     name: `${tour.destination} coach tours from West London`,
     description: tour.seoDescription,
-    url: `${settings.url}/uk-tours/${tour.slug}`,
+    url: `${publicUrl}/uk-tours/${tour.slug}`,
     areaServed: "United Kingdom",
-    provider: { "@type": "Organization", "@id": `${settings.url}/#organization`, name: settings.name },
+    provider: { "@type": "Organization", "@id": `${publicUrl}/#organization`, name: settings.name },
   };
 
   return (

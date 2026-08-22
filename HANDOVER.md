@@ -80,7 +80,8 @@ Only `NEXT_PUBLIC_*` variables should be enabled as build variables. Treat every
 - Contact and quote forms pass Turnstile, create Directus records, notify staff, and acknowledge the customer.
 - Customer OTP/account flow delivers the code; a forced SMTP failure shows an error instead of false success.
 - A Stripe test/live booking and lost-property payment reaches `paid` through the signed webhook.
-- The booking email is sent once; lost property sends customer and staff messages once; Directus email status fields show `sent`. Repeat this once through Stripe and once by changing a test record to Paid in Directus; neither path may duplicate email or inventory.
+- The booking email is sent once; lost property sends customer and staff messages once; Directus parent email fields and the matching **Email Logs** rows show `sent`. Repeat this once through Stripe, once with a 100% coupon/no PaymentIntent, and once by changing a test record to Paid in Directus; neither path may duplicate email or inventory.
+- Force one SMTP failure and confirm Email Logs shows `failed` with an attempt count and safe error code, then run maintenance and confirm the same logical row becomes `sent` without duplicating the paid order or inventory.
 - Cookie consent, security headers, sitemap, robots.txt, and llms.txt respond correctly.
 - GA4 makes no network request before explicit consent; accepting loads `G-3GXSRDBP55`, rejecting/withdrawing disables analytics and clears accessible first-party GA cookies.
 - Search Console verification, apex canonicals, root sitemap URLs, and the CMS-backed LocalBusiness/service JSON-LD are present after the domain cutover.
@@ -107,10 +108,11 @@ For an application rollback, select the last known-good Git commit in Coolify an
 - Every CMS bootstrap phase paces Directus requests and retries `429`/temporary upstream responses with bounded backoff. The configured 50-request/second Redis-backed limiter remains enabled; bootstrap defaults to 20 requests/second. Interrupted imports safely resume by matching existing file titles.
 - The August client media revision is guarded by settings.client_media_revision = client-review-2026-08-20-v2: its 23 committed assets are assigned once, and subsequent deploys preserve client-edited Directus media.
 - `DIRECTUS_SERVER_TOKEN` may be blank for the infrastructure bootstrap, but protected application writes remain disabled until a scoped token is configured.
+- `email_logs` is written through the secret-protected internal Directus endpoint, so the scoped app role does not need direct collection create/update permission. CMS staff may read the overview according to their Directus role.
 
 ## CMS operations
 
-Use Directus for site copy, navigation, footer, fleet, routes, pricing, SEO, media, FAQs, testimonials, blog content, and operational records. Do not edit MariaDB directly.
+Use Directus for site copy, navigation, footer, fleet, routes, pricing, SEO, media, FAQs, testimonials, blog content, and operational records. Singular item pages show all safe fields; system fields are read-only and OTP/session hashes deliberately remain hidden. **Email Logs** appears after Customer Sessions and stores delivery metadata only. Do not edit MariaDB directly.
 
 Seed and configuration scripts fill missing baseline data without replacing populated settings, dashboard panels, or transactional rows; they are not a substitute for production backups. Before changing schema, create and restore-test a backup, inspect the schema dry-run, regenerate `directus/schema-snapshot.yaml`, and apply it manually during a maintenance window.
 
@@ -121,7 +123,7 @@ Confirm each item with the project owner; some may already have been supplied in
 - Scoped `DIRECTUS_SERVER_TOKEN` and least-privilege permissions.
 - Cloudflare proxy, Full (strict), WAF rules, and the existing Managed widget's `TURNSTILE_SECRET`.
 - Stripe live keys, signed webhook, and real low-value transaction test.
-- End-to-end Postfix delivery for contact, quote, OTP, booking, and lost-property customer/staff emails.
+- End-to-end Postfix delivery for contact, quote, OTP, booking, and lost-property customer/staff emails, with Email Logs evidence and a failed-then-retried message.
 - Encrypted off-site backup schedule and successful restore test.
 - Lighthouse/accessibility review and key-page mobile QA.
 - Required WordPress-to-Next.js 301 redirects.

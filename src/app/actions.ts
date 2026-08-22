@@ -24,6 +24,7 @@ import { upsertCustomer } from "@/lib/account";
 import { getSettings } from "@/lib/directus";
 import { deliverLead } from "@/lib/lead-delivery";
 import { clientIp, rateLimited, rateLimitKey, RATE_LIMITS } from "@/lib/security";
+import { siteUrl } from "@/lib/site-url";
 
 
 export async function submitContact(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -183,7 +184,7 @@ export async function startBooking(_prev: FormState, formData: FormData): Promis
   await upsertCustomer(data.email, data.name);
 
   const settings = await getSettings();
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? settings.url;
+  const baseUrl = siteUrl(settings.url);
 
   try {
     const session = await getStripe().checkout.sessions.create({
@@ -265,7 +266,7 @@ export async function startPassPurchase(_prev: FormState, formData: FormData): P
   await upsertCustomer(data.email, data.name);
 
   const settings = await getSettings();
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? settings.url;
+  const baseUrl = siteUrl(settings.url);
 
   try {
     const session = await getStripe().checkout.sessions.create({

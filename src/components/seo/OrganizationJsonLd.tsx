@@ -1,9 +1,11 @@
 import { assetUrl, type SiteSettings } from "@/lib/directus";
 import type { ServiceCard } from "@/lib/site-config";
 import { JsonLdScript } from "@/components/seo/JsonLd";
+import { siteUrl } from "@/lib/site-url";
 
 /** Site-wide Organization / LocalBusiness structured data. */
 export function OrganizationJsonLd({ settings, services }: { settings: SiteSettings; services: ServiceCard[] }) {
+  const publicUrl = siteUrl(settings.url);
   const logo = assetUrl(settings.logo);
   const image = assetUrl(settings.heroImage);
   const sameAs = settings.socialLinks.map((link) => link.href).filter(Boolean);
@@ -12,18 +14,18 @@ export function OrganizationJsonLd({ settings, services }: { settings: SiteSetti
     name: "Coach transport services",
     itemListElement: services.map((service) => ({
       "@type": "Offer",
-      url: new URL(service.href, settings.url).toString(),
+      url: new URL(service.href, publicUrl).toString(),
       itemOffered: { "@type": "Service", name: service.title, description: service.blurb },
     })),
   } : undefined;
   const data = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
-    "@id": `${settings.url}/#organization`,
+    "@id": `${publicUrl}/#organization`,
     name: settings.name,
     alternateName: "NP Coaches",
     legalName: settings.legalName,
-    url: settings.url,
+    url: publicUrl,
     logo: logo ?? undefined,
     image: image ?? logo ?? undefined,
     description: settings.description,

@@ -108,7 +108,7 @@ test("compare-and-swap only updates the expected state once", async () => {
   assert.deepEqual((await request("/cas", payload)).body, { data: { updated: false } });
 });
 
-test("paid booking commit creates two-leg inventory and is idempotent", async () => {
+test("90 percent coupon creates two-leg paid inventory and is idempotent", async () => {
   const database = mockDatabase({
     bookings: [{
       id: 1,
@@ -127,7 +127,9 @@ test("paid booking commit creates two-leg inventory and is idempotent", async ()
     bookingId: 1,
     sessionId: "cs_test_paid_booking",
     paymentIntent: "pi_test_paid_booking",
-    amountTotal: 1200,
+    amountTotal: 150,
+    amountSubtotal: 1500,
+    amountDiscount: 1350,
     runs: [
       { serviceCode: "lm-morning", routeSlug: "outward", serviceDate: "2026-08-30", departureTime: "09:45", capacity: 240 },
       { serviceCode: "ml-afternoon", routeSlug: "return", serviceDate: "2026-08-31", departureTime: "15:00", capacity: 60 },
@@ -149,12 +151,48 @@ test("paid booking commit creates two-leg inventory and is idempotent", async ()
     inventory_status: "committed",
     outward_run_id: 1,
     return_run_id: 2,
-    amount: 1200,
+    subtotal_amount: 1500,
+    discount_amount: 1350,
+    amount: 150,
   });
 
   const retried = await request("/inventory/commit-paid-booking", payload);
   assert.equal(retried.status, 200);
   assert.deepEqual(database.rows("service_runs").map((row) => row.booked_seats), [1, 1]);
+});
+
+test("email delivery overview tracks attempts and final state without collection permissions", async () => {
+  const database = mockDatabase();
+  const request = harness(database);
+  const begin = {
+    idempotencyKey: "booking:14:customer",
+    emailType: "booking_confirmation",
+    recipient: "customer@example.test",
+    subject: "Your ticket",
+    sourceCollection: "bookings",
+    sourceId: 14,
+    reference: "NPX-TEST",
+    messageId: "<booking-test@example.test>",
+  };
+
+  assert.deepEqual((await request("/email-log/begin", begin)).body, { data: { id: 1, attempts: 1 } });
+  assert.deepEqual((await request("/email-log/finish", {
+    idempotencyKey: begin.idempotencyKey,
+    delivered: false,
+    errorCode: "smtp_not_configured",
+  })).body, { data: { updated: true } });
+  assert.deepEqual((await request("/email-log/begin", begin)).body, { data: { id: 1, attempts: 2 } });
+  assert.deepEqual((await request("/email-log/finish", {
+    idempotencyKey: begin.idempotencyKey,
+    delivered: true,
+    errorCode: null,
+  })).body, { data: { updated: true } });
+
+  assert.equal(database.rows("email_logs").length, 1);
+  assert.equal(database.rows("email_logs")[0].attempts, 2);
+  assert.equal(database.rows("email_logs")[0].status, "sent");
+  assert.equal(database.rows("email_logs")[0].error_code, null);
+  assert.ok(database.rows("email_logs")[0].sent_at);
 });
 
 test("CMS-paid booking reconciliation creates inventory once", async () => {
@@ -212,6 +250,8 @@ test("failed paid commit rolls back inventory and leaves booking pending", async
     sessionId: "cs_test_no_capacity",
     paymentIntent: "pi_test_no_capacity",
     amountTotal: 1500,
+    amountSubtotal: 1500,
+    amountDiscount: 0,
     runs: [
       { serviceCode: "lm-morning", routeSlug: "outward", serviceDate: "2026-08-30", departureTime: "09:45", capacity: 240 },
       { serviceCode: "ml-afternoon", routeSlug: "return", serviceDate: "2026-08-31", departureTime: "15:00", capacity: 60 },
@@ -243,10 +283,84 @@ test("paid inventory rejects capacity above the CMS limit", async () => {
     sessionId: "cs_test_invalid_capacity",
     paymentIntent: "pi_test_invalid_capacity",
     amountTotal: 1500,
+    amountSubtotal: 1500,
+    amountDiscount: 0,
     runs: [{ serviceCode: "lm-morning", routeSlug: "outward", serviceDate: "2026-08-30", departureTime: "09:45", capacity: 501 }],
     seats: 1,
   });
   assert.equal(result.status, 400);
   assert.deepEqual(database.rows("service_runs") ?? [], []);
   assert.equal(database.rows("bookings")[0].status, "pending");
+});
+
+test("100 percent coupon commits a paid ticket without a payment intent", async () => {
+  const database = mockDatabase({
+    bookings: [{
+      id: 1,
+      reference: "NPC-FREE-1",
+      status: "pending",
+      stripe_session_id: "cs_test_free_booking",
+      stripe_payment_intent: null,
+      inventory_status: "unreserved",
+      outward_run_id: null,
+      return_run_id: null,
+      subtotal_amount: 1800,
+      discount_amount: 0,
+      amount: 1800,
+    }],
+  });
+  const request = harness(database);
+  const result = await request("/inventory/commit-paid-booking", {
+    bookingId: 1,
+    sessionId: "cs_test_free_booking",
+    paymentIntent: null,
+    amountTotal: 0,
+    amountSubtotal: 1800,
+    amountDiscount: 1800,
+    runs: [{ serviceCode: "lm-morning", routeSlug: "outward", serviceDate: "2026-08-30", departureTime: "09:45", capacity: 60 }],
+    seats: 1,
+  });
+
+  assert.equal(result.status, 200);
+  assert.equal(database.rows("bookings")[0].status, "paid");
+  assert.equal(database.rows("bookings")[0].inventory_status, "committed");
+  assert.equal(database.rows("bookings")[0].stripe_payment_intent, null);
+  assert.equal(database.rows("bookings")[0].subtotal_amount, 1800);
+  assert.equal(database.rows("bookings")[0].discount_amount, 1800);
+  assert.equal(database.rows("bookings")[0].amount, 0);
+  assert.equal(database.rows("service_runs")[0].booked_seats, 1);
+});
+
+test("95 percent coupon records Stripe subtotal, discount and paid total", async () => {
+  const database = mockDatabase({
+    bookings: [{
+      id: 1,
+      reference: "NPC-95-1",
+      status: "pending",
+      stripe_session_id: "cs_test_95_booking",
+      stripe_payment_intent: null,
+      inventory_status: "unreserved",
+      outward_run_id: null,
+      return_run_id: null,
+      subtotal_amount: 1800,
+      discount_amount: 0,
+      amount: 1800,
+    }],
+  });
+  const request = harness(database);
+  const result = await request("/inventory/commit-paid-booking", {
+    bookingId: 1,
+    sessionId: "cs_test_95_booking",
+    paymentIntent: "pi_test_95_booking",
+    amountTotal: 90,
+    amountSubtotal: 1800,
+    amountDiscount: 1710,
+    runs: [{ serviceCode: "lm-morning", routeSlug: "outward", serviceDate: "2026-08-30", departureTime: "09:45", capacity: 60 }],
+    seats: 1,
+  });
+
+  assert.equal(result.status, 200);
+  assert.equal(database.rows("bookings")[0].subtotal_amount, 1800);
+  assert.equal(database.rows("bookings")[0].discount_amount, 1710);
+  assert.equal(database.rows("bookings")[0].amount, 90);
 });

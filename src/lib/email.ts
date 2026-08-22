@@ -1,4 +1,13 @@
 import type { Transporter } from "nodemailer";
+import { directusBeginEmailLog, directusFinishEmailLog } from "@/lib/directus-server";
+
+export interface EmailTracking {
+  idempotencyKey: string;
+  type: string;
+  sourceCollection?: string;
+  sourceId?: number;
+  reference?: string;
+}
 
 export interface EmailInput {
   to: string;
@@ -7,11 +16,13 @@ export interface EmailInput {
   html?: string;
   replyTo?: string;
   messageId?: string;
+  tracking?: EmailTracking;
 }
 
 export interface EmailResult {
   ok: boolean;
   delivered: boolean;
+  errorCode?: string;
 }
 
 interface SmtpConfig {
@@ -28,6 +39,34 @@ interface SmtpConfig {
 }
 
 let transporterPromise: Promise<Transporter> | null = null;
+
+function safeLogValue(value: string | undefined, max = 255): string | null {
+  const clean = value?.replace(/[\r\n]+/g, " ").trim();
+  return clean ? clean.slice(0, max) : null;
+}
+
+async function beginEmailLog(input: EmailInput): Promise<{ idempotencyKey: string } | null> {
+  if (!input.tracking) return null;
+  const key = safeLogValue(input.tracking.idempotencyKey, 200);
+  if (!key) return null;
+
+  const result = await directusBeginEmailLog({
+    idempotencyKey: key,
+    emailType: safeLogValue(input.tracking.type, 100),
+    recipient: safeLogValue(input.to),
+    subject: safeLogValue(input.subject),
+    sourceCollection: safeLogValue(input.tracking.sourceCollection, 100),
+    sourceId: input.tracking.sourceId ?? null,
+    reference: safeLogValue(input.tracking.reference, 100),
+    messageId: safeLogValue(input.messageId),
+  });
+  return result ? { idempotencyKey: key } : null;
+}
+
+async function finishEmailLog(log: { idempotencyKey: string } | null, delivered: boolean, errorCode?: string): Promise<void> {
+  if (!log) return;
+  await directusFinishEmailLog(log.idempotencyKey, delivered, delivered ? null : safeLogValue(errorCode, 100));
+}
 
 function envBoolean(name: string, fallback: boolean): boolean {
   const value = process.env[name]?.trim().toLowerCase();
@@ -81,14 +120,16 @@ async function getTransporter(config: SmtpConfig): Promise<Transporter> {
 
 export async function sendEmail(input: EmailInput): Promise<EmailResult> {
   const config = smtpConfig();
+  const log = await beginEmailLog(input);
   if (!smtpConfigured(config)) {
     console.info(`[email:not-configured] → ${input.to} · ${input.subject}`);
-    return { ok: true, delivered: false };
+    await finishEmailLog(log, false, "smtp_not_configured");
+    return { ok: true, delivered: false, errorCode: "smtp_not_configured" };
   }
 
   try {
     const transporter = await getTransporter(config);
-    await transporter.sendMail({
+    const info = await transporter.sendMail({
       from: { name: config.fromName, address: config.fromAddress },
       to: input.to,
       replyTo: input.replyTo,
@@ -97,11 +138,17 @@ export async function sendEmail(input: EmailInput): Promise<EmailResult> {
       text: input.text,
       html: input.html,
     });
-    return { ok: true, delivered: true };
+    const rejected = Array.isArray(info.rejected) ? info.rejected.length : 0;
+    const delivered = rejected === 0;
+    await finishEmailLog(log, delivered, delivered ? undefined : "recipient_rejected");
+    return delivered
+      ? { ok: true, delivered: true }
+      : { ok: false, delivered: false, errorCode: "recipient_rejected" };
   } catch (error) {
     const code = typeof error === "object" && error && "code" in error ? String(error.code) : "unknown";
     console.error(`[email] send failed (${code})`);
     transporterPromise = null;
-    return { ok: false, delivered: false };
+    await finishEmailLog(log, false, code);
+    return { ok: false, delivered: false, errorCode: code };
   }
 }

@@ -11,6 +11,7 @@ import { Icon } from "@/components/ui/Icon";
 import { Reveal } from "@/components/ui/motion";
 import { ButtonLink, buttonCls } from "@/components/ui/Button";
 import { assetUrl, getFleet, getFleetVehicle, getPage, getPages, getRoute, getRoutes, getScheduledServices, getSettings, getStops, selectPageHeroFallback } from "@/lib/directus";
+import { siteUrl } from "@/lib/site-url";
 
 // Root-level slugs resolve to a fleet vehicle, an editable content page, or a Daily Express route.
 export async function generateStaticParams() {
@@ -66,6 +67,7 @@ export default async function SlugPage({ params }: { params: Promise<{ slug: str
   const route = await getRoute(slug);
   if (route) {
     const [settings, stops, routeServices] = await Promise.all([getSettings(), getStops(), getScheduledServices(route.slug)]);
+    const publicUrl = siteUrl(settings.url);
     // Best-effort prefill: match the route's first/last stop name to a corridor stop code.
     const matchCode = (place?: string) =>
       stops.find((s) => place && (s.name.includes(place.split(" ")[0]) || place.includes(s.name.split(" ")[0])))?.code;
@@ -90,14 +92,14 @@ export default async function SlugPage({ params }: { params: Promise<{ slug: str
       serviceType: "Scheduled coach service",
       name: `${route.from} to ${route.to} coach service`,
       description: route.seoDescription,
-      url: `${settings.url}/${route.slug}`,
+      url: `${publicUrl}/${route.slug}`,
       areaServed: "United Kingdom",
-      provider: { "@type": "Organization", "@id": `${settings.url}/#organization`, name: settings.name },
+      provider: { "@type": "Organization", "@id": `${publicUrl}/#organization`, name: settings.name },
       offers: onlineFare !== null ? {
         "@type": "Offer",
         price: (onlineFare / 100).toFixed(2),
         priceCurrency: "GBP",
-        url: `${settings.url}${bookHref}`,
+        url: `${publicUrl}${bookHref}`,
       } : undefined,
     };
 

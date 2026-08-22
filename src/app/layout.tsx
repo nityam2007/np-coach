@@ -8,6 +8,7 @@ import { CookieConsent } from "@/components/layout/CookieConsent";
 import { OrganizationJsonLd } from "@/components/seo/OrganizationJsonLd";
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import { assetUrl, getServices, getSettings } from "@/lib/directus";
+import { siteUrl } from "@/lib/site-url";
 
 // Self-hosted Inter (variable) — no build-time Google Fonts fetch, so builds are
 // deterministic and work offline / in CI. Geist is likewise self-hosted via `geist`.
@@ -20,9 +21,10 @@ const inter = localFont({
 export async function generateMetadata(): Promise<Metadata> {
   const s = await getSettings();
   const socialImage = assetUrl(s.heroImage);
+  const publicUrl = siteUrl(s.url);
 
   return {
-    metadataBase: new URL(s.url),
+    metadataBase: new URL(publicUrl),
     title: { default: `${s.name} — ${s.tagline}`, template: `%s | ${s.name}` },
     description: s.description,
     openGraph: {

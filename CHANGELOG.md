@@ -246,3 +246,12 @@ Append-only. Newest entries at the bottom. Never edit or delete past entries —
 - Added a Directus create/update hook for `bookings` and `pass_purchases` status changes to `paid`. It calls a secret-protected internal web endpoint over the private Compose network.
 - Manual CMS-paid bookings now atomically reconcile dated inventory before the ticket email is claimed; manual CMS-paid lost-property records trigger both payment emails. Delivery leases and stable message ids prevent duplicates with Stripe webhooks and success-page checks.
 - Extended hourly maintenance to retry incomplete paid inventory/email reconciliation, and required `inventory_status=committed` before account tickets, success tickets or QR verification are exposed.
+
+## 2026-08-22 — Complete CMS records, Stripe discounts and email overview
+
+- Made every Directus singular item page expose all safe fields, with transactional/technical values read-only except explicit operator controls. OTP and customer-session hashes remain hidden.
+- Added **Email Logs** immediately after Customer Sessions. Each logical OTP, contact, quote, booking-ticket or lost-property customer/staff message records queued/sending/sent/failed state, attempts, source and a safe error code without storing message bodies; the private authenticated Directus extension writes the audit row without widening the scoped app token.
+- Persisted Stripe's verified subtotal, promotion discount and actual charged total for booking and lost-property orders. Added regression cases for 90%, 95% and 100% coupons, including paid zero-total Checkout sessions with no PaymentIntent.
+- Decoupled authoritative payment/inventory completion from SMTP delivery: a paid ticket stays available and Stripe receives a successful webhook response while failed email is retained for maintenance retry. CMS Paid transitions use the same idempotent path.
+- Centralised public-origin resolution through `SITE_URL`/`NEXT_PUBLIC_SITE_URL` with the CMS URL only as fallback, covering Stripe redirects, ticket links/QRs and structured data across demo, www and apex hosts.
+- Verified the Directus extension email-log lifecycle and discount commits, site URL precedence, TypeScript and ESLint; the complete test suite is recorded at commit time.

@@ -54,6 +54,8 @@ export async function boardingPassFromBooking(
     width: 256,
     color: { dark: "#172554", light: "#ffffff" },
   });
+  const subtotal = booking.subtotal_amount ?? booking.journey_snapshot?.amount ?? booking.amount;
+  const discount = booking.discount_amount ?? Math.max(0, subtotal - booking.amount);
   return {
     siteName,
     reference: booking.reference,
@@ -72,7 +74,9 @@ export async function boardingPassFromBooking(
     tripType: booking.trip_type,
     passengers: booking.passengers,
     passengerName: booking.name,
-    amountLabel: gbp(booking.amount),
+    amountLabel: discount > 0
+      ? `${gbp(booking.amount)} (discount ${gbp(discount)} from ${gbp(subtotal)})`
+      : gbp(booking.amount),
     qrDataUrl,
   };
 }

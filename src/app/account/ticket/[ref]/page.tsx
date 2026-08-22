@@ -8,6 +8,7 @@ import { boardingPassFromBooking } from "@/lib/ticket";
 import { BoardingPass } from "@/components/account/BoardingPass";
 import { TicketActions } from "@/components/account/TicketActions";
 import { Icon } from "@/components/ui/Icon";
+import { siteUrl } from "@/lib/site-url";
 
 export const metadata: Metadata = { title: "Your ticket", robots: { index: false } };
 
@@ -25,7 +26,7 @@ export default async function TicketPage({ params }: { params: Promise<{ ref: st
   }
 
   const [stops, settings] = await Promise.all([getStops(), getSettings()]);
-  const pass = await boardingPassFromBooking(booking, stops, settings.name, settings.url);
+  const pass = await boardingPassFromBooking(booking, stops, settings.name, siteUrl(settings.url));
 
   return (
     <section className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:py-20">

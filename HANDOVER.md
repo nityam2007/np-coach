@@ -32,7 +32,7 @@ NP Coaches remains the product and customer-facing brand. Blustdio is the delive
 
 Only `web:3000` and `directus:8055` receive Coolify domains. MariaDB, Redis, Postfix, schema migration, and CMS bootstrap must never receive public domains or host port mappings.
 
-Persistent data is stored in the named volumes `mariadb_data`, `redis_data`, and `directus_uploads`. Never delete or rename these volumes during a normal deployment. Directus extensions are repository code baked into the Directus image, not persistent data.
+Persistent data is stored in the named volumes `mariadb_data`, `redis_data`, `directus_uploads`, and `directus_extensions`. Never delete or rename these volumes during a normal deployment.
 
 ## Source of truth
 
@@ -132,7 +132,7 @@ The code-level production-readiness remediation is complete; the authoritative c
 
 Release sequence:
 
-1. Keep `DAILY_EXPRESS_BOOKINGS_ENABLED=false`; deploy the Directus image with both repository extensions baked in and let the additive bootstrap add sessions, delivery leases, `service_runs`, unique constraints, and booking inventory fields.
+1. Keep `DAILY_EXPRESS_BOOKINGS_ENABLED=false`; deploy the read-only-mounted Directus extension and let the additive bootstrap add sessions, delivery leases, `service_runs`, unique constraints, and booking inventory fields.
 2. Configure all six independent audit secrets, including `INTERNAL_API_SECRET` on both Directus and web, and optionally the revalidation Flow. Confirm the app token remains scoped, the internal endpoint rejects unauthorised calls, and public file metadata is restricted.
 3. Enter approved route capacities, schedule `POST /api/maintenance` hourly, run `npm run check`, parse `docker-compose.coolify.yml`, and concurrency-test single/return last-seat cases before deliberately enabling bookings.
 4. Configure and run encrypted off-site backup plus disposable restore, then complete live Stripe (including refund/dispute), Postfix relay!� M365 mailbox delivery, Cloudflare, legal/ICO, access-control, accessibility/mobile, SEO/redirect, and content/fare/timetable acceptance.

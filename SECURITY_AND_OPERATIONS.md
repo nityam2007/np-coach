@@ -18,7 +18,7 @@ The August production-readiness findings that can be addressed in this repositor
 - Contact and quote records are persisted before email. A bounded maintenance retry worker uses atomic delivery leases; payment and lead delivery failures remain visible in Directus.
 - Ticket QR codes contain signed validation URLs, not passenger data. Verification checks the live paid booking and returns no personal data.
 - Header navigation, lightboxes, route selectors, form errors, skip navigation, carousel motion, and hero video controls received keyboard, focus, reduced-motion, and Save-Data handling.
-- MariaDB and Redis are on private Compose networks. Redis uses `noeviction`; unused Directus transports are disabled; Coolify bakes the required extensions into the pinned Directus image, and Directus fails startup if either cannot load.
+- MariaDB and Redis are on private Compose networks. Redis uses `noeviction`; unused Directus transports are disabled; the required internal extension is bind-mounted read-only and Directus fails startup if it cannot load.
 - Backups include MariaDB and Directus uploads, require age encryption and an off-site rclone destination, and have a disposable restore-test script.
 - The standard gate runs unit tests, migration/extension syntax checks, TypeScript, ESLint, and a production build. CI separately audits production dependencies.
 

@@ -99,7 +99,7 @@ src/
   lib/
     site-config.ts      shared CMS/fallback content types
 directus/               Directus seed media and development uploads
-extensions/             required Directus endpoint + public-read security hook
+extensions/             required private Directus endpoint (read-only mount)
 docker-compose.yml      dev stack: MariaDB + Directus + app
 docker-compose.coolify.yml  production stack managed by Coolify
 Dockerfile.bootstrap    one-shot committed CMS/content/media bootstrap

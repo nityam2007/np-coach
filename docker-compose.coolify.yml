@@ -83,9 +83,7 @@ services:
       - default
       - database
       - cache
-    build:
-      context: .
-      dockerfile: Dockerfile.directus
+    image: directus/directus:12.1.0
     restart: unless-stopped
     expose:
       - "8055"
@@ -121,6 +119,7 @@ services:
       EXTENSIONS_MUST_LOAD: "true"
     volumes:
       - directus_uploads:/directus/uploads
+      - ./extensions:/directus/extensions:ro
     healthcheck:
       test: ["CMD-SHELL", "wget --spider -q http://127.0.0.1:8055/server/ping || exit 1"]
       interval: 15s

@@ -26,7 +26,7 @@ The first deployment does not need a database dump:
 - `directus/seed-media/` contains the committed starter media archive.
 - `scripts/seed-directus.mjs`, `configure-directus.mjs`, and `upload-media.mjs` are idempotent.
 
-`schema-migrate` runs only `directus bootstrap`, which installs/upgrades Directus's system tables. It deliberately does **not** run `schema apply` during a Git deployment. `cms-bootstrap` then creates missing app collections/fields and fills first-run content/media before the web container starts.
+`schema-migrate` runs only `node /directus/cli.js bootstrap`, which installs/upgrades Directus's system tables through the CLI bundled in the pinned image. It deliberately does **not** run `schema apply` during a Git deployment. `cms-bootstrap` then creates missing app collections/fields and fills first-run content/media before the web container starts.
 
 On an existing instance, settings and dashboard panels remain client-owned. The seed only adds missing nested keys and never writes transactional rows. It records counts for `customers`, `bookings`, `pass_purchases`, `contact_submissions`, and `quote_requests` before and after bootstrap and fails the release if any count decreases. Exact snapshot apply is available only through `scripts/schema.sh apply`, which always shows a dry-run and refuses the apply without `CONFIRM_SCHEMA_APPLY=I_HAVE_A_VERIFIED_BACKUP`.
 

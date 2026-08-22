@@ -16,7 +16,7 @@ FILE="directus/schema-snapshot.yaml"
 
 case "$CMD" in
   snapshot)
-    docker compose exec -T directus npx directus schema snapshot --yes /tmp/schema.yaml >/dev/null
+    docker compose exec -T directus node /directus/cli.js schema snapshot --yes /tmp/schema.yaml >/dev/null
     docker compose exec -T directus cat /tmp/schema.yaml > "$FILE"
     echo "✓ schema snapshot written to $FILE ($(wc -l < "$FILE") lines) — commit it"
     ;;
@@ -24,7 +24,7 @@ case "$CMD" in
     [ -f "$FILE" ] || { echo "✗ $FILE not found — run 'scripts/schema.sh snapshot' first"; exit 1; }
     docker compose exec -T directus sh -c 'cat > /tmp/schema.yaml' < "$FILE"
     echo "Schema dry-run (review destructive collection/field changes before continuing):"
-    docker compose exec -T directus npx directus schema apply --dry-run /tmp/schema.yaml
+    docker compose exec -T directus node /directus/cli.js schema apply --dry-run /tmp/schema.yaml
     [ "${CONFIRM_SCHEMA_APPLY:-}" = "I_HAVE_A_VERIFIED_BACKUP" ] || {
       echo "✗ Refusing schema apply without a verified backup."
       echo "  Review the dry-run above, verify a backup, then re-run with:"
@@ -32,7 +32,7 @@ case "$CMD" in
       exit 1
     }
     echo "Applying confirmed schema snapshot..."
-    docker compose exec -T directus npx directus schema apply --yes /tmp/schema.yaml
+    docker compose exec -T directus node /directus/cli.js schema apply --yes /tmp/schema.yaml
     echo "✓ schema applied from $FILE"
     ;;
   *)

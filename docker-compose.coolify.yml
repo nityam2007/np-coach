@@ -71,7 +71,7 @@ services:
     # Routine Git deployments must never reconcile the live database to an exact
     # snapshot. bootstrap only installs/upgrades Directus system tables; the
     # cms-bootstrap service performs additive, idempotent app migrations.
-    command: ["npx directus bootstrap"]
+    command: ["node /directus/cli.js bootstrap"]
     environment:
       <<: *directus-bootstrap
     depends_on:

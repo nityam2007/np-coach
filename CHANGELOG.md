@@ -172,3 +172,9 @@ Append-only. Newest entries at the bottom. Never edit or delete past entries —
 - Preserved the existing apex Search Console HTML verification token through public build variables and expanded the production CSP only for the required Google tag/Analytics endpoints.
 - Expanded site-wide LocalBusiness JSON-LD with verified company, address, contact, area, currency and CMS service-catalog data; existing sitemap, robots, canonicals and `llms.txt` remain rooted at `https://np-coaches.co.uk`.
 - Made cookie-banner wording editable in Directus and added a revision-guarded, one-time update to the existing Privacy and Cookie Policy records covering GA4, Search Console, Google Maps, consent withdrawal, cookie durations and international processing. Future CMS edits are preserved.
+
+## 2026-08-22 — Directus 12.3 schema launcher hotfix
+
+- Fixed the failed 12.3 deployment where `schema-migrate` exited with `/bin/sh: npx: not found`; Directus 12.3's slim runtime image no longer includes npm/npx.
+- Replaced every container-side `npx directus` invocation with the image's verified `node /directus/cli.js` entrypoint, including the guarded manual snapshot/apply helper.
+- Ran the exact replacement `node /directus/cli.js bootstrap` command against a disposable SQLite database in the pinned 12.3.0 image; all system migrations completed and the process exited successfully.

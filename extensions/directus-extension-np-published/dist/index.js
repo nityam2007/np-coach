@@ -44,8 +44,13 @@ const publishedContentHook = ({ filter }) => {
     return items?.status === "published" ? items : null;
   });
 
-  filter("files.read", (items, _meta, { accountability }) => {
-    if (!accountability || accountability.user) return items;
+  filter("files.query", (query, _meta, { accountability }) => {
+    if (accountability?.user || !Array.isArray(query?.fields)) return query;
+    return { ...query, fields: [...PUBLIC_FILE_FIELDS] };
+  });
+
+  filter("files.read", (items, { query }, { accountability }) => {
+    if (accountability?.user || !Array.isArray(query?.fields)) return items;
     const sanitize = (item) => Object.fromEntries(
       Object.entries(item ?? {}).filter(([field]) => PUBLIC_FILE_FIELDS.has(field)),
     );

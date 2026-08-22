@@ -10,9 +10,9 @@ function harness(accountability = null) {
     },
   });
 
-  return (name, payload, collection) => filters.get(name)(
+  return (name, payload, collection, meta = { collection }) => filters.get(name)(
     payload,
-    { collection },
+    meta,
     { accountability },
   );
 }
@@ -55,7 +55,7 @@ test("authenticated Directus reads are unchanged", () => {
 });
 
 test("anonymous file reads expose display-safe metadata only", () => {
-  const run = harness({ user: null });
+  const run = harness();
   assert.deepEqual(
     run("files.read", {
       id: "file-id",
@@ -64,11 +64,27 @@ test("anonymous file reads expose display-safe metadata only", () => {
       filename_disk: "private-storage-name.jpg",
       storage: "local",
       uploaded_by: "admin-id",
-    }, "directus_files"),
+    }, "directus_files", { collection: "directus_files", query: { fields: ["*"] } }),
     {
       id: "file-id",
       title: "Coach",
       type: "image/jpeg",
     },
+  );
+
+  assert.deepEqual(
+    run("files.query", { fields: ["filename_disk"] }, "directus_files"),
+    { fields: ["id", "title", "type", "width", "height", "description", "modified_on"] },
+  );
+
+  const internalAsset = { id: "file-id", filename_disk: "asset.jpg", storage: "local" };
+  assert.equal(
+    run(
+      "files.read",
+      internalAsset,
+      "directus_files",
+      { collection: "directus_files", query: { limit: 1, filter: { id: { _eq: "file-id" } } } },
+    ),
+    internalAsset,
   );
 });

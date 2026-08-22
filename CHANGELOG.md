@@ -255,3 +255,10 @@ Append-only. Newest entries at the bottom. Never edit or delete past entries —
 - Decoupled authoritative payment/inventory completion from SMTP delivery: a paid ticket stays available and Stripe receives a successful webhook response while failed email is retained for maintenance retry. CMS Paid transitions use the same idempotent path.
 - Centralised public-origin resolution through `SITE_URL`/`NEXT_PUBLIC_SITE_URL` with the CMS URL only as fallback, covering Stripe redirects, ticket links/QRs and structured data across demo, www and apex hosts.
 - Verified the Directus extension email-log lifecycle and discount commits, site URL precedence, TypeScript and ESLint; the complete test suite is recorded at commit time.
+
+## 2026-08-22 — Zero-total Checkout return-page fallback
+
+- Fixed 100%-discount bookings remaining on “We’re confirming your payment” when the signed Stripe webhook had already marked the booking paid and committed its inventory but the return page's second verification/delivery pass failed transiently.
+- The success resolver now falls back by the high-entropy Checkout Session id and returns only an already-paid record; Daily Express additionally requires `inventory_status=committed`. It cannot mark a pending record paid, deduct seats or trust a public booking reference. Lost-property 100% Checkout uses the same paid-only fallback.
+- Fixed paid tickets appearing in My Account but returning the generic 404 from View Ticket. The detail page now applies normalized owner email, reference, paid status and committed inventory in one server-side Directus query—the same proven scope as the account list—while preserving non-disclosing authorization for other customers.
+- Retried an unsent ticket email immediately when the paid Checkout-session fallback succeeds or the authenticated owner opens that ticket. Both paths use the existing atomic delivery lease, so they cooperate safely with Stripe webhooks, CMS Paid hooks and maintenance without making ticket visibility depend on SMTP.

@@ -647,7 +647,33 @@ export async function retryPaidNotifications(limit = 500): Promise<boolean> {
 
 /** Verify the Checkout session with Stripe after redirect, never from a public reference. */
 export async function confirmCheckoutSession(sessionId: string, kind: "booking" | "pass"): Promise<string | null> {
-  if (!stripeConfigured() || !sessionId.startsWith("cs_")) return null;
+  if (!sessionId.startsWith("cs_")) return null;
+  const collection = kind === "pass" ? "pass_purchases" : "bookings";
+
+  // The signed webhook may finish before this return-page request, while a
+  // second Stripe API read or notification attempt can still fail transiently.
+  // A Checkout Session id is high entropy; it may reveal only an order that the
+  // authoritative webhook/CMS reconciliation has already marked paid. It never
+  // promotes a pending row or commits inventory here.
+  const paidWebhookResult = async (): Promise<string | null> => {
+    const fields = collection === "bookings" ? "reference,status,inventory_status" : "reference,status";
+    const rows = await directusServerRead<Array<{ reference: string; status: string; inventory_status?: string | null }>>(
+      `/items/${collection}?filter[stripe_session_id][_eq]=${encodeURIComponent(sessionId)}&fields=${fields}&limit=2`,
+    );
+    if (!rows || rows.length !== 1 || rows[0].status !== "paid") return null;
+    if (collection === "bookings" && rows[0].inventory_status !== "committed") return null;
+    try {
+      await deliverPaymentNotifications(collection, rows[0].reference);
+    } catch (error) {
+      // The paid order remains authoritative; maintenance and authenticated
+      // ticket access can retry this same idempotent notification channel.
+      console.error("[email] paid Checkout return notification retry failed", error);
+    }
+    return rows[0].reference;
+  };
+
+  if (!stripeConfigured()) return paidWebhookResult();
+
   try {
     const session = await getStripe().checkout.sessions.retrieve(sessionId);
     if (
@@ -656,8 +682,7 @@ export async function confirmCheckoutSession(sessionId: string, kind: "booking" 
     ) {
       return null;
     }
-    const collection = kind === "pass" ? "pass_purchases" : "bookings";
-    return markPaidBySession(
+    const reference = await markPaidBySession(
       collection,
       session.id,
       typeof session.payment_intent === "string" ? session.payment_intent : (session.payment_intent?.id ?? null),
@@ -668,8 +693,10 @@ export async function confirmCheckoutSession(sessionId: string, kind: "booking" 
         reference: session.metadata?.reference,
       },
     );
-  } catch {
-    return null;
+    return reference ?? paidWebhookResult();
+  } catch (error) {
+    console.error("[stripe] Checkout return verification failed; checking paid webhook state", error);
+    return paidWebhookResult();
   }
 }
 async function getById<T>(collection: string, id: number): Promise<T | null> {

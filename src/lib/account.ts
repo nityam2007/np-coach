@@ -173,6 +173,15 @@ export async function getCustomerBookings(email: string): Promise<BookingRow[]> 
   return rows ?? [];
 }
 
+/** One paid ticket owned by the signed-in email; keeps ownership inside the CMS query. */
+export async function getCustomerBooking(email: string, reference: string): Promise<BookingRow | null> {
+  const e = normalise(email);
+  const rows = await directusServerRead<BookingRow[]>(
+    `/items/bookings?filter[email][_eq]=${encodeURIComponent(e)}&filter[reference][_eq]=${encodeURIComponent(reference)}&filter[status][_eq]=paid&filter[inventory_status][_eq]=committed&limit=2`,
+  );
+  return rows?.length === 1 ? rows[0] : null;
+}
+
 /** A customer's lost-property claims (any status), newest first. */
 export async function getCustomerPasses(email: string): Promise<PassPurchaseRow[]> {
   const e = normalise(email);

@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-store";
-import { getBookingByReference } from "@/lib/stripe";
+import { getCustomerBooking } from "@/lib/account";
+import { reconcilePaidOrder } from "@/lib/stripe";
 import { getStops, getSettings } from "@/lib/directus";
 import { boardingPassFromBooking } from "@/lib/ticket";
 import { BoardingPass } from "@/components/account/BoardingPass";
@@ -17,12 +18,16 @@ export default async function TicketPage({ params }: { params: Promise<{ ref: st
   if (!session) redirect("/account/login");
 
   const { ref } = await params;
-  const booking = await getBookingByReference(ref);
+  const booking = await getCustomerBooking(session.email, ref);
 
-  // Authorisation: the ticket must have committed paid inventory AND be owned by the signed-in customer.
-  // notFound() (not a message) so we never reveal whether a reference exists.
-  if (!booking || booking.status !== "paid" || booking.inventory_status !== "committed" || booking.email.trim().toLowerCase() !== session.email) {
-    notFound();
+  // The CMS query enforces owner + paid + committed together. Keep a generic 404
+  // so another customer's reference can never be used as an existence oracle.
+  if (!booking) notFound();
+
+  // A paid customer opening their own ticket is a safe immediate retry point.
+  // The delivery lease makes this idempotent with Stripe, CMS hooks and maintenance.
+  if (booking.confirmation_email_status !== "sent") {
+    await reconcilePaidOrder("bookings", booking.id);
   }
 
   const [stops, settings] = await Promise.all([getStops(), getSettings()]);

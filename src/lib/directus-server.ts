@@ -77,28 +77,37 @@ export async function directusServerWrite(
   }
 }
 
-async function internalRequest<T>(path: string, body: unknown): Promise<T | null> {
+type InternalRequestResult<T> =
+  | { ok: true; data: T }
+  | { ok: false; status: number | null };
+
+async function internalRequestResult<T>(path: string, body: unknown): Promise<InternalRequestResult<T>> {
   const token = await directusServerToken();
   const secret = process.env.INTERNAL_API_SECRET;
-  if (!token || !secret) return null;
+  if (!token || !secret) return { ok: false, status: null };
   try {
-    const res = await fetch(`${DIRECTUS_URL}/np-internal${path}`, {
+    const res = await fetch(DIRECTUS_URL + "/np-internal" + path, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        Authorization: "Bearer " + token,
         "X-Internal-API-Secret": secret,
       },
       body: JSON.stringify(body),
       cache: "no-store",
       signal: AbortSignal.timeout(8_000),
     });
-    if (!res.ok) return null;
+    if (!res.ok) return { ok: false, status: res.status };
     const json = (await res.json()) as { data: T };
-    return json.data;
+    return { ok: true, data: json.data };
   } catch {
-    return null;
+    return { ok: false, status: null };
   }
+}
+
+async function internalRequest<T>(path: string, body: unknown): Promise<T | null> {
+  const result = await internalRequestResult<T>(path, body);
+  return result.ok ? result.data : null;
 }
 
 /** A SQL-level conditional update performed inside Directus. */
@@ -120,12 +129,24 @@ export interface AtomicInventoryRun {
   capacity: number;
 }
 
+export type DirectusInventoryReservationResult =
+  | { ok: true; runIds: number[] }
+  | { ok: false; reason: "capacity" | "unavailable" };
+
 export async function directusReserveInventory(
   runs: AtomicInventoryRun[],
   seats: number,
-): Promise<number[] | null> {
-  const result = await internalRequest<{ runIds: number[] }>("/inventory/reserve", { runs, seats });
-  return result?.runIds ?? null;
+): Promise<DirectusInventoryReservationResult> {
+  const result = await internalRequestResult<{ runIds: number[] }>("/inventory/reserve", { runs, seats });
+  if (!result.ok) {
+    return { ok: false, reason: result.status === 409 ? "capacity" : "unavailable" };
+  }
+  return { ok: true, runIds: result.data.runIds };
+}
+
+export async function directusInventoryReady(): Promise<boolean> {
+  const result = await internalRequestResult<{ ready: boolean }>("/inventory/status", {});
+  return result.ok && result.data.ready === true;
 }
 
 export async function directusReleaseInventory(runIds: number[], seats: number): Promise<boolean> {

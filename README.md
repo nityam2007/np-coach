@@ -18,7 +18,7 @@ Rebuild of [np-coaches.co.uk](https://np-coaches.co.uk) — a UK coach-hire oper
 > **SEO and UI:** canonical/Open Graph/Twitter metadata, sitemap/robots/llms.txt and JSON-LD are site-wide. Interior content pages share `PageHero`; CMS banner images fill the hero behind a navy contrast overlay instead of rendering as a separate card; blog articles use the same light editorial treatment and remain fully CMS-managed. Bespoke fleet, route, tour and school pages retain their structured designs.
 >
 > **Analytics and CMS (2026-08-22):** GA4 `G-3GXSRDBP55` uses UK consent-gated basic mode and receives path-only page locations; Search Console's existing apex verification token is preserved at build time. Consent copy and Google disclosures are CMS-managed, while a revision guard updates the two existing legal pages once. LocalBusiness JSON-LD now includes the verified company/address/contact facts and a CMS service catalog. Directus is pinned to browser-verified 12.3.0 because the 12.1.0 Studio bundle crashed before Vue mounted.
-> **CMS media and booking controls (2026-08-22):** additive bootstrap now repairs the real `directus_files` relation behind every single-file image/video field, so editors can choose or replace media from the File Library. `service_runs` remains visible as the automatic per-date/per-departure inventory ledger. Booking fares display independently from the launch gate, while checkout still requires both the production flag and an approved positive route capacity.
+> **CMS media and booking controls (2026-08-22):** additive bootstrap now repairs the real `directus_files` relation behind every single-file image/video field, so editors can choose or replace media from the File Library. `service_runs` remains visible as the automatically-created per-date/per-departure inventory ledger. Scheduled Services hold the normal capacity (60 initially; editable up to 500 for multiple/larger buses), while Service Runs can override capacity or cancel one date. Live availability and checkout now require the same authenticated atomic inventory endpoint, so an infrastructure fault cannot be shown as a false sold-out result.
 > The header and footer navigation are CMS-managed; Contact Us remains a primary menu item. `/faqs` is a dedicated SEO-ready accordion page sourced from the same editable FAQ settings as the homepage, with the homepage showing the four priority questions only.
 
 ## Current payment and form controls
@@ -102,7 +102,7 @@ src/
   lib/
     site-config.ts      shared CMS/fallback content types
 directus/               Directus seed media and development uploads
-extensions/             required private Directus endpoint (read-only mount)
+extensions/             required private Directus endpoints (baked into production image)
 docker-compose.yml      dev stack: MariaDB + Directus + app
 docker-compose.coolify.yml  production stack managed by Coolify
 Dockerfile.bootstrap    one-shot committed CMS/content/media bootstrap
@@ -125,6 +125,6 @@ Daily Express paid checkout is deliberately disabled in production by default (`
 
 Use `npm run check` for the full local gate. Production backups use `scripts/backup-db.sh`; validate each backup generation with `scripts/restore-test.sh` on a non-production Docker host.
 
-The Daily Express multi-service correction is implemented additively: routes remains the direction/SEO source, while scheduled_services represents each real departure. The four online WordPress buses are mirrored with exact stop times, 60 seats each, and all 48 numeric fare rows; empty “Ex: 10” placeholders are deliberately omitted. Online checkout requires explicit outward/return service choices and atomic inventory by service code/date. Leicester remains driver-sale only. Keep DAILY_EXPRESS_BOOKINGS_ENABLED=false until the return/inventory policy and live acceptance gate pass.
+The Daily Express multi-service correction is implemented additively: routes remains the direction/SEO source, while scheduled_services represents each real departure. The four online WordPress buses are mirrored with exact stop times, 60 seats each, and all 48 numeric fare rows; empty “Ex: 10” placeholders are deliberately omitted. Editors can change each Scheduled Service default capacity from 1–500 and use the automatically-created Service Run for a date-specific capacity override or cancellation. Online checkout requires explicit outward/return service choices and atomic inventory by service code/date. Leicester remains driver-sale only. Keep DAILY_EXPRESS_BOOKINGS_ENABLED=false until the return/inventory policy and live acceptance gate pass.
 
 The revision-guarded additive seed updates existing online scheduled-service records once from the approved four-bus source data, then leaves future Directus editor changes untouched.

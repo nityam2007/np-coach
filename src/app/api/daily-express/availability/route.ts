@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getScheduledServices } from "@/lib/directus";
-import { directusServerRead } from "@/lib/directus-server";
+import { directusInventoryReady, directusServerRead } from "@/lib/directus-server";
 
 export const dynamic = "force-dynamic";
 
@@ -11,33 +11,59 @@ interface ServiceRunRow {
   status: string;
 }
 
+interface ServiceAvailability {
+  remaining: number;
+  capacity: number;
+}
+
 export async function GET(request: NextRequest) {
   const date = request.nextUrl.searchParams.get("date") ?? "";
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
     return NextResponse.json({ error: "Invalid service date" }, { status: 400 });
   }
 
-  const services = (await getScheduledServices()).filter((service) => service.salesMode === "online");
-  const rows = await directusServerRead<ServiceRunRow[]>(
-    "/items/service_runs?fields=service_code,capacity,booked_seats,status"
-      + "&filter[service_date][_eq]=" + encodeURIComponent(date)
-      + "&limit=100",
-  );
-
+  const [allServices, rows, inventoryReady] = await Promise.all([
+    getScheduledServices(),
+    directusServerRead<ServiceRunRow[]>(
+      "/items/service_runs?fields=service_code,capacity,booked_seats,status"
+        + "&filter[service_date][_eq]=" + encodeURIComponent(date)
+        + "&limit=100",
+    ),
+    directusInventoryReady(),
+  ]);
+  const services = allServices.filter((service) => service.salesMode === "online");
+  const canReserve = inventoryReady && rows !== null;
   const runs = new Map((rows ?? []).map((row) => [row.service_code, row]));
-  const availability = Object.fromEntries(services.map((service) => {
-    if (rows === null) return [service.code, null];
 
+  const availability = Object.fromEntries(services.map((service): [string, ServiceAvailability | null] => {
+    if (!canReserve) return [service.code, null];
+
+    if (!Number.isInteger(service.capacity) || service.capacity < 1 || service.capacity > 500) {
+      return [service.code, null];
+    }
     const run = runs.get(service.code);
-    if (!run) return [service.code, service.capacity];
-    if (run.status !== "scheduled") return [service.code, 0];
+    if (!run) {
+      return [service.code, { remaining: service.capacity, capacity: service.capacity }];
+    }
+    if (!Number.isInteger(run.capacity) || run.capacity < 1 || run.capacity > 500
+      || !Number.isInteger(run.booked_seats) || run.booked_seats < 0) {
+      return [service.code, null];
+    }
+    if (run.status !== "scheduled") {
+      return [service.code, { remaining: 0, capacity: run.capacity }];
+    }
 
-    const capacity = Math.min(service.capacity, Math.max(0, run.capacity));
-    return [service.code, Math.max(0, capacity - Math.max(0, run.booked_seats))];
+    return [
+      service.code,
+      {
+        remaining: Math.max(0, run.capacity - run.booked_seats),
+        capacity: run.capacity,
+      },
+    ];
   }));
 
   return NextResponse.json(
-    { date, availability },
+    { date, inventoryReady: canReserve, availability },
     { headers: { "Cache-Control": "private, no-store, max-age=0" } },
   );
 }

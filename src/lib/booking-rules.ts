@@ -81,7 +81,7 @@ export function resolveJourneyOptions(
 
   return services.flatMap((service) => {
     if (service.salesMode !== "online" || !service.operatingDays.includes(weekday)) return [];
-    if (!Number.isInteger(service.capacity) || service.capacity < 1) return [];
+    if (!Number.isInteger(service.capacity) || service.capacity < 1 || service.capacity > 500) return [];
 
     const fromIndex = service.stops.findIndex((stop) => stop.code === fromCode);
     const toIndex = service.stops.findIndex((stop) => stop.code === toCode);

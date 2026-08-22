@@ -19,7 +19,17 @@ export interface BookingStopOption {
   detail: string;
 }
 
-type SeatAvailability = Record<string, Record<string, number | null>>;
+interface SeatCount {
+  remaining: number;
+  capacity: number;
+}
+
+interface AvailabilitySnapshot {
+  inventoryReady: boolean;
+  services: Record<string, SeatCount | null>;
+}
+
+type SeatAvailability = Record<string, AvailabilitySnapshot>;
 
 const initial: FormState = { ok: false };
 
@@ -74,7 +84,7 @@ function DepartureOptionCard({
   selected,
   onSelect,
   fieldName,
-  remaining,
+  availability,
 }: {
   option: JourneyOption;
   date: string;
@@ -83,15 +93,15 @@ function DepartureOptionCard({
   selected: boolean;
   onSelect: () => void;
   fieldName: "outwardService" | "returnService";
-  remaining: number | null | undefined;
+  availability: SeatCount | null | undefined;
 }) {
   const formattedDate = formatJourneyDate(date);
-  const seatsValue = remaining === undefined
+  const seatsValue = availability === undefined
     ? "Checking…"
-    : remaining === null
-      ? option.service.capacity + " max"
-      : remaining + "/" + option.service.capacity;
-  const seatsLabel = remaining === null ? "Coach capacity" : "Seats available";
+    : availability === null
+      ? "Unavailable"
+      : availability.remaining + "/" + availability.capacity;
+  const seatsLabel = availability === null ? "Live booking" : "Seats available";
 
   return (
     <div className={"overflow-hidden rounded-xl bg-white ring-1 transition " + (selected ? "ring-2 ring-accent" : "ring-greyblue/25")}>
@@ -229,10 +239,19 @@ export function BookingForm({
           signal: controller.signal,
         });
         if (!response.ok) throw new Error("Availability request failed");
-        const payload = (await response.json()) as { availability: Record<string, number | null> };
-        return [date, payload.availability] as const;
+        const payload = (await response.json()) as {
+          inventoryReady: boolean;
+          availability: Record<string, SeatCount | null>;
+        };
+        return [date, { inventoryReady: payload.inventoryReady, services: payload.availability }] as const;
       } catch {
-        return [date, Object.fromEntries(serviceCodes.map((code) => [code, null]))] as const;
+        return [
+          date,
+          {
+            inventoryReady: false,
+            services: Object.fromEntries(serviceCodes.map((code) => [code, null])),
+          },
+        ] as const;
       }
     })).then((entries) => {
       if (!controller.signal.aborted) setSeatAvailability(Object.fromEntries(entries));
@@ -251,18 +270,45 @@ export function BookingForm({
   const total = unit * (passengers > 0 ? passengers : 0);
   const sameStop = from === to;
   const hasRequiredServices = Boolean(selectedOutward && (tripType === "single" || selectedReturn));
-  const outwardRemaining = selectedOutward ? seatAvailability[travelDate]?.[selectedOutward.service.code] : undefined;
-  const returnRemaining = selectedReturn ? seatAvailability[returnDate]?.[selectedReturn.service.code] : undefined;
-  const outwardHasSeats = Boolean(selectedOutward)
-    && passengers <= (outwardRemaining ?? selectedOutward?.service.capacity ?? 0);
-  const returnHasSeats = !selectedReturn
-    || passengers <= (returnRemaining ?? selectedReturn.service.capacity);
+  const outwardSnapshot = seatAvailability[travelDate];
+  const returnSnapshot = seatAvailability[returnDate];
+  const outwardAvailability = selectedOutward
+    ? outwardSnapshot?.services[selectedOutward.service.code]
+    : undefined;
+  const returnAvailability = selectedReturn
+    ? returnSnapshot?.services[selectedReturn.service.code]
+    : undefined;
+  const outwardHasSeats = Boolean(
+    selectedOutward
+    && outwardSnapshot?.inventoryReady
+    && outwardAvailability
+    && passengers <= outwardAvailability.remaining,
+  );
+  const returnHasSeats = !selectedReturn || Boolean(
+    returnSnapshot?.inventoryReady
+    && returnAvailability
+    && passengers <= returnAvailability.remaining,
+  );
+  const inventoryChecking = Boolean(
+    (selectedOutward && outwardSnapshot === undefined)
+    || (selectedReturn && returnSnapshot === undefined),
+  );
+  const inventoryUnavailable = Boolean(
+    (selectedOutward && outwardSnapshot !== undefined
+      && (!outwardSnapshot.inventoryReady || outwardAvailability == null))
+    || (selectedReturn && returnSnapshot !== undefined
+      && (!returnSnapshot.inventoryReady || returnAvailability == null)),
+  );
   const available = Boolean(bookingsEnabled && hasRequiredServices && outwardHasSeats && returnHasSeats);
   const unavailableLabel = !hasRequiredServices
     ? "Journey unavailable"
     : !bookingsEnabled
       ? "Online booking paused"
-      : "Not enough seats";
+      : inventoryChecking
+        ? "Checking availability…"
+        : inventoryUnavailable
+          ? "Booking unavailable"
+          : "Not enough seats";
   const todayDate = new Date();
   const today = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/London",
@@ -358,7 +404,7 @@ export function BookingForm({
             selected={selectedOutward?.service.code === option.service.code}
             onSelect={() => setOutwardService(option.service.code)}
             fieldName="outwardService"
-            remaining={seatAvailability[travelDate]?.[option.service.code]}
+            availability={seatAvailability[travelDate]?.services[option.service.code]}
           />
         )) : (
           <p className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-900">
@@ -383,7 +429,7 @@ export function BookingForm({
               selected={selectedReturn?.service.code === option.service.code}
               onSelect={() => setReturnService(option.service.code)}
               fieldName="returnService"
-              remaining={seatAvailability[returnDate]?.[option.service.code]}
+              availability={seatAvailability[returnDate]?.services[option.service.code]}
             />
           )) : (
             <p className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-900">
@@ -433,6 +479,11 @@ export function BookingForm({
       {hasRequiredServices && !bookingsEnabled && (
         <p className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-900" role="status">
           Online booking is not open for this service yet. Please call us to book while availability is confirmed.
+        </p>
+      )}
+      {hasRequiredServices && bookingsEnabled && inventoryUnavailable && (
+        <p className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-900" role="status">
+          Live seat availability is temporarily unavailable, so checkout is paused. Please try again shortly or call us.
         </p>
       )}
       <SubmitButton total={total} available={available} unavailableLabel={unavailableLabel} />

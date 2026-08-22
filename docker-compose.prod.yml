@@ -86,7 +86,9 @@ services:
       - traefik.http.services.web.loadbalancer.server.port=3000
 
   directus:
-    image: directus/directus:12.3.0
+    build:
+      context: .
+      dockerfile: Dockerfile.directus
     restart: unless-stopped
     depends_on:
       db:
@@ -114,7 +116,6 @@ services:
       TUS_ENABLED: "false"
     volumes:
       - ./directus/uploads:/directus/uploads
-      - ./extensions:/directus/extensions:ro
     labels:
       - traefik.enable=true
       # Client-review alias for the same Directus instance.

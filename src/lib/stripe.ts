@@ -97,7 +97,6 @@ export async function priceBooking(
     : null;
   if (tripType === "return" && !inbound) return null;
 
-  if (passengers > outward.service.capacity || (inbound && passengers > inbound.service.capacity)) return null;
   const outwardGross = computeGross(outward.fare.adult, pricing.dailyExpressVat).gross;
   const returnGross = inbound ? computeGross(inbound.fare.adult, pricing.dailyExpressVat).gross : 0;
   const unitAmount = outwardGross + returnGross;

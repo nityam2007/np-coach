@@ -1,0 +1,5 @@
+# Production Directus image. Repository extensions are application code, so bake
+# them into the immutable image instead of relying on Coolify host bind mounts.
+FROM directus/directus:12.3.0
+
+COPY --chown=node:node extensions /directus/extensions

@@ -89,6 +89,12 @@ test("internal endpoint rejects a missing shared secret", async () => {
   assert.equal(result.status, 401);
 });
 
+test("inventory readiness is exposed only through the authenticated endpoint", async () => {
+  const request = harness(mockDatabase());
+  assert.deepEqual((await request("/inventory/status", {})).body, { data: { ready: true } });
+  assert.equal((await request("/inventory/status", {}, "")).status, 401);
+});
+
 test("compare-and-swap only updates the expected state once", async () => {
   const database = mockDatabase({ bookings: [{ id: 1, status: "pending", stripe_session_id: null }] });
   const request = harness(database);
@@ -122,4 +128,25 @@ test("two-leg reservations and releases are transactional", async () => {
   const released = await request("/inventory/release", { runIds: reserved.body.data.runIds, seats: 2 });
   assert.equal(released.status, 200);
   assert.deepEqual(database.rows("service_runs").map((row) => row.booked_seats), [0, 0]);
+});
+
+test("inventory accepts combined capacity above the old single-coach limit", async () => {
+  const database = mockDatabase();
+  const request = harness(database);
+  const result = await request("/inventory/reserve", {
+    runs: [{ serviceCode: "lm-morning", routeSlug: "outward", serviceDate: "2026-08-30", departureTime: "09:45", capacity: 240 }],
+    seats: 2,
+  });
+  assert.equal(result.status, 200);
+  assert.equal(database.rows("service_runs")[0].capacity, 240);
+  assert.equal(database.rows("service_runs")[0].booked_seats, 2);
+});
+
+test("inventory rejects capacity above the CMS limit", async () => {
+  const request = harness(mockDatabase());
+  const result = await request("/inventory/reserve", {
+    runs: [{ serviceCode: "lm-morning", routeSlug: "outward", serviceDate: "2026-08-30", departureTime: "09:45", capacity: 501 }],
+    seats: 1,
+  });
+  assert.equal(result.status, 400);
 });

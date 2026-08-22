@@ -99,7 +99,7 @@ The authoritative research, approved-data checklist, target model, implementatio
 Implemented in code and fallback data:
 
 - keep `routes` as direction/SEO pages and preserve existing URLs;
-- add individual `scheduled_services` with stable codes, operating days, ordered stops, boarding/dropping rules, stop-pair fares, sales mode, and capacity;
+- add individual `scheduled_services` with stable codes, operating days, ordered stops, boarding/dropping rules, stop-pair fares, sales mode, and editable default capacity (1–500);
 - model two online 60-seat services per London–Midlands direction, all seven days;
 - keep both Leicester services Friday–Monday and `driver_only`;
 - select and price a real outward service and, for returns, a real reverse-direction service;

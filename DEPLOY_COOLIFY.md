@@ -7,7 +7,7 @@ This is the active production path on the Hostinger VPS. The full stack complete
 | Service | Public? | Persistence | Purpose |
 | --- | --- | --- | --- |
 | `web` | Yes, port 3000 through a Coolify domain | Container image | Next.js standalone app |
-| `directus` | Yes, port 8055 through a separate Coolify domain | `directus_uploads`, `directus_extensions` | CMS, API, admin |
+| `directus` | Yes, port 8055 through a separate Coolify domain | `directus_uploads` | CMS, API, admin; repository extensions are baked into `Dockerfile.directus` |
 | `database` | No | `mariadb_data` | MariaDB, used only by Directus |
 | `redis` | No | `redis_data` | Password-protected Directus cache/rate-limit store |
 | `schema-migrate` | No; one-shot | Container image | Bootstraps/upgrades Directus system tables without reconciling app schema |

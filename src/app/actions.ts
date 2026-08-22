@@ -119,7 +119,7 @@ export async function startBooking(_prev: FormState, formData: FormData): Promis
   if (!process.env.STRIPE_SECRET_KEY) {
     return { ok: false, message: "Online payments are not available at the moment. Please call us to book." };
   }
-  const reservation = await reserveInventory(
+  const inventoryResult = await reserveInventory(
     {
       routeSlug: priced.routeSlug,
       serviceCode: priced.outwardServiceCode,
@@ -138,9 +138,12 @@ export async function startBooking(_prev: FormState, formData: FormData): Promis
       : null,
     priced.passengers,
   );
-  if (!reservation) {
-    return { ok: false, message: "That departure no longer has enough seats available. Please choose another journey or call us." };
+  if (!inventoryResult.ok) {
+    return inventoryResult.reason === "capacity"
+      ? { ok: false, message: "That departure no longer has enough seats available. Please choose another journey or call us." }
+      : { ok: false, message: "Live seat availability could not be confirmed, so no payment was taken. Please try again shortly or call us." };
   }
+  const reservation = inventoryResult.reservation;
   const reference = bookingReference();
   // Persist the booking as `pending` BEFORE payment (data-safety rule).
   const booking = await createPendingBooking({

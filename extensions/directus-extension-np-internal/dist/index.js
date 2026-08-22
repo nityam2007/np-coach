@@ -52,7 +52,7 @@ function validRun(run) {
     && typeof run.serviceCode === "string" && /^[a-z0-9-]{1,100}$/.test(run.serviceCode)
     && typeof run.serviceDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(run.serviceDate)
     && typeof run.departureTime === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(run.departureTime)
-    && Number.isInteger(run.capacity) && run.capacity >= 1 && run.capacity <= 120;
+    && Number.isInteger(run.capacity) && run.capacity >= 1 && run.capacity <= 500;
 }
 
 const runKey = (run) => `${run.serviceCode}:${run.serviceDate}`;
@@ -63,6 +63,10 @@ const endpoint = {
     router.use((req, res, next) => {
       if (!authorised(req, env)) return res.status(401).json({ error: "unauthorised" });
       next();
+    });
+
+    router.post("/inventory/status", (_req, res) => {
+      return res.json({ data: { ready: true } });
     });
 
     router.post("/cas", async (req, res) => {

@@ -18,7 +18,7 @@ The August production-readiness findings that can be addressed in this repositor
 - Contact and quote records are persisted before email. A bounded maintenance retry worker uses atomic delivery leases; payment and lead delivery failures remain visible in Directus.
 - Ticket QR codes contain signed validation URLs, not passenger data. Verification checks the live paid booking and returns no personal data.
 - Header navigation, lightboxes, route selectors, form errors, skip navigation, carousel motion, and hero video controls received keyboard, focus, reduced-motion, and Save-Data handling.
-- MariaDB and Redis are on private Compose networks. Redis uses `noeviction`; unused Directus transports are disabled; the required internal extension is bind-mounted read-only and Directus fails startup if it cannot load.
+- MariaDB and Redis are on private Compose networks. Redis uses `noeviction`; unused Directus transports are disabled; the required internal extensions are baked into the pinned Directus production image and Directus fails startup if they cannot load.
 - Backups include MariaDB and Directus uploads, require age encryption and an off-site rclone destination, and have a disposable restore-test script.
 - The standard gate runs unit tests, migration/extension syntax checks, TypeScript, ESLint, and a production build. CI separately audits production dependencies.
 
@@ -29,7 +29,7 @@ Keep `DAILY_EXPRESS_BOOKINGS_ENABLED=false` until the new extension and additive
 Before enabling Daily Express payments or signing off the release, an operator must:
 
 1. Generate independent `OTP_PEPPER`, `RATE_LIMIT_PEPPER`, `REVALIDATION_SECRET`, `MAINTENANCE_SECRET`, `TICKET_SIGNING_SECRET`, and `INTERNAL_API_SECRET` values in Coolify. Keep the scoped Directus, Stripe, Turnstile, and SMTP credentials server-only.
-2. Confirm the scoped `DIRECTUS_SERVER_TOKEN` can access only the required protected collections and fields. Confirm `/np-internal` rejects missing/incorrect secrets and that Directus starts with `EXTENSIONS_MUST_LOAD=true`.
+2. Confirm the scoped `DIRECTUS_SERVER_TOKEN` can access only the required protected collections and fields. Confirm an unauthenticated `POST /np-internal/inventory/status` returns 401 rather than 404, incorrect secrets are rejected, the web availability API reports `inventoryReady: true`, and Directus starts with `EXTENSIONS_MUST_LOAD=true`.
 3. Run the additive CMS bootstrap, verify `service_runs` and new session/delivery/inventory fields exist, enter approved non-zero route capacities, and concurrency-test the last-seat case for single and return journeys before changing the booking flag.
 4. Schedule an hourly authenticated `POST /api/maintenance` job and alert on non-2xx results. Configure a Directus Flow to call `/api/revalidate` after relevant content writes, or accept the five-minute ISR window.
 5. Verify Cloudflare Full (strict), proxy/WAF rules, Turnstile, origin restrictions, and that untrusted clients cannot reach the origin directly.

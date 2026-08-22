@@ -226,3 +226,10 @@ Append-only. Newest entries at the bottom. Never edit or delete past entries —
 - Confirmed all four online scheduled buses at 60 seats.
 - Added a one-time settings revision that updates existing Directus scheduled-service records with the approved schedules, fares and capacities, while preserving later CMS edits on subsequent bootstrap runs.
 - Verified 19 tests, seed/configure syntax, TypeScript, ESLint and git diff whitespace checks. Local seed execution was unavailable because neither Docker nor a Directus service is present on this workstation.
+
+## 2026-08-22 — Live inventory consistency and editable capacity
+
+- Diagnosed the demo mismatch: public availability fell back to the scheduled 60 seats while the deployed atomic Directus inventory route returned 404, and checkout mislabelled that infrastructure failure as insufficient capacity.
+- Made the availability API prove the authenticated inventory endpoint is ready and read dated inventory before exposing seat counts. Checkout now pauses with a truthful temporary-availability message for infrastructure failures; HTTP 409 alone means genuinely insufficient seats.
+- Kept `service_runs` as the required automatically-created dated inventory ledger for atomic booked-seat tracking, cancellation and per-date overrides. Scheduled-service default capacity and dated run capacity are CMS-editable from 1–500, supporting combined capacity for multiple or larger buses.
+- Baked repository extensions into the pinned Directus production image so Coolify does not depend on an unreliable source bind mount; added an authenticated readiness route and regression coverage.

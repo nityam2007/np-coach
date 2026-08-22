@@ -76,7 +76,7 @@ Use a distinct collection name per task so seed/content blocks don't overlap. Tw
 - [x] Correct dates, service days, direction, fares, return journeys, cutoff handling, timetable data, stable stop codes, terms consent, and persisted booking detail.
 - [x] Add company disclosure, legacy redirects, security contact, canonical home metadata, accessible route selection/skip navigation, and persistent cookie controls.
 - [x] Implement atomic `service_runs`, two-leg row-lock reservations, safe failure release, and fail-closed capacity checks through Directus.
-- [ ] Deploy the required Directus extension and additive schema, enter approved route capacities, concurrency-test the last-seat/payment cases, then deliberately enable `DAILY_EXPRESS_BOOKINGS_ENABLED`.
+- [ ] Deploy the required baked Directus extension image and additive schema; verify `/np-internal/inventory/status` returns 401 without auth (not 404) and web availability reports ready; then concurrency-test last-seat/payment cases before deliberately enabling `DAILY_EXPRESS_BOOKINGS_ENABLED`.
 - [ ] Complete the external production acceptance checklist in [`../SECURITY_AND_OPERATIONS.md`](../SECURITY_AND_OPERATIONS.md); these checks require service-owner access and evidence.
 - [ ] After deployment, run the live smoke/reconciliation/payment/email/accessibility/restore checks and record the evidence in `HANDOVER.md`.
 

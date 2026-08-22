@@ -52,6 +52,8 @@ Open **Environment Variables → Developer view** and paste `.env.coolify.exampl
 ```env
 NEXT_PUBLIC_SITE_URL=https://np-coaches.co.uk
 NEXT_PUBLIC_DIRECTUS_URL=https://cms.np-coaches.co.uk
+NEXT_PUBLIC_GOOGLE_ANALYTICS_ID=G-3GXSRDBP55
+NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=PEWp9KTyvJeyPa_1TpAQO3fdLzljRv8RnNggD-h8gsg
 DIRECTUS_ADMIN_EMAIL=admin@np-coaches.co.uk
 DIRECTUS_ADMIN_PASSWORD=<long unique password>
 ```
@@ -61,6 +63,7 @@ Coolify creates and retains every `SERVICE_*` password/secret referenced by the 
 Keep only the `NEXT_PUBLIC_*` values enabled as **Build Variables**. The admin password, Directus token, Stripe secrets, and Turnstile secret should be **Runtime only**. The internal Postfix setup has SMTP authentication disabled, so `SMTP_USER` and `SMTP_PASS` stay empty. If a secret contains `$`, enable Coolify's **Literal** option.
 
 `NEXT_PUBLIC_*` values are intentionally built into the browser bundle and are not secrets.
+The Analytics ID is loaded only after explicit consent. Keep the Search Console token present through the apex-domain cutover unless ownership is independently verified by DNS.
 
 ## 3. Assign domains
 
@@ -97,8 +100,11 @@ Verify:
 
 - `https://np-coaches.co.uk` loads with CMS images.
 - `https://cms.np-coaches.co.uk/admin` accepts the configured admin credentials.
+- The admin title changes from `Loading…` to the Directus sign-in screen and the console has no `init_runtime_dom_esm_bundler` error; all Directus/Schema images must remain pinned to 12.3.0.
 - Coolify shows `database` and `redis` without domains or published ports.
 - `schema-migrate` and `cms-bootstrap` are exited-success one-shot containers, not crash loops.
+- Before analytics consent, no request is made to `googletagmanager.com` or `google-analytics.com`; after accepting, GA4 receives a path-only `page_view` and `_ga` cookies appear.
+- `/robots.txt` advertises `https://np-coaches.co.uk/sitemap.xml`; the sitemap and every canonical use the apex domain, and page source contains the Google verification meta tag.
 
 The bootstrap scripts authenticate with the generated `ADMIN_TOKEN`, so changing the human admin password later does not break redeployments. Do not rotate that admin API token in Directus without also updating the corresponding Coolify-generated value.
 

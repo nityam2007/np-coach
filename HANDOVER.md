@@ -82,7 +82,10 @@ Only `NEXT_PUBLIC_*` variables should be enabled as build variables. Treat every
 - A Stripe test/live booking and lost-property payment reaches `paid` through the signed webhook.
 - The booking email is sent once; lost property sends customer and staff messages once; Directus email status fields show `sent`.
 - Cookie consent, security headers, sitemap, robots.txt, and llms.txt respond correctly.
+- GA4 makes no network request before explicit consent; accepting loads `G-3GXSRDBP55`, rejecting/withdrawing disables analytics and clears accessible first-party GA cookies.
+- Search Console verification, apex canonicals, root sitemap URLs, and the CMS-backed LocalBusiness/service JSON-LD are present after the domain cutover.
 - MariaDB and Redis have no public Coolify domain or published host port.
+- Directus Studio renders the sign-in application (not an empty `Loading…` shell) on pinned 12.3.0; `/server/ping` alone is not sufficient evidence.
 
 ## Backups and recovery
 

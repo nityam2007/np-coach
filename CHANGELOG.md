@@ -162,3 +162,13 @@ Append-only. Newest entries at the bottom. Never edit or delete past entries —
 - Added an API hook that forces `status=published` on every anonymous content query/read, plus matching filters on all website CMS reads, without relying on edition-gated custom permission rules.
 - Switched public content permission reconciliation to Directus's standard permission shape, preserved the existing public-file permission unchanged during upgrades, and stripped anonymous file API responses to display-safe metadata without breaking transformed asset delivery.
 - Verified the complete seed/configure/media bootstrap against a backed-up MariaDB volume on Directus 12.1, including a second idempotent run and direct anonymous draft/null leak tests.
+
+## 2026-08-22 — Analytics, apex SEO and Directus Studio repair
+
+- Reproduced the CMS black screen in headless Chrome and identified the actual Directus 12.1 Studio crash (`init_runtime_dom_esm_bundler is not defined`), rather than treating successful API/asset responses as proof that the SPA mounted.
+- Pulled Directus 12.3.0, confirmed its rebuilt Studio bundle no longer contains the undefined call, and booted a disposable SQLite-backed container whose rendered title reached `Sign In · Directus` without a console exception. Pinned 12.3.0 across Coolify, local, standalone and schema-bootstrap images.
+- Started the real local Compose stack on 12.3.0: the Directus system migration completed, both NP extensions loaded, and `/server/ping` returned `pong`. Existing MariaDB and uploads mounts were retained; the pre-existing backup volume was not modified.
+- Added consent-gated GA4 measurement `G-3GXSRDBP55` using basic consent mode: no Google tag before acceptance, advertising consent/signals disabled, manual path-only page views, and first-party GA cookie cleanup after rejection.
+- Preserved the existing apex Search Console HTML verification token through public build variables and expanded the production CSP only for the required Google tag/Analytics endpoints.
+- Expanded site-wide LocalBusiness JSON-LD with verified company, address, contact, area, currency and CMS service-catalog data; existing sitemap, robots, canonicals and `llms.txt` remain rooted at `https://np-coaches.co.uk`.
+- Made cookie-banner wording editable in Directus and added a revision-guarded, one-time update to the existing Privacy and Cookie Policy records covering GA4, Search Console, Google Maps, consent withdrawal, cookie durations and international processing. Future CMS edits are preserved.

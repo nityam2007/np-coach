@@ -22,6 +22,7 @@ import {
   type SocialLink,
   type TourPageContent,
   type PageAttachment,
+  type CookieConsentContent,
 } from "./site-config";
 import { withRouteStopCodes } from "./route-stops";
 import { safeCmsUrl } from "./content-security";
@@ -75,6 +76,7 @@ export interface SiteSettings {
   phone: { display: string; href: string; hours: string };
   email: { general: string; bookings: string };
   emailTemplates: EmailTemplates;
+  cookieConsent: CookieConsentContent;
   address: { line1: string; line2: string; city: string; county: string; postcode: string };
   nav: NavLink[];
   footerColumns: FooterColumn[];
@@ -127,6 +129,7 @@ interface SettingsRow {
   email_general: string;
   email_bookings: string;
   email_templates: EmailTemplates | null;
+  cookie_consent: CookieConsentContent | null;
   address_line1: string;
   address_line2: string;
   address_city: string;
@@ -219,6 +222,7 @@ const fallbackSettings: SiteSettings = {
   phone: siteConfig.phone,
   email: siteConfig.email,
   emailTemplates: siteConfig.emailTemplates,
+  cookieConsent: siteConfig.cookieConsent,
   address: siteConfig.address,
   nav: siteConfig.nav,
   footerColumns: siteConfig.footerColumns,
@@ -276,6 +280,7 @@ export async function getSettings(): Promise<SiteSettings> {
     phone: { display: row.phone_display, href: safeCmsUrl(row.phone_href, siteConfig.phone.href), hours: row.phone_hours },
     email: { general: row.email_general, bookings: row.email_bookings },
     emailTemplates: mergeEmailTemplates(row.email_templates),
+    cookieConsent: { ...siteConfig.cookieConsent, ...(row.cookie_consent ?? {}) },
     address: {
       line1: row.address_line1,
       line2: row.address_line2,

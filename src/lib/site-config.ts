@@ -339,6 +339,15 @@ export interface EmailTemplates {
   quoteCustomer: EmailTemplateCopy;
   quoteStaff: EmailTemplateCopy;
 }
+export interface CookieConsentContent {
+  dialogLabel: string;
+  message: string;
+  policyLabel: string;
+  settingsLabel: string;
+  rejectLabel: string;
+  acceptLabel: string;
+}
+
 export interface SiteContent {
   name: string;
   legalName: string;
@@ -354,6 +363,7 @@ export interface SiteContent {
   email: { general: string; bookings: string };
   socialLinks: SocialLink[];
   emailTemplates: EmailTemplates;
+  cookieConsent: CookieConsentContent;
   address: { line1: string; line2: string; city: string; county: string; postcode: string };
   mediaAlt: {
     homepageHero: string;

@@ -9,6 +9,7 @@ const BASE = process.env.DIRECTUS_URL ?? "http://localhost:8055";
 const EMAIL = process.env.DIRECTUS_ADMIN_EMAIL ?? "admin@np-coaches.co.uk";
 const PASSWORD = process.env.DIRECTUS_ADMIN_PASSWORD ?? "change-me";
 const STATIC_TOKEN = process.env.DIRECTUS_ADMIN_TOKEN;
+const LEGAL_POLICY_REVISION = "google-analytics-2026-08-22-v1";
 
 const directus = createDirectusApi({ base: BASE, token: STATIC_TOKEN });
 const api = directus.request;
@@ -456,6 +457,8 @@ async function run() {
   await ensureField("settings", str("registered_in"));
   await ensureField("settings", json("accreditations"));
   await ensureField("settings", json("email_templates"));
+  await ensureField("settings", json("cookie_consent"));
+  await ensureField("settings", str("legal_policy_revision"));
   await ensureField("settings", json("coverage"));
   await ensureField("settings", json("faqs"));
   await ensureField("settings", json("pricing")); // configurable fees + per-fee VAT rates
@@ -587,10 +590,12 @@ async function run() {
   const socialLinksMissing = !Array.isArray(currentSettings?.social_links) || currentSettings.social_links.length === 0;
   const homepageChanged = JSON.stringify(mergedHomepage) !== JSON.stringify(currentSettings?.homepage ?? null);
   const emailTemplatesChanged = JSON.stringify(mergedEmailTemplates) !== JSON.stringify(currentSettings?.email_templates ?? null);
+  const cookieConsentChanged = JSON.stringify(mergedCookieConsent) !== JSON.stringify(currentSettings?.cookie_consent ?? null);
   const fleetPageChanged = JSON.stringify(mergedFleetPage) !== JSON.stringify(currentSettings?.fleet_page ?? null);
   const tourPageChanged = JSON.stringify(mergedTourPage) !== JSON.stringify(currentSettings?.tour_page ?? null);
 
   // Seed the singleton only once. After that, Directus is the source of truth:
+  const mergedCookieConsent = { ...content.cookieConsent, ...(currentSettings?.cookie_consent ?? {}) };
   // routine deploys may add missing nested keys but never reset editor-managed values.
   const settingsDefaults = {
       name: content.name,
@@ -607,6 +612,7 @@ async function run() {
       phone_hours: content.phone.hours,
       email_general: content.email.general,
       email_templates: mergedEmailTemplates,
+      cookie_consent: mergedCookieConsent,
       email_bookings: content.email.bookings,
       address_line1: content.address.line1,
       address_line2: content.address.line2,
@@ -633,6 +639,7 @@ async function run() {
     if (pricingChanged) settingsPatch.pricing = mergedPricing;
     if (homepageChanged) settingsPatch.homepage = mergedHomepage;
     if (emailTemplatesChanged) settingsPatch.email_templates = mergedEmailTemplates;
+    if (cookieConsentChanged) settingsPatch.cookie_consent = mergedCookieConsent;
     if (fleetPageChanged) settingsPatch.fleet_page = mergedFleetPage;
     if (tourPageChanged) settingsPatch.tour_page = mergedTourPage;
     if (socialLinksMissing) settingsPatch.social_links = content.socialLinks;
@@ -750,6 +757,32 @@ async function run() {
     console.log(`✓ seeded ${missingPages.length} missing pages (${missingPages.map((p) => p.slug).join(", ")})`);
   } else {
     console.log("• all pages present — skipped");
+  }
+
+  if (currentSettings?.legal_policy_revision !== LEGAL_POLICY_REVISION) {
+    const policySeeds = content.pages.filter((page) =>
+      ["privacy-policy", "cookie-policy"].includes(page.slug),
+    );
+    const policyRows = await api("/items/pages?fields=id,slug&limit=-1");
+    const idBySlug = new Map(policyRows.map((page) => [page.slug, page.id]));
+    for (const page of policySeeds) {
+      const id = idBySlug.get(page.slug);
+      if (!id) throw new Error(`Legal policy page missing after seed: ${page.slug}`);
+      await api(`/items/pages/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          body: page.body,
+          seo_title: page.seoTitle,
+          seo_description: page.seoDescription,
+        }),
+      });
+      console.log(`✓ ${page.slug}: Google services disclosure applied`);
+    }
+    await api("/items/settings", {
+      method: "PATCH",
+      body: JSON.stringify({ legal_policy_revision: LEGAL_POLICY_REVISION }),
+    });
+    console.log(`✓ legal policy revision ${LEGAL_POLICY_REVISION} recorded`);
   }
 
   // Tours — only seed if empty.

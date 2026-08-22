@@ -37,6 +37,8 @@ services:
         NEXT_PUBLIC_DIRECTUS_URL: ${NEXT_PUBLIC_DIRECTUS_URL}
         NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY}
         NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}
+        NEXT_PUBLIC_GOOGLE_ANALYTICS_ID: ${NEXT_PUBLIC_GOOGLE_ANALYTICS_ID:-G-3GXSRDBP55}
+        NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION: ${NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION:-PEWp9KTyvJeyPa_1TpAQO3fdLzljRv8RnNggD-h8gsg}
     restart: unless-stopped
     environment:
       # Server-only: in this network the app reaches Directus by service name.
@@ -69,6 +71,8 @@ services:
       LOST_PROPERTY_TO: ${LOST_PROPERTY_TO:-info@np-coaches.co.uk}
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
       NEXT_PUBLIC_DIRECTUS_URL: ${NEXT_PUBLIC_DIRECTUS_URL}
+      NEXT_PUBLIC_GOOGLE_ANALYTICS_ID: ${NEXT_PUBLIC_GOOGLE_ANALYTICS_ID:-G-3GXSRDBP55}
+      NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION: ${NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION:-PEWp9KTyvJeyPa_1TpAQO3fdLzljRv8RnNggD-h8gsg}
     depends_on:
       directus:
         condition: service_started
@@ -82,7 +86,7 @@ services:
       - traefik.http.services.web.loadbalancer.server.port=3000
 
   directus:
-    image: directus/directus:12.1.0
+    image: directus/directus:12.3.0
     restart: unless-stopped
     depends_on:
       db:

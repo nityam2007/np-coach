@@ -14,12 +14,11 @@ function formatGBP(pence: number) {
 
 export default async function PassSuccessPage({ searchParams }: { searchParams: Promise<{ session_id?: string }> }) {
   const { session_id } = await searchParams;
-  const reference = session_id ? await confirmCheckoutSession(session_id, "pass") : null;
-  const pass = reference
-    ? await getPassPurchaseByReference(reference)
-    : session_id
-      ? await getPaidPassByCheckoutSession(session_id)
-      : null;
+  let pass = session_id ? await getPaidPassByCheckoutSession(session_id) : null;
+  if (!pass && session_id) {
+    const reference = await confirmCheckoutSession(session_id, "pass");
+    pass = reference ? await getPassPurchaseByReference(reference) : null;
+  }
   const emailSent = pass?.confirmation_email_status === "sent";
 
   return (
@@ -34,9 +33,9 @@ export default async function PassSuccessPage({ searchParams }: { searchParams: 
             : "Your payment is being confirmed securely with Stripe. Your request is not sent to the team until that check succeeds."}
         </p>
 
-        {reference && pass?.status === "paid" && (
+        {pass?.status === "paid" && (
           <p className="mt-6 text-sm">
-            Reference: <span className="font-display text-lg font-bold text-navy">{reference}</span>
+            Reference: <span className="font-display text-lg font-bold text-navy">{pass.reference}</span>
           </p>
         )}
 

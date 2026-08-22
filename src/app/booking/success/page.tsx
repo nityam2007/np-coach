@@ -16,12 +16,13 @@ export const metadata: Metadata = {
 
 export default async function BookingSuccessPage({ searchParams }: { searchParams: Promise<{ session_id?: string }> }) {
   const { session_id } = await searchParams;
-  const reference = session_id ? await confirmCheckoutSession(session_id, "booking") : null;
-  const booking = reference
-    ? await getBookingByReference(reference)
-    : session_id
-      ? await getPaidBookingByCheckoutSession(session_id)
-      : null;
+  // Prefer the signed webhook's already-paid record. This makes a refresh fast
+  // and reliable even when Stripe's second API read is transiently unavailable.
+  let booking = session_id ? await getPaidBookingByCheckoutSession(session_id) : null;
+  if (!booking && session_id) {
+    const reference = await confirmCheckoutSession(session_id, "booking");
+    booking = reference ? await getBookingByReference(reference) : null;
+  }
   const [stops, settings] = await Promise.all([getStops(), getSettings()]);
   const emailSent = booking?.confirmation_email_status === "sent";
   const pass = booking?.status === "paid" && booking.inventory_status === "committed"

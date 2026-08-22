@@ -210,7 +210,9 @@ const endpoint = {
             subject: body.subject,
             message_id: body.messageId,
             error_code: null,
-            last_attempt_at: new Date().toISOString(),
+            // Pass native Date values to Knex. MariaDB timestamp columns do not
+            // reliably accept ISO strings containing `T`, milliseconds and `Z`.
+            last_attempt_at: new Date(),
           });
           return { id: row.id, attempts };
         });
@@ -227,7 +229,7 @@ const endpoint = {
         const updated = await database("email_logs").where({ idempotency_key: req.body.idempotencyKey }).update({
           status: req.body.delivered ? "sent" : "failed",
           error_code: req.body.delivered ? null : req.body.errorCode,
-          sent_at: req.body.delivered ? new Date().toISOString() : null,
+          sent_at: req.body.delivered ? new Date() : null,
         });
         return res.json({ data: { updated: updated === 1 } });
       } catch (error) {
@@ -251,7 +253,10 @@ const endpoint = {
           const eligible = row[statusField] === null || row[statusField] === "pending"
             || row[statusField] === "failed" || staleSending;
           if (!eligible) return { claimed: false, completed: false };
-          const updated = await trx(collection).where({ id }).update({ [statusField]: "sending", [startedField]: lease });
+          const updated = await trx(collection).where({ id }).update({
+            [statusField]: "sending",
+            [startedField]: new Date(lease),
+          });
           return { claimed: updated === 1, completed: false };
         });
         return res.json({ data });
@@ -278,7 +283,7 @@ const endpoint = {
           }
           const affected = await trx(collection).where({ id }).update({
             [statusField]: delivered ? "sent" : "failed",
-            [sentField]: delivered ? new Date().toISOString() : null,
+            [sentField]: delivered ? new Date() : null,
             [startedField]: null,
           });
           return affected === 1;

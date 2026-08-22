@@ -192,7 +192,8 @@ test("email delivery overview tracks attempts and final state without collection
   assert.equal(database.rows("email_logs")[0].attempts, 2);
   assert.equal(database.rows("email_logs")[0].status, "sent");
   assert.equal(database.rows("email_logs")[0].error_code, null);
-  assert.ok(database.rows("email_logs")[0].sent_at);
+  assert.ok(database.rows("email_logs")[0].last_attempt_at instanceof Date);
+  assert.ok(database.rows("email_logs")[0].sent_at instanceof Date);
 });
 
 test("payment email delivery claims pending state and records SMTP completion atomically", async () => {
@@ -219,6 +220,7 @@ test("payment email delivery claims pending state and records SMTP completion at
     staleBefore: "2026-08-22T16:50:00.000Z",
   })).body, { data: { claimed: true, completed: false } });
   assert.equal(database.rows("bookings")[0].confirmation_email_status, "sending");
+  assert.ok(database.rows("bookings")[0].confirmation_email_started_at instanceof Date);
   // Production MariaDB may store timestamp fields without fractional seconds.
   database.rows("bookings")[0].confirmation_email_started_at = "2026-08-22T17:00:00.000Z";
 
@@ -231,7 +233,7 @@ test("payment email delivery claims pending state and records SMTP completion at
   })).body, { data: { updated: true } });
   assert.equal(database.rows("bookings")[0].confirmation_email_status, "sent");
   assert.equal(database.rows("bookings")[0].confirmation_email_started_at, null);
-  assert.ok(database.rows("bookings")[0].confirmation_email_sent_at);
+  assert.ok(database.rows("bookings")[0].confirmation_email_sent_at instanceof Date);
 
   assert.deepEqual((await request("/email-delivery/claim", {
     collection: "bookings",
@@ -250,6 +252,7 @@ test("payment email delivery claims pending state and records SMTP completion at
     staleBefore: "2026-08-22T16:52:00.000Z",
   })).body, { data: { claimed: true, completed: false } });
   assert.equal(database.rows("bookings")[0].staff_email_status, "sending");
+  assert.ok(database.rows("bookings")[0].staff_email_started_at instanceof Date);
 
   assert.deepEqual((await request("/email-delivery/finish", {
     collection: "bookings",
@@ -259,7 +262,7 @@ test("payment email delivery claims pending state and records SMTP completion at
     delivered: true,
   })).body, { data: { updated: true } });
   assert.equal(database.rows("bookings")[0].staff_email_status, "sent");
-  assert.ok(database.rows("bookings")[0].staff_email_sent_at);
+  assert.ok(database.rows("bookings")[0].staff_email_sent_at instanceof Date);
 });
 
 test("CMS-paid booking reconciliation creates inventory once", async () => {

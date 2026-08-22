@@ -116,6 +116,24 @@ const ROUTES_FIELDS = [
 ];
 
 // T4 — Blog posts.
+// Individual repeatable Daily Express departures. Missing fare rows fail closed.
+const SCHEDULED_SERVICES_FIELDS = [
+  pk("id"),
+  { field: "sort", type: "integer", meta: { interface: "input", hidden: false }, schema: {} },
+  uniqueStr("code"),
+  str("route_slug"), str("name"), str("label"),
+  {
+    field: "sales_mode", type: "string",
+    meta: { interface: "select-dropdown", options: { choices: [{ text: "Online", value: "online" }, { text: "Driver only", value: "driver_only" }] } },
+    schema: { default_value: "driver_only" },
+  },
+  json("operating_days"),
+  { field: "capacity", type: "integer", meta: { interface: "input", note: "Sellable seats copied into each dated run." }, schema: { default_value: 0 } },
+  json("stops"),
+  json("fares"),
+  text("notice"),
+];
+
 const BLOG_FIELDS = [
   pk("id"),
   { field: "slug", type: "string", meta: {}, schema: {} },
@@ -216,6 +234,7 @@ const SERVICE_RUNS_FIELDS = [
   pk("id"),
   uniqueStr("run_key"),
   str("route_slug"),
+  str("service_code"),
   { field: "service_date", type: "date", meta: { interface: "datetime" }, schema: {} },
   str("departure_time"),
   int("capacity"),
@@ -229,6 +248,10 @@ const BOOKINGS_FIELDS = [
   uniqueStr("reference"),
   str("route_slug"),
   str("from_stop"), str("to_stop"), str("route_label"),
+  str("outward_service_code"), str("outward_service_name"), str("arrival_time"),
+  str("return_service_code"), str("return_service_name"), str("return_arrival_time"),
+  json("journey_snapshot"),
+
   { field: "trip_date", type: "date", meta: { interface: "datetime" }, schema: {} },
   str("trip_type"), // "single" | "return"
   str("departure_time"),
@@ -479,6 +502,7 @@ async function run() {
   await ensureCollection("tours", { sort_field: "sort", icon: "tour", note: "UK Tours destinations (SEO landing pages)" }, TOURS_FIELDS);
   await ensureCollection("routes", { sort_field: "sort", icon: "route", note: "Daily Express routes + timetables" }, ROUTES_FIELDS);
   await ensureCollection("stops", { sort_field: "sort", icon: "pin_drop", note: "Daily Express corridor stops (booking From/To)" }, STOPS_FIELDS);
+  await ensureCollection("scheduled_services", { sort_field: "sort", icon: "departure_board", note: "Individual Daily Express departures, schedules and stop-pair fares" }, SCHEDULED_SERVICES_FIELDS);
   await ensureCollection("school_routes", { sort_field: "sort", icon: "directions_bus", note: "Home-to-school route timetables" }, SCHOOL_ROUTES_FIELDS);
   await ensureCollection("blog_posts", { icon: "feed", note: "Blog posts" }, BLOG_FIELDS);
   await ensureCollection("testimonials", { sort_field: "sort", icon: "format_quote", note: "Homepage testimonials" }, TESTIMONIALS_FIELDS);
@@ -550,6 +574,15 @@ async function run() {
   await ensureField("bookings", str("inventory_status"));
   await ensureField("bookings", str("return_route_slug"));
   await ensureField("bookings", str("return_departure_time"));
+  await ensureField("bookings", str("outward_service_code"));
+  await ensureField("bookings", str("outward_service_name"));
+  await ensureField("bookings", str("arrival_time"));
+  await ensureField("bookings", str("return_service_code"));
+  await ensureField("bookings", str("return_service_name"));
+  await ensureField("bookings", str("return_arrival_time"));
+  await ensureField("bookings", json("journey_snapshot"));
+  await ensureField("service_runs", str("service_code"));
+
 
   const paymentStatusDefinition = BOOKINGS_FIELDS.find((field) => field.field === "status");
   if (!paymentStatusDefinition) throw new Error("payment status field definition missing");
@@ -588,7 +621,7 @@ async function run() {
 
   await ensureField("blog_posts", fileField("thumbnail", "Blog card and article preview image."));
   await ensureFileRelations();
-  const publishableCollections = ["services", "fleet", "pages", "tours", "routes", "stops", "school_routes", "blog_posts", "testimonials"];
+  const publishableCollections = ["services", "fleet", "pages", "tours", "routes", "scheduled_services", "stops", "school_routes", "blog_posts", "testimonials"];
   for (const collection of publishableCollections) {
     await ensureField(collection, publishedStatus);
     await publishRowsWithoutStatus(collection);
@@ -602,11 +635,13 @@ async function run() {
   await ensureUniqueField("pass_purchases", "reference");
   await ensureUniqueField("bookings", "stripe_payment_intent");
   await ensureUniqueField("service_runs", "run_key");
+  await ensureUniqueField("scheduled_services", "code");
   await ensureUniqueField("pass_purchases", "stripe_payment_intent");
   await ensurePublicRead("tours");
   await ensurePublicRead("routes");
   await ensurePublicRead("stops");
   await ensurePublicRead("school_routes");
+  await ensurePublicRead("scheduled_services");
   await ensurePublicRead("blog_posts");
   await ensurePublicRead("testimonials");
   for (const collection of ["contact_submissions", "quote_requests", "bookings", "service_runs", "pass_purchases", "customers", "otp_codes", "customer_sessions"]) {
@@ -933,6 +968,32 @@ async function run() {
       body: JSON.stringify({ price_single: seed.priceSingle, price_return: seed.priceReturn }),
     });
     console.log(`✓ backfilled fares for route "${route.slug}"`);
+  }
+
+  // Scheduled services — additive by immutable code; never replace editor-approved data.
+  const existingScheduledServices = await api("/items/scheduled_services?fields=code,sort&limit=-1");
+  const existingServiceCodes = new Set(existingScheduledServices.map((service) => service.code));
+  const missingScheduledServices = content.scheduledServices.filter((service) => !existingServiceCodes.has(service.code));
+  if (missingScheduledServices.length) {
+    await api("/items/scheduled_services", {
+      method: "POST",
+      body: JSON.stringify(missingScheduledServices.map((service, index) => ({
+        code: service.code,
+        route_slug: service.routeSlug,
+        name: service.name,
+        label: service.label,
+        sales_mode: service.salesMode,
+        operating_days: service.operatingDays,
+        capacity: service.capacity,
+        stops: service.stops,
+        fares: service.fares,
+        notice: service.notice,
+        sort: existingScheduledServices.length + index + 1,
+      }))),
+    });
+    console.log(`✓ seeded ${missingScheduledServices.length} missing scheduled services`);
+  } else {
+    console.log("• all scheduled services present — skipped");
   }
 
   // Stops — add missing codes without changing existing CMS rows.

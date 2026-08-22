@@ -79,3 +79,17 @@ Use a distinct collection name per task so seed/content blocks don't overlap. Tw
 - [ ] Deploy the required Directus extension and additive schema, enter approved route capacities, concurrency-test the last-seat/payment cases, then deliberately enable `DAILY_EXPRESS_BOOKINGS_ENABLED`.
 - [ ] Complete the external production acceptance checklist in [`../SECURITY_AND_OPERATIONS.md`](../SECURITY_AND_OPERATIONS.md); these checks require service-owner access and evidence.
 - [ ] After deployment, run the live smoke/reconciliation/payment/email/accessibility/restore checks and record the evidence in `HANDOVER.md`.
+
+## Planned enhancement — Daily Express multi-service correction (22 August 2026)
+
+Authoritative brief: [IMP-22-8-26.md](IMP-22-8-26.md).
+
+- [ ] Obtain NP Coaches approval for the seven documented timetable conflicts.
+- [ ] Obtain the complete stop-pair fare matrix for all four online services and confirm Adult/Child/Infant plus return-pricing rules.
+- [x] Add the additive `scheduled_services` CMS/fallback model; preserve `routes` as direction/SEO pages and retain legacy fields during cutover.
+- [x] Exclude Friday–Monday Leicester driver-sale services from online selectors, inventory, Stripe, and online Offer schema.
+- [x] Replace first-route matching with explicit outward/return scheduled-service selection and fail-closed fare resolution.
+- [x] Key atomic dated inventory by stable service code; keep whole-service capacity for launch unless segment reuse is separately approved.
+- [x] Persist immutable leg/fare snapshots and show both legs in email, account, boarding pass, and QR verification.
+- [ ] Complete the remaining fare/return/output acceptance tests from the brief. Core deterministic resolver, cutoff, two-service, Leicester-exclusion and two-leg atomic inventory tests pass locally.
+- [ ] Deploy additively with bookings disabled; enter approved CMS data and complete the full concurrency/Stripe/email/accessibility acceptance gate before enabling sales.

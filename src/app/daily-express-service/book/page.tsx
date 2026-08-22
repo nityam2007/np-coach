@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
-import { BookingForm, type BookingRouteOption, type BookingStopOption } from "@/components/forms/BookingForm";
+import { BookingForm, type BookingStopOption } from "@/components/forms/BookingForm";
 import { PageHero } from "@/components/sections/PageHero";
 import { Icon } from "@/components/ui/Icon";
-import { getRoutes, getStops, getSettings, selectPageHeroFallback } from "@/lib/directus";
-import { computeGross } from "@/lib/stripe";
+import { getOnlineStops, getScheduledServices, getSettings, selectPageHeroFallback } from "@/lib/directus";
 
 export const metadata: Metadata = {
   title: "Book the Daily Express",
@@ -18,15 +17,9 @@ export default async function BookPage({
   searchParams: Promise<{ from?: string; to?: string; date?: string; returnDate?: string; pax?: string; trip?: string; cancelled?: string }>;
 }) {
   const { from, to, date, returnDate, pax, trip, cancelled } = await searchParams;
-  const [stops, routes, settings] = await Promise.all([getStops(), getRoutes(), getSettings()]);
+  const [stops, services, settings] = await Promise.all([getOnlineStops(), getScheduledServices(), getSettings()]);
   const options: BookingStopOption[] = stops.map((s) => ({ code: s.code, name: s.name }));
 
-  const routeOptions: BookingRouteOption[] = routes.map((route) => ({
-    stops: route.stops.flatMap((stop) => stop.code ? [stop.code] : []),
-    fareSingle: computeGross(route.priceSingle, settings.pricing.dailyExpressVat).gross,
-    fareReturn: computeGross(route.priceReturn, settings.pricing.dailyExpressVat).gross,
-    capacity: route.capacity ?? 0,
-  }));
   const heroFallback = selectPageHeroFallback(settings, "/daily-express-service/book");
 
   return (
@@ -62,7 +55,7 @@ export default async function BookPage({
 
         <BookingForm
           stops={options}
-          routes={routeOptions}
+          services={services}
           defaultFrom={from}
           defaultTo={to}
           defaultDate={date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : undefined}

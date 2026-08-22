@@ -81,6 +81,12 @@ export default async function AccountPage() {
                   <p className="font-semibold text-navy">{b.route_label}</p>
                   <p className="mt-0.5 text-sm text-navy/70">
                     {b.trip_date ?? "—"} · {b.passengers} passenger{b.passengers > 1 ? "s" : ""} · {gbp(b.amount)}
+                  <p className="mt-0.5 text-sm text-navy/70">
+                    {b.outward_service_name} · {b.departure_time}–{b.arrival_time}
+                    {b.return_date && b.return_service_name
+                      ? ` · Return ${b.return_date}, ${b.return_service_name} ${b.return_departure_time}–${b.return_arrival_time}`
+                      : ""}
+                  </p>
                   </p>
                   <p className="mt-0.5 font-mono text-xs text-navy/70">{b.reference}</p>
                 </div>

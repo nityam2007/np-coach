@@ -204,6 +204,40 @@ export interface CoachRoute {
   seoTitle: string;
   seoDescription: string;
 }
+export type ScheduledServiceSalesMode = "online" | "driver_only";
+
+export interface ScheduledServiceStop {
+  /** Stable code from the `stops` collection. */
+  code: string;
+  /** Local Europe/London time in 24-hour HH:mm form. */
+  time: string;
+  boarding: boolean;
+  dropping: boolean;
+}
+
+export interface ScheduledServiceFare {
+  from: string;
+  to: string;
+  /** Fares in integer pence. Missing rows are deliberately not sold online. */
+  adult: number;
+  child: number;
+  infant: number;
+}
+
+/** One actual repeatable Daily Express departure, separate from its SEO route page. */
+export interface ScheduledService {
+  code: string;
+  routeSlug: string;
+  name: string;
+  label: string;
+  salesMode: ScheduledServiceSalesMode;
+  /** ISO weekdays: Monday=1 through Sunday=7. */
+  operatingDays: number[];
+  capacity: number;
+  stops: ScheduledServiceStop[];
+  fares: ScheduledServiceFare[];
+  notice: string;
+}
 
 export interface BlogPost {
   slug: string;
@@ -389,6 +423,7 @@ export interface SiteContent {
   pages: Page[];
   tours: Tour[];
   routes: CoachRoute[];
+  scheduledServices: ScheduledService[];
   stops: Stop[];
   blogPosts: BlogPost[];
 }

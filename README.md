@@ -124,3 +124,7 @@ The security, payment, CMS-cache, timetable, QR-ticket, deployment, backup, acce
 Daily Express paid checkout is deliberately disabled in production by default (`DAILY_EXPRESS_BOOKINGS_ENABLED=false`). Atomic per-departure inventory is implemented through the private Directus extension; do not enable the launch switch until that extension and the additive schema are deployed, approved capacities are entered, and last-seat/payment concurrency tests pass. Quote and lost-property flows are unaffected.
 
 Use `npm run check` for the full local gate. Production backups use `scripts/backup-db.sh`; validate each backup generation with `scripts/restore-test.sh` on a non-production Docker host.
+
+The Daily Express multi-service correction is implemented additively in code: `routes` remains the direction/SEO source, while `scheduled_services` represents each real departure with a stable code, ordered stops, explicit stop-pair fares, sales mode and capacity. Online checkout now requires explicit outward/return service choices and keys atomic inventory by service code/date. Leicester remains driver-sale only and is excluded from online selectors, Stripe and Offer schema. Missing fares fail closed; `DAILY_EXPRESS_BOOKINGS_ENABLED` must remain `false` until the operator approves all schedules/fares and the live acceptance gate passes.
+
+Only fare rows documented in [`AIDATA/IMP-22-8-26.md`](AIDATA/IMP-22-8-26.md) are present in fallback/seed data. Run the additive bootstrap only after reviewing that brief; do not infer the remaining fare matrix.

@@ -48,12 +48,24 @@ export function BoardingPass({ data, domId }: { data: BoardingPassData; domId?: 
 
           <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-3">
             <Field label="Date" value={data.date ?? "—"} />
+            <Field label="Service" value={data.serviceName} />
+            <Field label="Departs" value={data.departureTime} />
+            <Field label="Arrives" value={data.arrivalTime} />
             <Field label="Trip" value={trip} />
             <Field label="Passengers" value={data.passengers} />
             <Field label="Passenger" value={data.passengerName} />
             {data.amountLabel && <Field label="Paid" value={data.amountLabel} />}
           </div>
         </div>
+
+          {data.returnLeg && (
+            <div className="mt-5 rounded-xl bg-greyblue/10 p-4 text-sm text-navy">
+              <p className="font-semibold">Return · {data.returnLeg.serviceName}</p>
+              <p className="mt-1 text-navy/70">
+                {data.returnLeg.date} · {data.returnLeg.departureTime}–{data.returnLeg.arrivalTime}
+              </p>
+            </div>
+          )}
 
         {/* Tear-off stub */}
         <div className="flex flex-col items-center justify-center gap-3 border-t border-dashed border-greyblue/50 bg-greyblue/5 p-6 sm:w-56 sm:border-l sm:border-t-0">

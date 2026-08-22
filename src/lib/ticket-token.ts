@@ -1,6 +1,14 @@
 import crypto from "node:crypto";
 
-export interface TicketClaims { reference: string; from: string; to: string; date: string | null }
+export interface TicketClaims {
+  reference: string;
+  from: string;
+  to: string;
+  date: string | null;
+  outwardService?: string;
+  returnService?: string | null;
+  returnDate?: string | null;
+}
 
 function secret(): string {
   const value = process.env.TICKET_SIGNING_SECRET || process.env.AUTH_SECRET;

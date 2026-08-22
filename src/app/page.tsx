@@ -8,7 +8,7 @@ import { StatsBand } from "@/components/sections/StatsBand";
 import { TestimonialCarousel } from "@/components/sections/TestimonialCarousel";
 import { FaqAccordion } from "@/components/sections/FaqAccordion";
 import { Reveal } from "@/components/ui/motion";
-import { getFleet, getServices, getSettings, getStops, getTestimonials } from "@/lib/directus";
+import { getFleet, getOnlineStops, getServices, getSettings, getTestimonials } from "@/lib/directus";
 
 import { buildMetadata } from "@/lib/seo";
 
@@ -24,7 +24,7 @@ export default async function HomePage() {
     getServices(),
     getFleet(),
     getTestimonials(),
-    getStops(),
+    getOnlineStops(),
   ]);
   const { homepage } = settings;
 

@@ -192,3 +192,22 @@ Append-only. Newest entries at the bottom. Never edit or delete past entries —
 - Decoupled fare display from sellable capacity so configured single/return prices remain visible while checkout accurately distinguishes a closed launch flag, zero capacity, an unsupported direction, and insufficient seats.
 - Hardened the hero video control with an explicit muted retry and poster fallback on media failure; renamed the homepage services motion control from “services” to “carousel”.
 - Ran the complete additive seed and Directus admin configuration against the local MariaDB-backed 12.3.0 stack; all 18 File Library relations were present, 15 existing dashboard panels were preserved, and protected record counts did not decrease.
+
+## 2026-08-22 — Daily Express multi-service discovery and implementation brief
+
+- Audited the public WordPress homepage, Daily Express hub, four published bus records, two direction taxonomies, Leicester route pages, acceptance deployment, public production Directus route/stop data, and the local booking/payment/inventory path.
+- Confirmed the required hierarchy: two online route directions with two 60-seat daily services each, while London ↔ Leicester remains Friday–Monday and driver-sale only.
+- Documented the current first-overlapping-route fare bug, missing departure choice, flat-fare/return limitations, timetable conflicts, incomplete ticket/email leg details, and the safe disabled-capacity state.
+- Added `AIDATA/IMP-22-8-26.md` as the authoritative implementation brief with provisional schedules, confirmed fare evidence, missing approval inputs, additive Directus model, customer flow, code map, tests, rollout/rollback gates, and a copy-paste implementation prompt. Original user raw notes were preserved.
+- Updated the active plan, task board, and continuation handoff. No application code, production CMS data, or booking flag changed.
+
+## 2026-08-22 — Daily Express multi-service implementation
+
+- Added the additive `scheduled_services` Directus/fallback model with stable service codes, ordered boarding/dropping stops, explicit ISO operating days, per-stop-pair fare rows, sales mode and capacity; retained all populated legacy `routes` fields and URLs.
+- Seeded the six researched schedules additively. The four London–Midlands services are online-capable and 60-seat; both Friday–Monday Leicester services are `driver_only`. Only documented fares are present, and every missing fare fails closed pending operator approval.
+- Replaced first-overlapping-route resolution with deterministic all-service search and explicit outward/return selection. The server re-resolves service code, stop order, date, fare, capacity and one-hour Europe/London cutoff before persisting or contacting Stripe.
+- Keyed atomic dated inventory by `service_code:YYYY-MM-DD` while retaining route/time snapshots and conservative whole-service capacity. Two-leg reservation/release remains row-locked and transactional through Directus.
+- Persisted immutable outward/return journey and fare snapshots on bookings; added service names, departure/arrival times and both legs to confirmation email, account summaries, boarding passes and signed QR validation claims.
+- Excluded driver-only Leicester from homepage/book selectors, inventory, Stripe and online Offer schema while keeping its timetable/SEO pages and driver-sale notice. Route pages and the Daily Express hub now show every child service.
+- Expanded deterministic resolver and Directus extension coverage; 17 tests, TypeScript, ESLint, seed/configure syntax checks and `git diff --check` pass.
+- Kept `DAILY_EXPRESS_BOOKINGS_ENABLED=false`. No production CMS data, Stripe configuration, schema snapshot or launch flag was changed; the complete fare matrix, timetable approval, passenger/return rules and live acceptance gate remain required.

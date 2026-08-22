@@ -42,6 +42,14 @@ export interface BookingEmailData {
   reference: string;
   route_label: string;
   trip_date: string | null;
+  outward_service_name: string;
+  departure_time: string;
+  arrival_time: string;
+  return_date: string | null;
+  return_service_name: string | null;
+  return_departure_time: string | null;
+  return_arrival_time: string | null;
+  journey_snapshot?: unknown;
   trip_type: string;
   passengers: number;
   amount: number;
@@ -187,6 +195,13 @@ export function bookingConfirmationEmail(
       { label: "Booking reference", value: booking.reference },
       { label: "Journey", value: booking.route_label },
       { label: "Travel date", value: formatDate(booking.trip_date) },
+      { label: "Outward service", value: booking.outward_service_name },
+      { label: "Outward time", value: `${booking.departure_time}–${booking.arrival_time}` },
+      { label: "Return date", value: booking.return_date ? formatDate(booking.return_date) : null },
+      { label: "Return service", value: booking.return_service_name },
+      { label: "Return time", value: booking.return_departure_time && booking.return_arrival_time
+        ? `${booking.return_departure_time}–${booking.return_arrival_time}`
+        : null },
       { label: "Ticket", value: booking.trip_type === "return" ? "Return" : "Single" },
       { label: "Passengers", value: booking.passengers },
       { label: "Paid", value: formatMoney(booking.amount, booking.currency) },

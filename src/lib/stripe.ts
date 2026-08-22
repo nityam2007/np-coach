@@ -1,6 +1,6 @@
 import Stripe from "stripe";
 import crypto from "node:crypto";
-import { getRoutes, getStops, getSettings } from "@/lib/directus";
+import { getScheduledServices, getStops, getSettings } from "@/lib/directus";
 import { directusAtomicUpdate, directusServerRead, directusServerWrite } from "@/lib/directus-server";
 import {
   sendBookingConfirmation,
@@ -9,7 +9,7 @@ import {
 } from "@/lib/notifications";
 import type { EmailResult } from "@/lib/email";
 import type { Stop } from "@/lib/site-config";
-import { findJourney } from "@/lib/booking-rules";
+import { findJourneyByCode } from "@/lib/booking-rules";
 
 import { releaseInventory } from "@/lib/inventory";
 /**
@@ -45,16 +45,24 @@ export interface PricedBooking {
   tripType: TripType;
   passengers: number;
   unitAmount: number; // pence per passenger, VAT-inclusive
+  outwardUnitAmount: number;
+  returnUnitAmount: number;
   amount: number; // total pence, VAT-inclusive
   vatRate: number; // % applied
   label: string;
   routeSlug: string;
+  outwardServiceCode: string;
+  outwardServiceName: string;
+  arrivalTime: string;
+  returnServiceCode: string | null;
+  returnServiceName: string | null;
   departureTime: string;
   travelDate: string;
   returnDate: string | null;
   returnRouteSlug: string | null;
   returnDepartureTime: string | null;
   outwardCapacity: number;
+  returnArrivalTime: string | null;
   returnCapacity: number | null;
 }
 
@@ -69,28 +77,30 @@ export async function priceBooking(
   tripType: TripType,
   passengers: number,
   travelDate: string,
+  outwardServiceCode: string,
   returnDate?: string,
+  returnServiceCode?: string,
 ): Promise<PricedBooking | null> {
   if (!Number.isInteger(passengers) || passengers < 1 || passengers > 50) return null;
   if (tripType !== "single" && tripType !== "return") return null;
   if (!fromCode || !toCode || fromCode === toCode) return null;
 
-  const [stops, routes, { pricing }] = await Promise.all([getStops(), getRoutes(), getSettings()]);
+  const [stops, services, { pricing }] = await Promise.all([getStops(), getScheduledServices(), getSettings()]);
   const from = stops.find((s) => s.code === fromCode);
   const to = stops.find((s) => s.code === toCode);
   if (!from || !to) return null;
 
-  const outward = findJourney(routes, fromCode, toCode, travelDate);
+  const outward = findJourneyByCode(services, outwardServiceCode, fromCode, toCode, travelDate);
   if (!outward) return null;
-  const inbound = tripType === "return" && returnDate ? findJourney(routes, toCode, fromCode, returnDate) : null;
+  const inbound = tripType === "return" && returnDate && returnServiceCode
+    ? findJourneyByCode(services, returnServiceCode, toCode, fromCode, returnDate)
+    : null;
   if (tripType === "return" && !inbound) return null;
 
-  if (!Number.isInteger(outward.route.capacity) || (outward.route.capacity ?? 0) < 1) return null;
-  if (inbound && (!Number.isInteger(inbound.route.capacity) || (inbound.route.capacity ?? 0) < 1)) return null;
-  const net = tripType === "return" ? outward.route.priceReturn : outward.route.priceSingle;
-  if (!Number.isInteger(net) || net <= 0) return null;
-
-  const unitAmount = computeGross(net, pricing.dailyExpressVat).gross;
+  if (passengers > outward.service.capacity || (inbound && passengers > inbound.service.capacity)) return null;
+  const outwardGross = computeGross(outward.fare.adult, pricing.dailyExpressVat).gross;
+  const returnGross = inbound ? computeGross(inbound.fare.adult, pricing.dailyExpressVat).gross : 0;
+  const unitAmount = outwardGross + returnGross;
 
   return {
     from,
@@ -101,14 +111,22 @@ export async function priceBooking(
     amount: unitAmount * passengers,
     vatRate: pricing.dailyExpressVat,
     label: `${from.name} to ${to.name} — ${tripType === "return" ? "return" : "single"}`,
-    routeSlug: outward.route.slug,
+    outwardUnitAmount: outwardGross,
+    returnUnitAmount: returnGross,
+    routeSlug: outward.service.routeSlug,
+    outwardServiceCode: outward.service.code,
+    outwardServiceName: outward.service.name,
     departureTime: outward.departureTime,
+    arrivalTime: outward.arrivalTime,
     travelDate,
     returnDate: tripType === "return" ? returnDate ?? null : null,
-    returnRouteSlug: inbound?.route.slug ?? null,
+    returnServiceName: inbound?.service.name ?? null,
+    returnRouteSlug: inbound?.service.routeSlug ?? null,
+    returnServiceCode: inbound?.service.code ?? null,
     returnDepartureTime: inbound?.departureTime ?? null,
-    outwardCapacity: outward.route.capacity ?? 0,
-    returnCapacity: inbound?.route.capacity ?? null,
+    returnArrivalTime: inbound?.arrivalTime ?? null,
+    outwardCapacity: outward.service.capacity,
+    returnCapacity: inbound?.service.capacity ?? null,
   };
 }
 
@@ -134,6 +152,27 @@ export function bookingReference(): string {
 }
 
 // ---- Authenticated Directus access for bookings (server-only) ----
+export interface BookingLegSnapshot {
+  serviceCode: string;
+  serviceName: string;
+  routeSlug: string;
+  date: string;
+  fromCode: string;
+  fromName: string;
+  departureTime: string;
+  toCode: string;
+  toName: string;
+  arrivalTime: string;
+  farePerPassenger: number;
+}
+
+export interface BookingJourneySnapshot {
+  outward: BookingLegSnapshot;
+  return: BookingLegSnapshot | null;
+  passengers: number;
+  amount: number;
+}
+
 export interface BookingRow {
   id: number;
   reference: string;
@@ -147,10 +186,17 @@ export interface BookingRow {
   route_slug: string;
   departure_time: string;
   return_date: string | null;
+  outward_service_code: string;
+  outward_service_name: string;
+  arrival_time: string;
+  journey_snapshot: BookingJourneySnapshot | null;
   return_route_slug: string | null;
   return_departure_time: string | null;
   trip_type: string;
   passengers: number;
+  return_service_code: string | null;
+  return_service_name: string | null;
+  return_arrival_time: string | null;
   name: string;
   email: string;
   phone: string;
@@ -171,11 +217,18 @@ export async function createPendingBooking(data: {
   departureTime: string;
   returnDate: string | null;
   returnRouteSlug: string | null;
+  outwardServiceCode: string;
+  outwardServiceName: string;
+  arrivalTime: string;
+  journeySnapshot: BookingJourneySnapshot;
   returnDepartureTime: string | null;
   tripDate: string | null;
   tripType: TripType;
   passengers: number;
   amount: number;
+  returnServiceCode: string | null;
+  returnServiceName: string | null;
+  returnArrivalTime: string | null;
   name: string;
   email: string;
   outwardRunId: number;
@@ -194,10 +247,17 @@ export async function createPendingBooking(data: {
     return_date: data.returnDate,
     return_route_slug: data.returnRouteSlug,
     return_departure_time: data.returnDepartureTime,
+    outward_service_code: data.outwardServiceCode,
+    outward_service_name: data.outwardServiceName,
+    arrival_time: data.arrivalTime,
+    journey_snapshot: data.journeySnapshot,
     trip_type: data.tripType,
     passengers: data.passengers,
     amount: data.amount,
     currency: "gbp",
+    return_service_code: data.returnServiceCode,
+    return_service_name: data.returnServiceName,
+    return_arrival_time: data.returnArrivalTime,
     name: data.name,
     email: data.email,
     outward_run_id: data.outwardRunId,

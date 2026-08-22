@@ -104,7 +104,16 @@ export async function startBooking(_prev: FormState, formData: FormData): Promis
   }
 
   // Price is computed server-side from Directus — the client never sends an amount.
-  const priced = await priceBooking(data.from, data.to, data.tripType, data.passengers, data.date, data.returnDate);
+  const priced = await priceBooking(
+    data.from,
+    data.to,
+    data.tripType,
+    data.passengers,
+    data.date,
+    data.outwardService,
+    data.returnDate,
+    data.returnService,
+  );
   if (!priced) return { ok: false, message: "That journey or passenger count isn't available. Please check and try again." };
 
   if (!process.env.STRIPE_SECRET_KEY) {
@@ -113,13 +122,15 @@ export async function startBooking(_prev: FormState, formData: FormData): Promis
   const reservation = await reserveInventory(
     {
       routeSlug: priced.routeSlug,
+      serviceCode: priced.outwardServiceCode,
       serviceDate: priced.travelDate,
       departureTime: priced.departureTime,
       capacity: priced.outwardCapacity,
     },
-    priced.returnRouteSlug && priced.returnDate && priced.returnDepartureTime && priced.returnCapacity
+    priced.returnServiceCode && priced.returnRouteSlug && priced.returnDate && priced.returnDepartureTime && priced.returnCapacity
       ? {
           routeSlug: priced.returnRouteSlug,
+          serviceCode: priced.returnServiceCode,
           serviceDate: priced.returnDate,
           departureTime: priced.returnDepartureTime,
           capacity: priced.returnCapacity,
@@ -138,12 +149,50 @@ export async function startBooking(_prev: FormState, formData: FormData): Promis
     toStop: priced.to.code,
     routeLabel: priced.label,
     routeSlug: priced.routeSlug,
+    outwardServiceCode: priced.outwardServiceCode,
+    outwardServiceName: priced.outwardServiceName,
+    arrivalTime: priced.arrivalTime,
     tripDate: priced.travelDate,
     departureTime: priced.departureTime,
     returnDate: priced.returnDate,
     returnRouteSlug: priced.returnRouteSlug,
     returnDepartureTime: priced.returnDepartureTime,
     tripType: priced.tripType,
+    journeySnapshot: {
+      outward: {
+        serviceCode: priced.outwardServiceCode,
+        serviceName: priced.outwardServiceName,
+        routeSlug: priced.routeSlug,
+        date: priced.travelDate,
+        fromCode: priced.from.code,
+        fromName: priced.from.name,
+        departureTime: priced.departureTime,
+        toCode: priced.to.code,
+        toName: priced.to.name,
+        arrivalTime: priced.arrivalTime,
+        farePerPassenger: priced.outwardUnitAmount,
+      },
+      return: priced.returnServiceCode && priced.returnRouteSlug && priced.returnDate && priced.returnDepartureTime && priced.returnArrivalTime
+        ? {
+            serviceCode: priced.returnServiceCode,
+            serviceName: priced.returnServiceName ?? priced.returnServiceCode,
+            routeSlug: priced.returnRouteSlug,
+            date: priced.returnDate,
+            fromCode: priced.to.code,
+            fromName: priced.to.name,
+            departureTime: priced.returnDepartureTime,
+            toCode: priced.from.code,
+            toName: priced.from.name,
+            arrivalTime: priced.returnArrivalTime,
+            farePerPassenger: priced.returnUnitAmount,
+          }
+        : null,
+      passengers: priced.passengers,
+      amount: priced.amount,
+    },
+    returnServiceCode: priced.returnServiceCode,
+    returnServiceName: priced.returnServiceName,
+    returnArrivalTime: priced.returnArrivalTime,
     passengers: priced.passengers,
     amount: priced.amount,
     name: data.name,

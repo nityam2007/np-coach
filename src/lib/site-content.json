@@ -926,7 +926,7 @@
         }
       ],
       "seoTitle": "London to Leicester Coach | Fri–Mon | NP Coaches",
-      "seoDescription": "Coach service from Southall and Slough to Leicester with NP Coaches. Morning departure, Friday to Monday only. Book online up to 1 hour before travel."
+      "seoDescription": "Coach service from Southall and Slough to Leicester with NP Coaches. Morning departure, Friday to Monday only. Tickets are available directly from the driver."
     },
     {
       "slug": "leicester-to-london",
@@ -955,7 +955,125 @@
         }
       ],
       "seoTitle": "Leicester to London Coach | Fri–Mon | NP Coaches",
-      "seoDescription": "Coach service from Leicester to Slough and London with NP Coaches. Afternoon departure, Friday to Monday only. Book online up to 1 hour before travel."
+      "seoDescription": "Coach service from Leicester to Slough and London with NP Coaches. Afternoon departure, Friday to Monday only. Tickets are available directly from the driver."
+    }
+  ],
+  "scheduledServices": [
+    {
+      "code": "lm-morning",
+      "routeSlug": "london-to-wolverhampton",
+      "name": "London to the Midlands — morning service",
+      "label": "Morning service",
+      "salesMode": "online",
+      "operatingDays": [1, 2, 3, 4, 5, 6, 7],
+      "capacity": 60,
+      "stops": [
+        { "code": "southall", "time": "09:45", "boarding": true, "dropping": false },
+        { "code": "slough", "time": "10:15", "boarding": true, "dropping": true },
+        { "code": "coventry", "time": "12:00", "boarding": true, "dropping": true },
+        { "code": "birmingham-soho", "time": "13:00", "boarding": true, "dropping": true },
+        { "code": "birmingham-smethwick", "time": "13:30", "boarding": true, "dropping": true },
+        { "code": "wolverhampton", "time": "14:00", "boarding": false, "dropping": true }
+      ],
+      "fares": [],
+      "notice": "Timetable pending final operator approval. Missing fare rows are not sold online."
+    },
+    {
+      "code": "lm-evening",
+      "routeSlug": "london-to-wolverhampton",
+      "name": "London to the Midlands — evening service",
+      "label": "Evening service",
+      "salesMode": "online",
+      "operatingDays": [1, 2, 3, 4, 5, 6, 7],
+      "capacity": 60,
+      "stops": [
+        { "code": "southall", "time": "14:45", "boarding": true, "dropping": false },
+        { "code": "slough", "time": "15:15", "boarding": true, "dropping": true },
+        { "code": "coventry", "time": "17:00", "boarding": true, "dropping": true },
+        { "code": "birmingham-soho", "time": "18:00", "boarding": true, "dropping": true },
+        { "code": "birmingham-smethwick", "time": "18:15", "boarding": true, "dropping": true },
+        { "code": "wolverhampton", "time": "18:45", "boarding": false, "dropping": true }
+      ],
+      "fares": [
+        { "from": "southall", "to": "wolverhampton", "adult": 1800, "child": 1800, "infant": 1800 }
+      ],
+      "notice": "Timetable pending final operator approval. Only the documented fare row is available."
+    },
+    {
+      "code": "ml-afternoon",
+      "routeSlug": "wolverhampton-to-london",
+      "name": "The Midlands to London — afternoon service",
+      "label": "Afternoon service",
+      "salesMode": "online",
+      "operatingDays": [1, 2, 3, 4, 5, 6, 7],
+      "capacity": 60,
+      "stops": [
+        { "code": "wolverhampton", "time": "14:30", "boarding": true, "dropping": false },
+        { "code": "birmingham-smethwick", "time": "15:00", "boarding": true, "dropping": true },
+        { "code": "birmingham-soho", "time": "15:15", "boarding": true, "dropping": true },
+        { "code": "coventry", "time": "16:00", "boarding": true, "dropping": true },
+        { "code": "slough", "time": "17:45", "boarding": true, "dropping": true },
+        { "code": "southall", "time": "18:15", "boarding": false, "dropping": true }
+      ],
+      "fares": [],
+      "notice": "Timetable pending final operator approval. Missing fare rows are not sold online."
+    },
+    {
+      "code": "ml-evening",
+      "routeSlug": "wolverhampton-to-london",
+      "name": "The Midlands to London — evening service",
+      "label": "Evening service",
+      "salesMode": "online",
+      "operatingDays": [1, 2, 3, 4, 5, 6, 7],
+      "capacity": 60,
+      "stops": [
+        { "code": "birmingham-soho", "time": "18:00", "boarding": true, "dropping": false },
+        { "code": "birmingham-smethwick", "time": "18:15", "boarding": true, "dropping": true },
+        { "code": "wolverhampton", "time": "19:15", "boarding": true, "dropping": true },
+        { "code": "slough", "time": "22:15", "boarding": true, "dropping": true },
+        { "code": "southall", "time": "22:30", "boarding": false, "dropping": true }
+      ],
+      "fares": [
+        { "from": "birmingham-soho", "to": "slough", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "birmingham-soho", "to": "southall", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "birmingham-smethwick", "to": "slough", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "birmingham-smethwick", "to": "southall", "adult": 1500, "child": 1500, "infant": 1500 },
+        { "from": "wolverhampton", "to": "slough", "adult": 1800, "child": 1800, "infant": 1800 },
+        { "from": "wolverhampton", "to": "southall", "adult": 1800, "child": 1800, "infant": 1800 }
+      ],
+      "notice": "This service does not call at Coventry. Timetable pending final operator approval."
+    },
+    {
+      "code": "london-leicester-morning",
+      "routeSlug": "london-to-leicester",
+      "name": "London to Leicester — morning service",
+      "label": "Morning service — pay the driver",
+      "salesMode": "driver_only",
+      "operatingDays": [1, 5, 6, 7],
+      "capacity": 60,
+      "stops": [
+        { "code": "southall", "time": "08:15", "boarding": true, "dropping": false },
+        { "code": "slough", "time": "08:45", "boarding": true, "dropping": true },
+        { "code": "leicester", "time": "11:15", "boarding": false, "dropping": true }
+      ],
+      "fares": [],
+      "notice": "Tickets are available directly from the driver. This service runs Friday to Monday."
+    },
+    {
+      "code": "leicester-london-afternoon",
+      "routeSlug": "leicester-to-london",
+      "name": "Leicester to London — afternoon service",
+      "label": "Afternoon service — pay the driver",
+      "salesMode": "driver_only",
+      "operatingDays": [1, 5, 6, 7],
+      "capacity": 60,
+      "stops": [
+        { "code": "leicester", "time": "17:00", "boarding": true, "dropping": false },
+        { "code": "slough", "time": "19:15", "boarding": true, "dropping": true },
+        { "code": "southall", "time": "19:30", "boarding": false, "dropping": true }
+      ],
+      "fares": [],
+      "notice": "Tickets are available directly from the driver. This service runs Friday to Monday."
     }
   ],
   "stops": [

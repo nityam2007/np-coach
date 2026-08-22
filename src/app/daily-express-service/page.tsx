@@ -3,7 +3,7 @@ import { RouteTimetable } from "@/components/sections/RouteTimetable";
 import { PageHero } from "@/components/sections/PageHero";
 import { BreadcrumbJsonLd, JsonLdScript } from "@/components/seo/JsonLd";
 import { buildMetadata } from "@/lib/seo";
-import { getRoutes, getSettings, getStops } from "@/lib/directus";
+import { getRoutes, getScheduledServices, getSettings, getStops } from "@/lib/directus";
 
 export const metadata = buildMetadata({
   title: "Daily Express Coach Service | London ↔ Midlands & Leicester",
@@ -22,7 +22,7 @@ const travelInfo = [
 ];
 
 export default async function DailyExpressPage() {
-  const [routes, settings, stops] = await Promise.all([getRoutes(), getSettings(), getStops()]);
+  const [routes, services, settings, stops] = await Promise.all([getRoutes(), getScheduledServices(), getSettings(), getStops()]);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -101,7 +101,7 @@ export default async function DailyExpressPage() {
               </div>
               <p className="mt-2 text-sm text-navy/70">{route.summary}</p>
               <div className="mt-4">
-                <RouteTimetable route={route} />
+                <RouteTimetable route={route} services={services.filter((service) => service.routeSlug === route.slug)} stops={stops} />
               </div>
               <Link
                 href={`/${route.slug}`}

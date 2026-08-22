@@ -56,6 +56,8 @@ export const bookingSchema = z
     tripType: z.enum(["single", "return"]).default("single"),
     date: z.string().trim().min(1, "Please choose a travel date").max(40),
     returnDate: z.string().trim().max(40).optional().default(""),
+    outwardService: z.string().trim().regex(/^[a-z0-9-]{1,100}$/, "Please choose an outward departure"),
+    returnService: z.string().trim().max(100).optional().default(""),
     termsAccepted: z.literal("on", { message: "Please accept the booking terms" }),
     passengers: z.coerce.number().int().min(1, "At least 1 passenger").max(50, "Max 50 per booking"),
     name: z.string().trim().min(2, "Please enter your name").max(120),
@@ -65,8 +67,9 @@ export const bookingSchema = z
   })
   .refine((d) => d.from !== d.to, { path: ["to"], message: "From and To must be different stops" })
   .refine((d) => d.tripType === "single" || Boolean(d.returnDate), { path: ["returnDate"], message: "Please choose a return date" })
-  .refine((d) => !d.returnDate || d.returnDate >= d.date, { path: ["returnDate"], message: "Return must be on or after the outward date" });
+  .refine((d) => !d.returnDate || d.returnDate >= d.date, { path: ["returnDate"], message: "Return must be on or after the outward date" })
 
+  .refine((d) => d.tripType === "single" || Boolean(d.returnService), { path: ["returnService"], message: "Please choose a return departure" });
 // Lost Property reclaim pass (P5). Mirrors the live-site form. The fee/VAT are
 // NOT accepted from the client — they're computed server-side from CMS pricing.
 export const lostPropertySchema = z.object({

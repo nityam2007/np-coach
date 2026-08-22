@@ -49,12 +49,13 @@ function validCasPayload(body) {
 function validRun(run) {
   return validObject(run)
     && typeof run.routeSlug === "string" && /^[a-z0-9-]{1,100}$/.test(run.routeSlug)
+    && typeof run.serviceCode === "string" && /^[a-z0-9-]{1,100}$/.test(run.serviceCode)
     && typeof run.serviceDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(run.serviceDate)
     && typeof run.departureTime === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(run.departureTime)
     && Number.isInteger(run.capacity) && run.capacity >= 1 && run.capacity <= 120;
 }
 
-const runKey = (run) => `${run.routeSlug}:${run.serviceDate}:${run.departureTime}`;
+const runKey = (run) => `${run.serviceCode}:${run.serviceDate}`;
 
 const endpoint = {
   id: "np-internal",
@@ -92,6 +93,7 @@ const endpoint = {
             await trx("service_runs").insert({
               run_key: run.key,
               route_slug: run.routeSlug,
+              service_code: run.serviceCode,
               service_date: run.serviceDate,
               departure_time: run.departureTime,
               capacity: run.capacity,

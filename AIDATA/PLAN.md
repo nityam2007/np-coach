@@ -87,3 +87,25 @@ Each is a single self-contained component module; layouts/pages compose them. **
 ## Source content map
 
 Live-site archive lives in `Pages OLD/` (root pages, `Fleet/`, `Routes/`, `Info/`, `Legal/`, `Services/`, `School Transport/`). Canonical business facts (name, depot, phone, accreditations) → `SEO - OLD/llms.txt`. **Note:** scraped privacy policy contains boilerplate (`gamechique.com`) — rewrite for NP Coaches. `Routes/`: only Wolverhampton→London, London→Leicester, Leicester→London have live pages. `Fleet/76-seat-coaches.md` content is actually a 72-seat coach. The mockup footer's address/phone (Tamworth / 0121…) is template placeholder — **use the real Iver depot details from `llms.txt`.**
+
+---
+
+## Implemented foundation — Daily Express multi-service model (22 August 2026)
+
+The original P4 payment/inventory foundation remains implemented, but new production evidence shows that the content model must be corrected before online sales are enabled. The current `routes` row combines an SEO direction with one timetable and cannot represent the two real daily services in each London–Midlands direction. Overlapping London/Leicester stops can also leak the wrong fare into a London–Midlands search.
+
+The authoritative research, approved-data checklist, target model, implementation sequence, and copy-paste prompt are in [IMP-22-8-26.md](IMP-22-8-26.md).
+
+Implemented in code and fallback data:
+
+- keep `routes` as direction/SEO pages and preserve existing URLs;
+- add individual `scheduled_services` with stable codes, operating days, ordered stops, boarding/dropping rules, stop-pair fares, sales mode, and capacity;
+- model two online 60-seat services per London–Midlands direction, all seven days;
+- keep both Leicester services Friday–Monday and `driver_only`;
+- select and price a real outward service and, for returns, a real reverse-direction service;
+- key dated inventory by stable service code and keep the existing fail-closed/atomic Stripe protections;
+- show complete outward/return details in confirmations, accounts, and tickets.
+
+Do not enable `DAILY_EXPRESS_BOOKINGS_ENABLED` until NP Coaches approves the conflicting times, supplies the complete fare matrix, confirms passenger/return/inventory rules, and the live concurrency/payment/email acceptance gate passes.
+
+Production deployment/data approval remains gated by the authoritative brief. The seeded fare matrix is intentionally incomplete and fails closed; the guarded Directus schema snapshot was not regenerated in this code-only pass.

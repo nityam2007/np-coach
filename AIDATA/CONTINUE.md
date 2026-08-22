@@ -90,7 +90,7 @@ Directus collection → seed (`scripts/seed-directus.mjs`) → typed in `src/lib
 Grouped (via `npm run configure`):
 - **Content:** `pages` (+ optional `image`), `blog_posts` (+ `thumbnail`)
 - **Marketing:** `fleet` (+`image`,`gallery`,`layout_images`,`group_label`), `tours` (+`image`), `testimonials`, `services`
-- **Daily Express:** `routes` (timetable + per-route fares, now informational), `stops` (6 corridor stops → booking From/To), `school_routes` (home-to-school timetables)
+- **Daily Express:** `routes` (direction/SEO pages; legacy timetable/fare fields retained), `scheduled_services` (individual departures, ordered stops, explicit fares and sales mode), `stops` (online selectors derive only from online services), `school_routes` (home-to-school timetables)
 - **Bookings & Payments:** `bookings`, `pass_purchases`, `service_runs` (server-write only; transactional inventory uses the private Directus extension)
 - **Leads:** `contact_submissions`, `quote_requests` (server-token create, no anonymous access)
 - **Accounts:** `customers`, `otp_codes`, `customer_sessions` (server-only; HMAC OTPs and opaque revocable sessions)
@@ -128,3 +128,15 @@ The code remediation is implemented and documented in [`../SECURITY_AND_OPERATIO
 - Directus writes purge its cache; configure the protected revalidation Flow for immediate web refresh, otherwise pages use five-minute ISR.
 - Schedule encrypted database/uploads backups and prove restore with `scripts/restore-test.sh`; Docker was unavailable on the audit workstation, so the disposable restore still needs an operator run.
 - Complete the external acceptance checklist (Cloudflare origin/WAF, live Stripe scenarios, M365 delivery, Directus roles, legal/ICO review, accessibility/mobile, redirects/indexing, content/fare/timetable approval) before launch sign-off.
+
+---
+
+## 9. Daily Express requirements correction — 22 August 2026
+
+A production WordPress/Directus/code audit found that the current one-row-per-direction `routes` model does not represent the four real daily London–Midlands buses. There are two 60-seat services in each direction; Leicester is Friday–Monday and sold by the driver only. The deployed booking resolver can currently take the first overlapping route and display a Leicester fare for a London–Midlands stop pair.
+
+The additive application implementation is now in the worktree: typed/fallback `scheduled_services`, idempotent Directus bootstrap/admin configuration, explicit outward/return departure selection, server-side stable-code re-resolution, service-code/date inventory keys, immutable booking snapshots, multi-service timetables, driver-only Leicester exclusions, and complete leg details in emails/accounts/tickets. Core TypeScript, lint, script syntax and 17 tests pass.
+
+Keep `DAILY_EXPRESS_BOOKINGS_ENABLED=false`. The fallback contains the six researched schedules and only the fare rows explicitly evidenced in the brief; all other stop pairs fail closed. No production CMS data, schema snapshot, Stripe configuration, or launch flag was changed.
+
+Before deployment/enablement, obtain timetable approval and the complete fare matrix/passenger/return policy, run additive bootstrap against a disposable/local Directus twice, refresh the guarded schema snapshot if required for manual migration, and complete the production concurrency/Stripe/email/accessibility acceptance gate in [IMP-22-8-26.md](IMP-22-8-26.md).

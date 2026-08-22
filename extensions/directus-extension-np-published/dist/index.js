@@ -5,6 +5,7 @@ const PUBLISHABLE_COLLECTIONS = new Set([
   "tours",
   "routes",
   "stops",
+  "scheduled_services",
   "school_routes",
   "blog_posts",
   "testimonials",

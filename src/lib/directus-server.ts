@@ -114,6 +114,7 @@ export async function directusAtomicUpdate(
 
 export interface AtomicInventoryRun {
   routeSlug: string;
+  serviceCode: string;
   serviceDate: string;
   departureTime: string;
   capacity: number;

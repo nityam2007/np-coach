@@ -15,6 +15,7 @@ import {
   type Pricing,
   type EmailTemplates,
   type Stop,
+  type ScheduledService,
   type SchoolTransport,
   type SchoolRoute,
   type HomepageContent,
@@ -539,6 +540,58 @@ export async function getRoute(slug: string): Promise<CoachRoute | null> {
 }
 
 // ---- stops (Daily Express corridor; stop-to-stop booking) ----
+// ---- scheduled services (individual Daily Express departures) ----
+interface ScheduledServiceRow {
+  code: string;
+  route_slug: string;
+  name: string;
+  label: string | null;
+  sales_mode: ScheduledService["salesMode"];
+  operating_days: number[];
+  capacity: number;
+  stops: ScheduledService["stops"];
+  fares: ScheduledService["fares"];
+  notice: string | null;
+}
+
+function toScheduledService(row: ScheduledServiceRow): ScheduledService {
+  return {
+    code: row.code,
+    routeSlug: row.route_slug,
+    name: row.name,
+    label: row.label || row.name,
+    salesMode: row.sales_mode,
+    operatingDays: Array.isArray(row.operating_days) ? row.operating_days : [],
+    capacity: row.capacity ?? 0,
+    stops: Array.isArray(row.stops) ? row.stops : [],
+    fares: Array.isArray(row.fares) ? row.fares : [],
+    notice: row.notice ?? "",
+  };
+}
+
+export async function getScheduledServices(routeSlug?: string): Promise<ScheduledService[]> {
+  const routeFilter = routeSlug ? `&filter[route_slug][_eq]=${encodeURIComponent(routeSlug)}` : "";
+  const rows = await fetchData<ScheduledServiceRow[]>(
+    `/items/scheduled_services?filter[status][_eq]=published&sort=sort&limit=-1${routeFilter}`,
+    routeSlug ? `scheduled_services:${routeSlug}` : "scheduled_services",
+  );
+  if (rows === undefined) {
+    return routeSlug
+      ? siteConfig.scheduledServices.filter((service) => service.routeSlug === routeSlug)
+      : siteConfig.scheduledServices;
+  }
+  return rows.map(toScheduledService);
+}
+
+/** Stops which occur on at least one online service; driver-only Leicester stays excluded. */
+export async function getOnlineStops(): Promise<Stop[]> {
+  const [stops, services] = await Promise.all([getStops(), getScheduledServices()]);
+  const onlineCodes = new Set(
+    services.filter((service) => service.salesMode === "online").flatMap((service) => service.stops.map((stop) => stop.code)),
+  );
+  return stops.filter((stop) => onlineCodes.has(stop.code));
+}
+
 export async function getStops(): Promise<Stop[]> {
   const rows = await fetchData<Stop[]>("/items/stops?filter[status][_eq]=published&sort=sort&limit=-1", "stops");
   if (rows === undefined) return siteConfig.stops;

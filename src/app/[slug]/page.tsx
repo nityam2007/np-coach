@@ -10,7 +10,7 @@ import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Icon } from "@/components/ui/Icon";
 import { Reveal } from "@/components/ui/motion";
 import { ButtonLink, buttonCls } from "@/components/ui/Button";
-import { assetUrl, getFleet, getFleetVehicle, getPage, getPages, getRoute, getRoutes, getSettings, getStops, selectPageHeroFallback } from "@/lib/directus";
+import { assetUrl, getFleet, getFleetVehicle, getPage, getPages, getRoute, getRoutes, getScheduledServices, getSettings, getStops, selectPageHeroFallback } from "@/lib/directus";
 
 // Root-level slugs resolve to a fleet vehicle, an editable content page, or a Daily Express route.
 export async function generateStaticParams() {
@@ -65,7 +65,7 @@ export default async function SlugPage({ params }: { params: Promise<{ slug: str
   // 3) Daily Express route?
   const route = await getRoute(slug);
   if (route) {
-    const [settings, stops] = await Promise.all([getSettings(), getStops()]);
+    const [settings, stops, routeServices] = await Promise.all([getSettings(), getStops(), getScheduledServices(route.slug)]);
     // Best-effort prefill: match the route's first/last stop name to a corridor stop code.
     const matchCode = (place?: string) =>
       stops.find((s) => place && (s.name.includes(place.split(" ")[0]) || place.includes(s.name.split(" ")[0])))?.code;
@@ -76,6 +76,10 @@ export default async function SlugPage({ params }: { params: Promise<{ slug: str
         ? `/daily-express-service/book?from=${fromCode}&to=${toCode}`
         : "/daily-express-service/book";
     const routeFallback = selectPageHeroFallback(settings, slug);
+    const onlineFares = routeServices
+      .filter((service) => service.salesMode === "online")
+      .flatMap((service) => service.fares.flatMap((fare) => [fare.adult, fare.child, fare.infant]));
+    const onlineFare = onlineFares.length ? Math.min(...onlineFares) : null;
     const routeHero = assetUrl(route.image ?? routeFallback?.image);
     const routeHeroAlt = route.image
       ? (route.imageAlt ?? `${route.from} to ${route.to} coach service`)
@@ -89,9 +93,9 @@ export default async function SlugPage({ params }: { params: Promise<{ slug: str
       url: `${settings.url}/${route.slug}`,
       areaServed: "United Kingdom",
       provider: { "@type": "Organization", "@id": `${settings.url}/#organization`, name: settings.name },
-      offers: route.priceSingle > 0 ? {
+      offers: onlineFare !== null ? {
         "@type": "Offer",
-        price: (route.priceSingle / 100).toFixed(2),
+        price: (onlineFare / 100).toFixed(2),
         priceCurrency: "GBP",
         url: `${settings.url}${bookHref}`,
       } : undefined,
@@ -134,10 +138,12 @@ export default async function SlugPage({ params }: { params: Promise<{ slug: str
               </div>
               <p className="mt-4 max-w-2xl text-lg text-greyblue">{route.summary}</p>
               <div className="mt-8 flex flex-wrap gap-3">
+                {onlineFare !== null && (
                 <ButtonLink href={bookHref} className="group">
                   Book this route
                   <Icon name="arrowRight" className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </ButtonLink>
+                )}
                 <a href={settings.phone.href} className={buttonCls("ghostDark")}>
                   <Icon name="phone" className="h-4 w-4" />
                   Call {settings.phone.display}
@@ -153,18 +159,19 @@ export default async function SlugPage({ params }: { params: Promise<{ slug: str
             <Eyebrow>Timetable</Eyebrow>
             <h2 className="mt-3 font-display text-3xl font-bold text-navy sm:text-4xl">Departure times</h2>
             <p className="mt-2 text-sm text-navy/70">
-              Times can change — please check on your day of travel. Online tickets must be booked at least 1 hour before
-              departure and are non-refundable.
+              {onlineFare !== null ? "Times can change — please check on your day of travel. Online tickets close 1 hour before departure." : "Times can change — please check on your day of travel. Tickets for this service are available directly from the driver."}
             </p>
             <div className="mt-6">
-              <RouteTimetable route={route} />
+              <RouteTimetable route={route} services={routeServices} stops={stops} />
             </div>
 
             <div className="mt-10 flex flex-wrap gap-3">
+              {onlineFare !== null && (
               <ButtonLink href={bookHref} className="group">
                 Book this route
                 <Icon name="arrowRight" className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </ButtonLink>
+              )}
               <ButtonLink href="/daily-express-service" variant="secondary">
                 All routes
               </ButtonLink>

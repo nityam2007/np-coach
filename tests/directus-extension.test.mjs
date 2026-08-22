@@ -106,11 +106,13 @@ test("two-leg reservations and releases are transactional", async () => {
   const database = mockDatabase();
   const request = harness(database);
   const runs = [
-    { routeSlug: "outward", serviceDate: "2026-08-30", departureTime: "09:45", capacity: 2 },
-    { routeSlug: "return", serviceDate: "2026-08-31", departureTime: "15:00", capacity: 2 },
+    { serviceCode: "lm-morning", routeSlug: "outward", serviceDate: "2026-08-30", departureTime: "09:45", capacity: 2 },
+    { serviceCode: "ml-afternoon", routeSlug: "return", serviceDate: "2026-08-31", departureTime: "15:00", capacity: 2 },
   ];
   const reserved = await request("/inventory/reserve", { runs, seats: 2 });
   assert.equal(reserved.status, 200);
+  assert.deepEqual(database.rows("service_runs").map((row) => row.run_key), ["lm-morning:2026-08-30", "ml-afternoon:2026-08-31"]);
+  assert.deepEqual(database.rows("service_runs").map((row) => row.service_code), ["lm-morning", "ml-afternoon"]);
   assert.deepEqual(database.rows("service_runs").map((row) => row.booked_seats), [2, 2]);
 
   const rejected = await request("/inventory/reserve", { runs, seats: 1 });

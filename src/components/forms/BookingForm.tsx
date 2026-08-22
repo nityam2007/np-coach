@@ -11,16 +11,11 @@ import { inputCls } from "@/components/ui/field";
 import { useFormErrors } from "@/components/forms/useFormErrors";
 import { RouteStopSelect } from "@/components/forms/RouteStopSelect";
 
+import { resolveJourneyOptions } from "@/lib/booking-rules";
+import type { ScheduledService } from "@/lib/site-config";
 export interface BookingStopOption {
   code: string;
   name: string;
-}
-
-export interface BookingRouteOption {
-  stops: string[];
-  fareSingle: number;
-  fareReturn: number;
-  capacity: number;
 }
 
 const initial: FormState = { ok: false };
@@ -40,7 +35,7 @@ function SubmitButton({ total, available, unavailableLabel }: { total: number; a
 
 export function BookingForm({
   stops,
-  routes,
+  services,
   defaultFrom,
   defaultTo,
   defaultDate,
@@ -51,7 +46,7 @@ export function BookingForm({
   bookingsEnabled,
 }: {
   stops: BookingStopOption[];
-  routes: BookingRouteOption[];
+  services: ScheduledService[];
   defaultFrom?: string;
   defaultTo?: string;
   defaultDate?: string;
@@ -69,28 +64,35 @@ export function BookingForm({
   const [to, setTo] = useState(initialTo);
   const [tripType, setTripType] = useState<"single" | "return">(defaultTripType ?? "single");
   const [passengers, setPassengers] = useState(defaultPassengers && defaultPassengers > 0 ? defaultPassengers : 1);
+  const [travelDate, setTravelDate] = useState(defaultDate ?? "");
+  const [returnDate, setReturnDate] = useState(defaultReturnDate ?? "");
+  const [outwardService, setOutwardService] = useState("");
+  const [returnService, setReturnService] = useState("");
 
   // On success the server returns a Stripe Checkout URL — send the browser there.
   useEffect(() => {
     if (state.ok && state.redirect) window.location.href = state.redirect;
   }, [state]);
 
-  const matchingRoute = routes.find((route) => {
-    const fromIndex = route.stops.indexOf(from); const toIndex = route.stops.indexOf(to);
-    return fromIndex >= 0 && toIndex > fromIndex;
-  });
-  const unit = matchingRoute ? (tripType === "return" ? matchingRoute.fareReturn : matchingRoute.fareSingle) : 0;
+  const outwardOptions = travelDate ? resolveJourneyOptions(services, from, to, travelDate) : [];
+  const selectedOutward = outwardOptions.find((option) => option.service.code === outwardService) ?? outwardOptions[0];
+  const returnOptions = tripType === "return" && returnDate
+    ? resolveJourneyOptions(services, to, from, returnDate)
+    : [];
+  const selectedReturn = returnOptions.find((option) => option.service.code === returnService) ?? returnOptions[0];
+  const unit = (selectedOutward?.fare.adult ?? 0) + (tripType === "return" ? selectedReturn?.fare.adult ?? 0 : 0);
   const total = unit * (passengers > 0 ? passengers : 0);
   const sameStop = from === to;
-  const available = Boolean(bookingsEnabled && matchingRoute && matchingRoute.capacity > 0 && passengers <= matchingRoute.capacity);
-  const unavailableLabel = !matchingRoute
+  const hasRequiredServices = Boolean(selectedOutward && (tripType === "single" || selectedReturn));
+  const available = Boolean(bookingsEnabled && hasRequiredServices
+    && passengers <= (selectedOutward?.service.capacity ?? 0)
+    && (!selectedReturn || passengers <= selectedReturn.service.capacity));
+  const unavailableLabel = !hasRequiredServices
     ? "Journey unavailable"
     : !bookingsEnabled
       ? "Online booking paused"
-      : matchingRoute.capacity < 1
-        ? "Online booking not open"
-        : "Not enough seats";
-  const today = new Date().toISOString().slice(0, 10);
+      : "Not enough seats";
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 
   return (
     <form ref={formRef} action={action} className="grid gap-4">
@@ -127,7 +129,7 @@ export function BookingForm({
             <label key={t} className="flex items-center gap-2 font-normal capitalize">
               <input type="radio" name="tripType" value={t} checked={tripType === t} onChange={() => setTripType(t)} />
               {t}
-              <span className="text-navy/70">({matchingRoute ? formatGBP(t === "return" ? matchingRoute.fareReturn : matchingRoute.fareSingle) : "unavailable"})</span>
+              <span className="text-navy/70">({t === tripType && unit > 0 ? formatGBP(unit) : "select dates"})</span>
             </label>
           ))}
         </div>
@@ -136,7 +138,7 @@ export function BookingForm({
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="text-sm font-semibold text-navy">
           Travel date
-          <input name="date" type="date" min={today} defaultValue={defaultDate} required className={inputCls} />
+          <input name="date" type="date" min={today} value={travelDate} onChange={(event) => setTravelDate(event.target.value)} required className={inputCls} />
           {state.errors?.date && (
             <span className="mt-1 block text-xs font-normal text-red-600">{state.errors.date}</span>
           )}
@@ -144,7 +146,7 @@ export function BookingForm({
         {tripType === "return" && (
           <label className="text-sm font-semibold text-navy">
             Return date
-            <input name="returnDate" type="date" min={defaultDate || today} defaultValue={defaultReturnDate} required className={inputCls} />
+            <input name="returnDate" type="date" min={travelDate || today} value={returnDate} onChange={(event) => setReturnDate(event.target.value)} required className={inputCls} />
             {state.errors?.returnDate && (
               <span className="mt-1 block text-xs font-normal text-red-600">{state.errors.returnDate}</span>
             )}
@@ -167,6 +169,50 @@ export function BookingForm({
           )}
         </label>
       </div>
+
+      <fieldset className="grid gap-3 rounded-xl border border-greyblue/20 bg-tint-soft p-4">
+        <legend className="px-1 text-sm font-semibold text-navy">Choose outward departure</legend>
+        {outwardOptions.length ? outwardOptions.map((option) => (
+          <label key={option.service.code} className="flex cursor-pointer items-center justify-between gap-3 rounded-lg bg-white px-4 py-3 text-sm text-navy ring-1 ring-greyblue/20">
+            <span className="flex items-center gap-3">
+              <input
+                type="radio"
+                name="outwardService"
+                value={option.service.code}
+                checked={selectedOutward?.service.code === option.service.code}
+                onChange={() => setOutwardService(option.service.code)}
+                required
+              />
+              <span><strong>{option.service.label}</strong><br />{option.departureTime}–{option.arrivalTime}</span>
+            </span>
+            <strong>{formatGBP(option.fare.adult)}</strong>
+          </label>
+        )) : <p className="text-sm text-amber-900">No explicitly priced online departure is available for this stop pair and date.</p>}
+        {state.errors?.outwardService && <span className="text-xs text-red-600">{state.errors.outwardService}</span>}
+      </fieldset>
+
+      {tripType === "return" && (
+        <fieldset className="grid gap-3 rounded-xl border border-greyblue/20 bg-tint-soft p-4">
+          <legend className="px-1 text-sm font-semibold text-navy">Choose return departure</legend>
+          {returnOptions.length ? returnOptions.map((option) => (
+            <label key={option.service.code} className="flex cursor-pointer items-center justify-between gap-3 rounded-lg bg-white px-4 py-3 text-sm text-navy ring-1 ring-greyblue/20">
+              <span className="flex items-center gap-3">
+                <input
+                  type="radio"
+                  name="returnService"
+                  value={option.service.code}
+                  checked={selectedReturn?.service.code === option.service.code}
+                  onChange={() => setReturnService(option.service.code)}
+                  required
+                />
+                <span><strong>{option.service.label}</strong><br />{option.departureTime}–{option.arrivalTime}</span>
+              </span>
+              <strong>{formatGBP(option.fare.adult)}</strong>
+            </label>
+          )) : <p className="text-sm text-amber-900">No explicitly priced return departure is available for this stop pair and date.</p>}
+          {state.errors?.returnService && <span className="text-xs text-red-600">{state.errors.returnService}</span>}
+        </fieldset>
+      )}
 
       <label className="text-sm font-semibold text-navy">
         Lead passenger name
@@ -214,7 +260,7 @@ export function BookingForm({
         </span>
       </label>
 
-      {matchingRoute && (!bookingsEnabled || matchingRoute.capacity < 1) && (
+      {hasRequiredServices && !bookingsEnabled && (
         <p className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-900" role="status">
           Online booking is not open for this service yet. Please call us to book while availability is confirmed.
         </p>

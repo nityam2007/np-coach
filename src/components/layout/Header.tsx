@@ -113,7 +113,7 @@ export function Header({ settings }: { settings: SiteSettings }) {
                 height={48}
                 priority
                 className="w-auto object-contain transition-[height,transform] duration-300 ease-out group-hover:scale-105"
-                style={{ height: scrolled ? "2.4rem" : "2.75rem" }}
+                style={{ height: scrolled ? "2.4rem" : "2.75rem", width: "auto" }}
               />
             ) : (
               <span className="grid h-10 w-10 place-items-center rounded-lg bg-navy font-display text-sm font-bold text-offwhite transition-transform group-hover:scale-105">
@@ -235,8 +235,8 @@ export function Header({ settings }: { settings: SiteSettings }) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             />
-              ref={drawerRef}
             <motion.nav
+              ref={drawerRef}
               className="fixed right-0 top-0 z-50 flex h-dvh w-[86%] max-w-sm flex-col overflow-y-auto bg-white shadow-lg lg:hidden"
               aria-label="Mobile"
               initial={{ x: "100%" }}

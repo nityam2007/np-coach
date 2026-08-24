@@ -283,3 +283,8 @@ Append-only. Newest entries at the bottom. Never edit or delete past entries —
 - Fixed the actual pre-SMTP failure behind paid bookings remaining `pending`: the private Directus extension now passes native `Date` values through Knex instead of ISO `T…Z` strings that MariaDB timestamp columns can reject.
 - Applied the same MariaDB-safe write to Email Logs attempt/sent timestamps and both customer/staff delivery leases; tests now require native Date values at each database timestamp boundary.
 - Made both Stripe success pages prefer the already-paid record bound to the exact Checkout Session before making another Stripe API request. Daily Express still requires committed inventory, and a pending record can never render a ticket.
+
+## 2026-08-25 — Mobile navigation runtime repair
+
+- Fixed the mobile Header crash caused by the drawer ref being rendered as a React child instead of being attached to the navigation element.
+- Kept the logo aspect ratio explicit while its height animates, removing the corresponding Next Image warning.

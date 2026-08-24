@@ -30,6 +30,7 @@ export function AccreditationStrip({ items, logos }: { items: string[]; logos: R
                   width={150}
                   height={56}
                   className="max-h-12 max-w-full object-contain opacity-100 transition-transform duration-300 group-hover:scale-105"
+                  style={{ width: "auto", height: "auto" }}
                 />
               ) : (
                 <span className="text-center text-xs font-semibold uppercase tracking-wide text-navy/70 transition-colors group-hover:text-navy">

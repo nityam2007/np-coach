@@ -288,3 +288,8 @@ Append-only. Newest entries at the bottom. Never edit or delete past entries —
 
 - Fixed the mobile Header crash caused by the drawer ref being rendered as a React child instead of being attached to the navigation element.
 - Kept the logo aspect ratio explicit while its height animates, removing the corresponding Next Image warning.
+
+## 2026-08-25 — Approved logo and accreditation image sizing
+
+- Changed the idempotent Directus media bootstrap to replace the old seeded `io.png` logo with the approved archived `bfd.png`, while preserving any later CMS-selected logo.
+- Made both dimensions automatic for accreditation images constrained by their responsive container, removing repeated Next Image aspect-ratio warnings.

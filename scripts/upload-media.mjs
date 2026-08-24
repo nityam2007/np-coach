@@ -224,12 +224,13 @@ async function run() {
     if (liveIds[file]) await setItemImage("blog_posts", slug, "thumbnail", liveIds[file]);
   }
 
-  // Brand assets on settings (only if unset — client edits win): the crisp NPC globe
-  // logo, the flagship-coach hero photo, the school-transport block photo, and the real
-  // accreditation badge images.
+  // Brand assets on settings. Replace only the old seeded logo (or an empty value)
+  // with the approved bfd.png; later editor-selected logos still win.
   const current = await api("/items/settings?fields=logo,hero_image,school_image,accreditation_logos");
   const patch = {};
-  if (!current.logo && liveIds["io.png"]) patch.logo = liveIds["io.png"];
+  const approvedLogo = liveIds["bfd.png"];
+  const oldSeededLogo = liveIds["io.png"];
+  if (approvedLogo && (!current.logo || current.logo === oldSeededLogo)) patch.logo = approvedLogo;
   if (!current.hero_image && liveIds["DSC09341-3.jpg"]) patch.hero_image = liveIds["DSC09341-3.jpg"];
   if (!current.school_image && liveIds["DSC01183.jpg"]) patch.school_image = liveIds["DSC01183.jpg"];
   const ACCRED_LOGOS = {

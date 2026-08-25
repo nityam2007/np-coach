@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { findJourney, findJourneyByCode, resolveJourneyOptions } from "../src/lib/booking-rules.ts";
-import type { CoachRoute, ScheduledService } from "../src/lib/site-config.ts";
+import type { CoachRoute, ScheduledService, SchoolTransport } from "../src/lib/site-config.ts";
 
 const daily: CoachRoute = {
   slug: "london-to-wolverhampton",
@@ -32,7 +32,7 @@ const limited: CoachRoute = {
 
 const fallback = JSON.parse(
   readFileSync(new URL("../src/lib/site-content.json", import.meta.url), "utf8"),
-) as { scheduledServices: ScheduledService[] };
+) as { scheduledServices: ScheduledService[]; schoolTransport: SchoolTransport };
 const services = fallback.scheduledServices;
 const byCode = new Map(services.map((service) => [service.code, service]));
 const now = new Date("2026-08-20T06:00:00Z");
@@ -153,4 +153,15 @@ test("blank WordPress placeholder rows remain unavailable on that service", () =
 
 test("never exposes a driver-only Leicester service online", () => {
   assert.deepEqual(resolveJourneyOptions(services, "southall", "leicester", journeyDate, now), []);
+});
+
+test("school ticket links use the approved CMS seed values without tracking actions", () => {
+  const schools = fallback.schoolTransport;
+  const herschel = schools.schools.find((school) => school.slug === "herschel-grammar-school");
+
+  assert.equal(schools.ticketPortalUrl, "https://tickets.trackaroo.co.uk/buy/np-coaches");
+  assert.equal(herschel?.buyUrl, "https://tickets.trackaroo.co.uk/buy/np-coaches/pioneer-secondary-academy");
+  assert.equal(herschel?.spacesAvailable, true);
+  assert.equal(herschel?.waitlistUrl, "");
+  assert.equal("trackingUrl" in schools, false);
 });

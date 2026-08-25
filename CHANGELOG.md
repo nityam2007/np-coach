@@ -293,3 +293,9 @@ Append-only. Newest entries at the bottom. Never edit or delete past entries —
 
 - Changed the idempotent Directus media bootstrap to replace the old seeded `io.png` logo with the approved archived `bfd.png`, while preserving any later CMS-selected logo.
 - Made both dimensions automatic for accreditation images constrained by their responsive container, removing repeated Next Image aspect-ratio warnings.
+
+## 2026-08-25 — CMS-managed school ticket buttons
+
+- Added the general Trackaroo ticket portal to the home-to-school landing page and changed Herschel's primary action from the ShuttleID waiting list to the supplied Trackaroo Buy Tickets link.
+- Moved all per-school ticket/waiting-list availability values into the existing editable `settings.school_transport` JSON and removed tracking buttons from individual school pages.
+- Fixed media bootstrap so adding school logos merges into that JSON instead of deleting its editable button configuration.

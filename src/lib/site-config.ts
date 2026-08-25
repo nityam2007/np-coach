@@ -160,6 +160,8 @@ export interface SchoolTransportSchool {
   spacesAvailable: boolean;
 }
 export interface SchoolTransport {
+  /** General Trackaroo portal shown on the home-to-school landing page. */
+  ticketPortalUrl: string;
   schools: SchoolTransportSchool[];
 }
 

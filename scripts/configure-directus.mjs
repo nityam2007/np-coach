@@ -328,6 +328,7 @@ const FIELD_META = {
     { field: "nav", meta: { width: "full", note: "Main navigation links." } },
     { field: "footer_columns", meta: { width: "full", note: "Footer headings and links." } },
     { field: "social_links", meta: { width: "full", note: "Social account labels and URLs." } },
+    { field: "school_transport", meta: { width: "full", interface: "input-code", options: { language: "json" }, note: "Home-to-school ticket buttons and availability. Edit ticketPortalUrl and each school's buyUrl, waitlistUrl and spacesAvailable values. Logos are maintained by media bootstrap." } },
     { field: "faqs", meta: { width: "full", note: "Homepage and FAQ-page questions and answers." } },
     { field: "hero_image", meta: { width: "half", note: "Homepage hero fallback/poster image." } },
     { field: "hero_image_alt", meta: { width: "half", note: "Accessible description of the homepage hero image." } },

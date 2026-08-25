@@ -717,12 +717,22 @@ async function run() {
   const mergedFleetPage = { ...content.fleetPage, ...(currentSettings?.fleet_page ?? {}) };
   const mergedTourPage = { ...content.tourPage, ...(currentSettings?.tour_page ?? {}) };
   const mergedCookieConsent = { ...content.cookieConsent, ...(currentSettings?.cookie_consent ?? {}) };
+  const storedSchoolTransport = currentSettings?.school_transport ?? {};
+  const mergedSchoolTransport = {
+    ...content.schoolTransport,
+    ...storedSchoolTransport,
+    schools: Array.isArray(storedSchoolTransport.schools) && storedSchoolTransport.schools.length
+      ? storedSchoolTransport.schools
+      : content.schoolTransport.schools,
+    logos: storedSchoolTransport.logos ?? {},
+  };
   const socialLinksMissing = !Array.isArray(currentSettings?.social_links) || currentSettings.social_links.length === 0;
   const homepageChanged = JSON.stringify(mergedHomepage) !== JSON.stringify(currentSettings?.homepage ?? null);
   const emailTemplatesChanged = JSON.stringify(mergedEmailTemplates) !== JSON.stringify(currentSettings?.email_templates ?? null);
   const cookieConsentChanged = JSON.stringify(mergedCookieConsent) !== JSON.stringify(currentSettings?.cookie_consent ?? null);
   const fleetPageChanged = JSON.stringify(mergedFleetPage) !== JSON.stringify(currentSettings?.fleet_page ?? null);
   const tourPageChanged = JSON.stringify(mergedTourPage) !== JSON.stringify(currentSettings?.tour_page ?? null);
+  const schoolTransportChanged = JSON.stringify(mergedSchoolTransport) !== JSON.stringify(currentSettings?.school_transport ?? null);
 
   // Seed the singleton only once. After that, Directus is the source of truth:
   // routine deploys may add missing nested keys but never reset editor-managed values.
@@ -760,6 +770,7 @@ async function run() {
       fleet_page: mergedFleetPage,
       tour_page: mergedTourPage,
       social_links: content.socialLinks,
+      school_transport: mergedSchoolTransport,
   };
   const hasLiveSettings = currentSettings?.id != null;
   const settingsPatch = hasLiveSettings ? {} : settingsDefaults;
@@ -771,6 +782,7 @@ async function run() {
     if (cookieConsentChanged) settingsPatch.cookie_consent = mergedCookieConsent;
     if (fleetPageChanged) settingsPatch.fleet_page = mergedFleetPage;
     if (tourPageChanged) settingsPatch.tour_page = mergedTourPage;
+    if (schoolTransportChanged) settingsPatch.school_transport = mergedSchoolTransport;
     if (socialLinksMissing) settingsPatch.social_links = content.socialLinks;
   }
 

@@ -89,9 +89,19 @@ export default async function HomeToSchoolPage() {
         imageAlt={settings.homeToSchoolImageAlt}
         priority
       >
-        <div className="mt-6 max-w-2xl rounded-xl border border-accent/15 bg-white/85 px-4 py-3 text-sm text-navy/80 shadow-sm">
-          <strong>Notice:</strong> due to fuel and operating costs, fares may be reviewed during the academic year.
-          Parents are notified in advance and may cancel before any revised price takes effect.
+        <div className="mt-6 flex max-w-2xl flex-wrap items-center gap-4 rounded-xl border border-accent/15 bg-white/85 px-4 py-3 text-sm text-navy/80 shadow-sm">
+          <p className="min-w-0 flex-1">
+            <strong>Notice:</strong> due to fuel and operating costs, fares may be reviewed during the academic year.
+            Parents are notified in advance and may cancel before any revised price takes effect.
+          </p>
+          <a
+            href={settings.schoolTransport.ticketPortalUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shrink-0 rounded-lg bg-accent px-4 py-2 font-semibold text-white transition-colors hover:bg-brand-hover"
+          >
+            Buy Tickets
+          </a>
         </div>
       </PageHero>
 

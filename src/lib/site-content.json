@@ -459,6 +459,7 @@
     ]
   },
   "schoolTransport": {
+    "ticketPortalUrl": "https://tickets.trackaroo.co.uk/buy/np-coaches",
     "schools": [
       {
         "slug": "pioneer-secondary-academy",
@@ -472,9 +473,9 @@
         "slug": "herschel-grammar-school",
         "name": "Herschel Grammar School",
         "intro": "Daily home-to-school coaches for Herschel Grammar School across the XR1, XR2, XR3, S and N routes. Return departs school 15:05.",
-        "buyUrl": "https://tickets.trackaroo.co.uk/buy/np-coaches/herschel-grammar-school",
-        "waitlistUrl": "https://passenger.shuttleid.uk/waiting-list/3fb6889e-ea13-4013-919e-aaeaccb0d8b9",
-        "spacesAvailable": false
+        "buyUrl": "https://tickets.trackaroo.co.uk/buy/np-coaches/pioneer-secondary-academy",
+        "waitlistUrl": "",
+        "spacesAvailable": true
       }
     ]
   },

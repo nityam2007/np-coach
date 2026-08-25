@@ -147,7 +147,7 @@ interface SettingsRow {
   homepage: HomepageContent | null;
   tour_page: TourPageContent | null;
   fleet_page: FleetPageContent | null;
-  school_transport: { logos?: Record<string, string> } | null;
+  school_transport: SchoolTransportBlob | null;
   accreditation_logos: Record<string, string> | null;
   logo: string | null;
   hero_image: string | null;
@@ -302,9 +302,9 @@ export async function getSettings(): Promise<SiteSettings> {
     homepage: { ...siteConfig.homepage, ...(row.homepage ?? {}) },
     tourPage: { ...siteConfig.tourPage, ...(row.tour_page ?? {}) },
     fleetPage: { ...siteConfig.fleetPage, ...(row.fleet_page ?? {}) },
-    // Schools list/config is authoritative in site-content; logos (Directus file ids)
-    // are merged in from the school_transport blob, keyed by school slug.
-    schoolTransport: mergeSchoolLogos(row.school_transport),
+    // School buttons, availability and logos are editable together in the
+    // settings.school_transport JSON blob; seed values cover missing keys.
+    schoolTransport: mergeSchoolTransport(row.school_transport),
     accreditationLogos: row.accreditation_logos ?? {},
     logo: row.logo ?? null,
     heroImage: row.hero_image ?? null,
@@ -344,12 +344,14 @@ export function selectPageHeroFallback(settings: SiteSettings, key: string): Pag
 interface SchoolTransportBlob {
   logos?: Record<string, string>;
   schools?: SchoolTransport["schools"];
+  ticketPortalUrl?: string;
 }
 
-function mergeSchoolLogos(blob: SchoolTransportBlob | null | undefined): SchoolTransport {
+function mergeSchoolTransport(blob: SchoolTransportBlob | null | undefined): SchoolTransport {
   const logos = blob?.logos ?? {};
   const schools = blob?.schools?.length ? blob.schools : siteConfig.schoolTransport.schools;
   return {
+    ticketPortalUrl: safeCmsUrl(blob?.ticketPortalUrl || siteConfig.schoolTransport.ticketPortalUrl),
     schools: schools.map((school) => ({ ...school, buyUrl: safeCmsUrl(school.buyUrl), waitlistUrl: school.waitlistUrl ? safeCmsUrl(school.waitlistUrl) : "", logo: logos[school.slug] ?? school.logo ?? null })),
   };
 }

@@ -9,8 +9,6 @@ import { Reveal } from "@/components/ui/motion";
 import { buildMetadata } from "@/lib/seo";
 import { assetUrl, getSettings, getSchoolRoutes, selectPageHeroFallback } from "@/lib/directus";
 
-const TRACK_URL = "https://passenger.shuttleid.uk/";
-
 function routeAnchor(code: string) {
   return code.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 }
@@ -104,14 +102,6 @@ export default async function SchoolPage({ params }: { params: Promise<{ school:
                 </a>
               )
             )}
-            <a
-              href={TRACK_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-lg border border-greyblue/50 px-6 py-3 font-semibold text-offwhite transition-colors hover:bg-white/5"
-            >
-              Track the bus
-            </a>
           </div>
 
           {!info.spacesAvailable && (

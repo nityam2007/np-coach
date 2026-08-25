@@ -176,20 +176,24 @@ async function run() {
   // Tour hero images.
   for (const [slug, file] of Object.entries(TOUR_IMAGES)) await setItemImage("tours", slug, "image", ids[file]);
 
-  // School logos go on settings.school_transport as { logos: { <slug>: <fileId> } }.
-  // The schools list/config itself lives in site-content.json; we only manage logos here.
+  // Merge school logos into settings.school_transport without erasing the CMS-managed
+  // ticket, availability and per-school button configuration.
+  const currentSchoolTransport = await api("/items/settings?fields=school_transport");
+  const schoolTransport = currentSchoolTransport.school_transport ?? {};
   await api("/items/settings", {
     method: "PATCH",
     body: JSON.stringify({
       school_transport: {
+        ...schoolTransport,
         logos: {
+          ...(schoolTransport.logos ?? {}),
           "pioneer-secondary-academy": ids["school-psa.jpg"],
           "herschel-grammar-school": ids["school-herschel.png"],
         },
       },
     }),
   });
-  console.log("✓ set settings.school_transport logos (by slug)");
+  console.log("✓ merged settings.school_transport logos (CMS links preserved)");
 
   // Full live-site image archive (from scripts/crawl-live-images.mjs) → its own folder,
   // so the client can reuse any original WordPress image from the media library.

@@ -205,25 +205,45 @@ export async function directusFinishEmailLog(
   return result?.updated ?? false;
 }
 
-export async function directusClaimPaymentEmail(input: {
-  collection: "bookings" | "pass_purchases";
+export type EmailDeliveryCollection = "bookings" | "pass_purchases" | "contact_submissions" | "quote_requests";
+export type EmailDeliveryStatusField = "confirmation_email_status" | "staff_email_status";
+
+export async function directusClaimEmailDelivery(input: {
+  collection: EmailDeliveryCollection;
   id: number;
-  statusField: "confirmation_email_status" | "staff_email_status";
+  statusField: EmailDeliveryStatusField;
   lease: string;
   staleBefore: string;
-}): Promise<{ claimed: boolean; completed: boolean } | null> {
-  return internalRequest<{ claimed: boolean; completed: boolean }>("/email-delivery/claim", input);
+}): Promise<{ claimed: boolean; completed: boolean; lead?: Record<string, unknown> } | null> {
+  return internalRequest<{ claimed: boolean; completed: boolean; lead?: Record<string, unknown> }>("/email-delivery/claim", input);
 }
 
-export async function directusFinishPaymentEmail(input: {
-  collection: "bookings" | "pass_purchases";
+export async function directusFinishEmailDelivery(input: {
+  collection: EmailDeliveryCollection;
   id: number;
-  statusField: "confirmation_email_status" | "staff_email_status";
+  statusField: EmailDeliveryStatusField;
   lease: string;
   delivered: boolean;
 }): Promise<boolean> {
   const result = await internalRequest<{ updated: boolean }>("/email-delivery/finish", input);
   return result?.updated ?? false;
+}
+
+export async function directusCreateLead(
+  collection: "contact_submissions" | "quote_requests",
+  data: Record<string, unknown>,
+): Promise<{ id: number } | null> {
+  return internalRequest<{ id: number }>("/leads/create", { collection, data });
+}
+
+export async function directusPendingLeadIds(limit = 20): Promise<{
+  contact_submissions: number[];
+  quote_requests: number[];
+} | null> {
+  return internalRequest<{
+    contact_submissions: number[];
+    quote_requests: number[];
+  }>("/lead-delivery/pending", { limit });
 }
 
 export async function directusReleaseInventory(runIds: number[], seats: number): Promise<boolean> {

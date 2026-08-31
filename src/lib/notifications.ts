@@ -21,42 +21,50 @@ async function deliver(label: string, message: Parameters<typeof sendEmail>[0]):
   return result;
 }
 
-export async function sendContactNotifications(
+export function sendContactCustomerNotification(
   settings: SiteSettings,
   data: ContactEmailData,
   sourceId: number,
-): Promise<boolean> {
-  const staffTo = process.env.CONTACT_TO?.trim() || settings.email.general;
-  const results = await Promise.all([
-    deliver("contact acknowledgement", {
-      ...contactCustomerEmail(settings, data),
-      tracking: { idempotencyKey: `contact:${sourceId}:customer`, type: "contact_customer", sourceCollection: "contact_submissions", sourceId },
-    }),
-    deliver("contact staff notification", {
-      ...contactStaffEmail(settings, data, staffTo),
-      tracking: { idempotencyKey: `contact:${sourceId}:staff`, type: "contact_staff", sourceCollection: "contact_submissions", sourceId },
-    }),
-  ]);
-  return results.every((result) => result.delivered);
+): Promise<EmailResult> {
+  return deliver("contact acknowledgement", {
+    ...contactCustomerEmail(settings, data),
+    tracking: { idempotencyKey: `contact:${sourceId}:customer`, type: "contact_customer", sourceCollection: "contact_submissions", sourceId },
+  });
 }
 
-export async function sendQuoteNotifications(
+export function sendContactStaffNotification(
+  settings: SiteSettings,
+  data: ContactEmailData,
+  sourceId: number,
+): Promise<EmailResult> {
+  const staffTo = process.env.CONTACT_TO?.trim() || settings.email.general;
+  return deliver("contact staff notification", {
+    ...contactStaffEmail(settings, data, staffTo),
+    tracking: { idempotencyKey: `contact:${sourceId}:staff`, type: "contact_staff", sourceCollection: "contact_submissions", sourceId },
+  });
+}
+
+export function sendQuoteCustomerNotification(
   settings: SiteSettings,
   data: QuoteEmailData,
   sourceId: number,
-): Promise<boolean> {
+): Promise<EmailResult> {
+  return deliver("quote acknowledgement", {
+    ...quoteCustomerEmail(settings, data),
+    tracking: { idempotencyKey: `quote:${sourceId}:customer`, type: "quote_customer", sourceCollection: "quote_requests", sourceId },
+  });
+}
+
+export function sendQuoteStaffNotification(
+  settings: SiteSettings,
+  data: QuoteEmailData,
+  sourceId: number,
+): Promise<EmailResult> {
   const staffTo = process.env.QUOTE_TO?.trim() || settings.email.general;
-  const results = await Promise.all([
-    deliver("quote acknowledgement", {
-      ...quoteCustomerEmail(settings, data),
-      tracking: { idempotencyKey: `quote:${sourceId}:customer`, type: "quote_customer", sourceCollection: "quote_requests", sourceId },
-    }),
-    deliver("quote staff notification", {
-      ...quoteStaffEmail(settings, data, staffTo),
-      tracking: { idempotencyKey: `quote:${sourceId}:staff`, type: "quote_staff", sourceCollection: "quote_requests", sourceId },
-    }),
-  ]);
-  return results.every((result) => result.delivered);
+  return deliver("quote staff notification", {
+    ...quoteStaffEmail(settings, data, staffTo),
+    tracking: { idempotencyKey: `quote:${sourceId}:staff`, type: "quote_staff", sourceCollection: "quote_requests", sourceId },
+  });
 }
 
 export function sendBookingConfirmation(

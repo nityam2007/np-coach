@@ -11,6 +11,9 @@ export const metadata = buildMetadata({
   path: "/contact-us",
 });
 
+// Avoid serving a stale Server Action reference across production deployments.
+export const dynamic = "force-dynamic";
+
 export default async function ContactPage() {
   const settings = await getSettings();
   const { address } = settings;

@@ -25,23 +25,23 @@ export function QuoteForm() {
   const error = (name: string) => state.errors?.[name] && <span className="mt-1 block text-xs font-normal text-red-600">{state.errors[name]}</span>;
   return (
     <form ref={formRef} action={action} className="grid gap-4">
-      {state.message && <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{state.message}</p>}
+      {state.message && <p role="alert" aria-live="polite" className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{state.message}</p>}
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="text-sm font-semibold text-navy">Name<input name="name" required autoComplete="name" className={inputCls} />{error("name")}</label>
-        <label className="text-sm font-semibold text-navy">Phone<input name="phone" required type="tel" autoComplete="tel" className={inputCls} />{error("phone")}</label>
+        <label className="text-sm font-semibold text-navy">Name<input name="name" required autoComplete="name" aria-invalid={Boolean(state.errors?.name)} className={inputCls} />{error("name")}</label>
+        <label className="text-sm font-semibold text-navy">Phone<input name="phone" required type="tel" autoComplete="tel" aria-invalid={Boolean(state.errors?.phone)} className={inputCls} />{error("phone")}</label>
       </div>
-      <label className="text-sm font-semibold text-navy">Email<input name="email" required type="email" autoComplete="email" className={inputCls} />{error("email")}</label>
+      <label className="text-sm font-semibold text-navy">Email<input name="email" required type="email" autoComplete="email" aria-invalid={Boolean(state.errors?.email)} className={inputCls} />{error("email")}</label>
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="text-sm font-semibold text-navy">Pickup location<input name="pickup" required className={inputCls} />{error("pickup")}</label>
-        <label className="text-sm font-semibold text-navy">Destination<input name="destination" required className={inputCls} />{error("destination")}</label>
+        <label className="text-sm font-semibold text-navy">Pickup location<input name="pickup" required aria-invalid={Boolean(state.errors?.pickup)} className={inputCls} />{error("pickup")}</label>
+        <label className="text-sm font-semibold text-navy">Destination<input name="destination" required aria-invalid={Boolean(state.errors?.destination)} className={inputCls} />{error("destination")}</label>
       </div>
       <div className="grid gap-4 sm:grid-cols-3">
-        <label className="text-sm font-semibold text-navy">Outward date<input name="outboundDate" required type="date" className={inputCls} />{error("outboundDate")}</label>
-        <label className="text-sm font-semibold text-navy">Return date <span className="font-normal text-navy/70">(optional)</span><input name="returnDate" type="date" className={inputCls} />{error("returnDate")}</label>
-        <label className="text-sm font-semibold text-navy">Passengers<input name="passengers" required type="number" min="1" max="200" className={inputCls} />{error("passengers")}</label>
+        <label className="text-sm font-semibold text-navy">Outward date<input name="outboundDate" required type="date" aria-invalid={Boolean(state.errors?.outboundDate)} className={inputCls} />{error("outboundDate")}</label>
+        <label className="text-sm font-semibold text-navy">Return date <span className="font-normal text-navy/70">(optional)</span><input name="returnDate" type="date" aria-invalid={Boolean(state.errors?.returnDate)} className={inputCls} />{error("returnDate")}</label>
+        <label className="text-sm font-semibold text-navy">Passengers<input name="passengers" required type="number" min="1" max="200" aria-invalid={Boolean(state.errors?.passengers)} className={inputCls} />{error("passengers")}</label>
       </div>
-      <label className="text-sm font-semibold text-navy">Preferred coach size <span className="font-normal text-navy/70">(optional)</span><input name="coachSize" placeholder="e.g. 49 seats" className={inputCls} /></label>
-      <label className="text-sm font-semibold text-navy">Journey details<textarea name="journeyDetails" required rows={5} placeholder="Timings, stops, accessibility or luggage requirements" className={inputCls} />{error("journeyDetails")}</label>
+      <label className="text-sm font-semibold text-navy">Preferred coach size <span className="font-normal text-navy/70">(optional)</span><input name="coachSize" placeholder="e.g. 49 seats" aria-invalid={Boolean(state.errors?.coachSize)} className={inputCls} />{error("coachSize")}</label>
+      <label className="text-sm font-semibold text-navy">Journey details<textarea name="journeyDetails" required rows={5} placeholder="Timings, stops, accessibility or luggage requirements" aria-invalid={Boolean(state.errors?.journeyDetails)} className={inputCls} />{error("journeyDetails")}</label>
       <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute left-[-9999px] h-0 w-0" />
       <Turnstile resetSignal={state} />
       <SubmitButton />

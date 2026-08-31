@@ -1,6 +1,17 @@
 import { getSettings } from "@/lib/directus";
-import { directusAtomicUpdate, directusServerRead } from "@/lib/directus-server";
-import { sendContactNotifications, sendQuoteNotifications } from "@/lib/notifications";
+import {
+  directusClaimEmailDelivery,
+  directusFinishEmailDelivery,
+  directusPendingLeadIds,
+  type EmailDeliveryStatusField,
+} from "@/lib/directus-server";
+import type { EmailResult } from "@/lib/email";
+import {
+  sendContactCustomerNotification,
+  sendContactStaffNotification,
+  sendQuoteCustomerNotification,
+  sendQuoteStaffNotification,
+} from "@/lib/notifications";
 
 type LeadCollection = "contact_submissions" | "quote_requests";
 
@@ -27,86 +38,98 @@ interface QuoteRow {
   journey_details: string;
 }
 
-async function claim(collection: LeadCollection, id: number): Promise<string | false | null> {
+type LeadRow = ContactRow | QuoteRow;
+
+async function deliverOnce(
+  collection: LeadCollection,
+  id: number,
+  statusField: EmailDeliveryStatusField,
+  send: (lead: LeadRow) => Promise<EmailResult>,
+): Promise<boolean> {
   const now = new Date();
   const lease = now.toISOString();
-  const staleBefore = new Date(now.getTime() - 10 * 60_000).toISOString();
-  const current = await directusServerRead<{
-    email_status: string | null;
-    email_started_at: string | null;
-  }>(`/items/${collection}/${id}?fields=email_status,email_started_at`);
-  if (!current) return null;
-
-  const staleSending = current.email_status === "sending"
-    && (!current.email_started_at || current.email_started_at < staleBefore);
-  const eligible = current.email_status === null
-    || current.email_status === "pending"
-    || current.email_status === "failed"
-    || staleSending;
-  if (!eligible) return false;
-
-  const updated = await directusAtomicUpdate(
+  const claimed = await directusClaimEmailDelivery({
     collection,
     id,
-    {
-      email_status: current.email_status,
-      email_started_at: current.email_started_at,
-    },
-    { email_status: "sending", email_started_at: lease },
-  );
-  if (updated === null) return null;
-  return updated ? lease : false;
+    statusField,
+    lease,
+    staleBefore: new Date(now.getTime() - 10 * 60_000).toISOString(),
+  });
+  if (!claimed) return false;
+  if (claimed.completed) return true;
+  if (!claimed.claimed) return false;
+
+  const lead = claimed.lead as unknown as LeadRow | undefined;
+  if (!lead) {
+    await directusFinishEmailDelivery({ collection, id, statusField, lease, delivered: false });
+    return false;
+  }
+
+  let result: EmailResult;
+  try {
+    result = await send(lead);
+  } catch (error) {
+    console.error("[email] lead template/delivery failed", error);
+    await directusFinishEmailDelivery({ collection, id, statusField, lease, delivered: false });
+    return false;
+  }
+
+  const recorded = await directusFinishEmailDelivery({
+    collection,
+    id,
+    statusField,
+    lease,
+    delivered: result.delivered,
+  });
+  return result.delivered && recorded;
 }
 
 export async function deliverLead(collection: LeadCollection, id: number): Promise<boolean> {
-  const lease = await claim(collection, id);
-  if (lease === null) return false;
-  if (lease === false) return true;
-
   const settings = await getSettings();
-  let delivered = false;
   if (collection === "contact_submissions") {
-    const row = await directusServerRead<ContactRow>(`/items/${collection}/${id}`);
-    if (row) delivered = await sendContactNotifications(settings, row, row.id);
-  } else {
-    const row = await directusServerRead<QuoteRow>(`/items/${collection}/${id}`);
-    if (row) {
-      delivered = await sendQuoteNotifications(settings, {
-        name: row.name,
-        email: row.email,
-        phone: row.phone,
-        pickup: row.pickup,
-        destination: row.destination,
-        outboundDate: row.outbound_date,
-        returnDate: row.return_date ?? "",
-        passengers: row.passengers,
-        coachSize: row.coach_size,
-        journeyDetails: row.journey_details,
-      }, row.id);
-    }
+    const [customer, staff] = await Promise.all([
+      deliverOnce(collection, id, "confirmation_email_status", (lead) =>
+        sendContactCustomerNotification(settings, lead as ContactRow, id)),
+      deliverOnce(collection, id, "staff_email_status", (lead) =>
+        sendContactStaffNotification(settings, lead as ContactRow, id)),
+    ]);
+    return customer && staff;
   }
 
-  const recorded = await directusAtomicUpdate(
-    collection,
-    id,
-    { email_status: "sending", email_started_at: lease },
-    {
-      email_status: delivered ? "sent" : "failed",
-      email_started_at: null,
-      email_sent_at: delivered ? new Date().toISOString() : null,
-    },
-  );
-  return delivered && recorded === true;
+  const toQuoteData = (lead: LeadRow) => {
+    const row = lead as QuoteRow;
+    return {
+      name: row.name,
+      email: row.email,
+      phone: row.phone,
+      pickup: row.pickup,
+      destination: row.destination,
+      outboundDate: row.outbound_date,
+      returnDate: row.return_date ?? "",
+      passengers: row.passengers,
+      coachSize: row.coach_size,
+      journeyDetails: row.journey_details,
+    };
+  };
+  const [customer, staff] = await Promise.all([
+    deliverOnce(collection, id, "confirmation_email_status", (lead) =>
+      sendQuoteCustomerNotification(settings, toQuoteData(lead), id)),
+    deliverOnce(collection, id, "staff_email_status", (lead) =>
+      sendQuoteStaffNotification(settings, toQuoteData(lead), id)),
+  ]);
+  return customer && staff;
 }
 
-/** Retry a bounded batch from the protected maintenance endpoint. */
+/** Retry a bounded batch through the same private delivery path used at submit time. */
 export async function retryLeadNotifications(limit = 20): Promise<boolean> {
+  const targets = await directusPendingLeadIds(limit);
+  if (!targets) return false;
+
+  let complete = true;
   for (const collection of ["contact_submissions", "quote_requests"] as const) {
-    const rows = await directusServerRead<Array<{ id: number }>>(
-      `/items/${collection}?filter[email_status][_in]=pending,failed&fields=id&sort=created_at&limit=${limit}`,
-    );
-    if (rows === null) return false;
-    for (const row of rows) await deliverLead(collection, row.id);
+    for (const id of targets[collection]) {
+      if (!(await deliverLead(collection, id))) complete = false;
+    }
   }
-  return true;
+  return complete;
 }

@@ -12,6 +12,9 @@ export const metadata = buildMetadata({
   path: "/get-a-quote",
 });
 
+// Quote persistence is transactional; always render the current form action.
+export const dynamic = "force-dynamic";
+
 export default async function GetAQuotePage() {
   const settings = await getSettings();
 

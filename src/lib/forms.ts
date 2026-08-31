@@ -1,13 +1,12 @@
 import { z } from "zod";
-import { directusServerWrite } from "@/lib/directus-server";
+import { directusCreateLead } from "@/lib/directus-server";
 
 /**
  * Server-side form helpers: zod schemas, Cloudflare Turnstile verification, a
- * lightweight rate-limiter, and the Directus write. The app persists submissions
- * to Directus (server-write collections); email delivery (M365 SMTP) is added later.
+ * lightweight rate-limiter, and the private Directus lead write. Submissions are
+ * persisted before the independently tracked customer/staff email channels run.
  */
 
-const DIRECTUS_URL = process.env.DIRECTUS_URL ?? "http://localhost:8055";
 const TURNSTILE_SECRET =
   process.env.TURNSTILE_SECRET || process.env.TURNSTILE_SECRET_KEY;
 
@@ -148,8 +147,8 @@ export async function verifyTurnstile(token: string | undefined, ip?: string): P
 // ---- Directus write ----
 /** Create an item in a server-write collection and return its durable id. */
 export async function createSubmission(
-  collection: string,
+  collection: "contact_submissions" | "quote_requests",
   data: Record<string, unknown>,
 ): Promise<{ id: number } | null> {
-  return (await directusServerWrite(`/items/${collection}`, "POST", data)) as { id: number } | null;
+  return directusCreateLead(collection, data);
 }

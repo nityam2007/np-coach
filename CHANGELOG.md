@@ -299,3 +299,10 @@ Append-only. Newest entries at the bottom. Never edit or delete past entries —
 - Added the general Trackaroo ticket portal to the home-to-school landing page and changed Herschel's primary action from the ShuttleID waiting list to the supplied Trackaroo Buy Tickets link.
 - Moved all per-school ticket/waiting-list availability values into the existing editable `settings.school_transport` JSON and removed tracking buttons from individual school pages.
 - Fixed media bootstrap so adding school logos merges into that JSON instead of deleting its editable button configuration.
+
+## 2026-08-31 — Contact and quote persistence/email repair
+
+- Moved Contact and Get-a-Quote persistence to the same secret-protected Directus extension boundary used by transactional booking operations, so lead creation no longer depends on broad Directus collection permissions.
+- Replaced the leads' exact ISO timestamp CAS with MariaDB-safe row-locked delivery leases and separate customer/staff status channels. Failed channels remain independently retryable and Email Logs keep stable idempotency keys.
+- Added private maintenance lookup for unsent leads, complete read-only delivery visibility in Directus, dynamic form pages to avoid stale Server Action references after deploys, clearer field error states, and stable Turnstile layout.
+- Added regression coverage for durable quote creation and both pending → sending → sent delivery channels.

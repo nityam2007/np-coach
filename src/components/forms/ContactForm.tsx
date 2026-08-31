@@ -35,36 +35,38 @@ export function ContactForm() {
 
   return (
     <form ref={formRef} action={action} className="grid gap-4">
-      {state.message && <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{state.message}</p>}
+      {state.message && <p role="alert" aria-live="polite" className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{state.message}</p>}
 
       <label className="text-sm font-semibold text-navy">
         Name
-        <input name="name" type="text" required autoComplete="name" className={inputCls} />
+        <input name="name" type="text" required autoComplete="name" aria-invalid={Boolean(state.errors?.name)} className={inputCls} />
         {state.errors?.name && <span className="mt-1 block text-xs font-normal text-red-600">{state.errors.name}</span>}
       </label>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="text-sm font-semibold text-navy">
           Email
-          <input name="email" type="email" required autoComplete="email" className={inputCls} />
+          <input name="email" type="email" required autoComplete="email" aria-invalid={Boolean(state.errors?.email)} className={inputCls} />
           {state.errors?.email && (
             <span className="mt-1 block text-xs font-normal text-red-600">{state.errors.email}</span>
           )}
         </label>
         <label className="text-sm font-semibold text-navy">
           Phone <span className="font-normal text-navy/70">(optional)</span>
-          <input name="phone" type="tel" autoComplete="tel" className={inputCls} />
+          <input name="phone" type="tel" autoComplete="tel" aria-invalid={Boolean(state.errors?.phone)} className={inputCls} />
+          {state.errors?.phone && <span className="mt-1 block text-xs font-normal text-red-600">{state.errors.phone}</span>}
         </label>
       </div>
 
       <label className="text-sm font-semibold text-navy">
         Subject <span className="font-normal text-navy/70">(optional)</span>
-        <input name="subject" type="text" className={inputCls} />
+        <input name="subject" type="text" aria-invalid={Boolean(state.errors?.subject)} className={inputCls} />
+        {state.errors?.subject && <span className="mt-1 block text-xs font-normal text-red-600">{state.errors.subject}</span>}
       </label>
 
       <label className="text-sm font-semibold text-navy">
         Message
-        <textarea name="message" required rows={5} className={inputCls} />
+        <textarea name="message" required rows={5} aria-invalid={Boolean(state.errors?.message)} className={inputCls} />
         {state.errors?.message && (
           <span className="mt-1 block text-xs font-normal text-red-600">{state.errors.message}</span>
         )}

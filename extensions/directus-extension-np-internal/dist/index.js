@@ -107,14 +107,64 @@ function validEmailLogFinish(body) {
     && validShortText(body.errorCode, 100);
 }
 
-const PAYMENT_EMAIL_FIELDS = {
+const EMAIL_DELIVERY_FIELDS = {
   bookings: new Set(["confirmation_email_status", "staff_email_status"]),
   pass_purchases: new Set(["confirmation_email_status", "staff_email_status"]),
+  contact_submissions: new Set(["confirmation_email_status", "staff_email_status"]),
+  quote_requests: new Set(["confirmation_email_status", "staff_email_status"]),
 };
+
+const PAYMENT_COLLECTIONS = new Set(["bookings", "pass_purchases"]);
+const LEAD_COLLECTIONS = new Set(["contact_submissions", "quote_requests"]);
+
+const CONTACT_FIELDS = ["name", "email", "phone", "subject", "message"];
+const QUOTE_FIELDS = [
+  "name", "email", "phone", "pickup", "destination", "outbound_date",
+  "return_date", "passengers", "coach_size", "journey_details",
+];
+
+function boundedString(value, max, allowEmpty = false) {
+  return typeof value === "string" && value.length <= max && (allowEmpty || value.trim().length > 0);
+}
+
+function exactFields(value, fields) {
+  return validObject(value)
+    && Object.keys(value).length === fields.length
+    && Object.keys(value).every((field) => fields.includes(field));
+}
+
+function validLeadCreate(body) {
+  if (!validObject(body) || !LEAD_COLLECTIONS.has(body.collection)) return false;
+  const data = body.data;
+  if (body.collection === "contact_submissions") {
+    return exactFields(data, CONTACT_FIELDS)
+      && boundedString(data.name, 120)
+      && boundedString(data.email, 200)
+      && boundedString(data.phone, 40, true)
+      && boundedString(data.subject, 160, true)
+      && boundedString(data.message, 4000);
+  }
+  return exactFields(data, QUOTE_FIELDS)
+    && boundedString(data.name, 120)
+    && boundedString(data.email, 200)
+    && boundedString(data.phone, 40)
+    && boundedString(data.pickup, 200)
+    && boundedString(data.destination, 200)
+    && typeof data.outbound_date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(data.outbound_date)
+    && (data.return_date === null || (typeof data.return_date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(data.return_date)))
+    && Number.isInteger(data.passengers) && data.passengers >= 1 && data.passengers <= 200
+    && boundedString(data.coach_size, 80, true)
+    && boundedString(data.journey_details, 4000);
+}
+
+function leadPayload(collection, row) {
+  const fields = collection === "contact_submissions" ? CONTACT_FIELDS : QUOTE_FIELDS;
+  return Object.fromEntries(["id", ...fields].map((field) => [field, row[field]]));
+}
 
 function validDeliveryClaim(body) {
   return validObject(body)
-    && PAYMENT_EMAIL_FIELDS[body.collection]?.has(body.statusField)
+    && EMAIL_DELIVERY_FIELDS[body.collection]?.has(body.statusField)
     && Number.isInteger(body.id) && body.id >= 1
     && typeof body.lease === "string" && Number.isFinite(Date.parse(body.lease))
     && typeof body.staleBefore === "string" && Number.isFinite(Date.parse(body.staleBefore));
@@ -122,7 +172,7 @@ function validDeliveryClaim(body) {
 
 function validDeliveryFinish(body) {
   return validObject(body)
-    && PAYMENT_EMAIL_FIELDS[body.collection]?.has(body.statusField)
+    && EMAIL_DELIVERY_FIELDS[body.collection]?.has(body.statusField)
     && Number.isInteger(body.id) && body.id >= 1
     && typeof body.lease === "string" && Number.isFinite(Date.parse(body.lease))
     && typeof body.delivered === "boolean";
@@ -131,6 +181,20 @@ function validDeliveryFinish(body) {
 function deliveryTimestampFields(statusField) {
   const prefix = statusField.replace(/_status$/, "");
   return { startedField: `${prefix}_started_at`, sentField: `${prefix}_sent_at` };
+}
+
+function leadSummaryChanges(row, statusField, delivered) {
+  const otherStatusField = statusField === "confirmation_email_status"
+    ? "staff_email_status"
+    : "confirmation_email_status";
+  const status = !delivered || row[otherStatusField] === "failed"
+    ? "failed"
+    : row[otherStatusField] === "sent" ? "sent" : "sending";
+  return {
+    email_status: status,
+    email_started_at: status === "sending" ? row.email_started_at : null,
+    email_sent_at: status === "sent" ? new Date() : null,
+  };
 }
 
 async function reserveRuns(trx, runs, seats) {
@@ -238,6 +302,59 @@ const endpoint = {
       }
     });
 
+    router.post("/leads/create", async (req, res) => {
+      if (!validLeadCreate(req.body)) return res.status(400).json({ error: "invalid payload" });
+      const { collection, data } = req.body;
+      try {
+        const inserted = await database(collection).insert({
+          ...data,
+          email_status: null,
+          email_started_at: null,
+          email_sent_at: null,
+          confirmation_email_status: "pending",
+          confirmation_email_started_at: null,
+          confirmation_email_sent_at: null,
+          staff_email_status: "pending",
+          staff_email_started_at: null,
+          staff_email_sent_at: null,
+          created_at: new Date(),
+        });
+        const id = Number(Array.isArray(inserted) ? inserted[0] : inserted);
+        if (!Number.isSafeInteger(id) || id < 1) throw new Error("LEAD_CREATE_FAILED");
+        return res.json({ data: { id } });
+      } catch (error) {
+        logger.error(error, "lead create failed");
+        return res.status(503).json({ error: "lead storage unavailable" });
+      }
+    });
+
+    router.post("/lead-delivery/pending", async (req, res) => {
+      const limit = req.body?.limit;
+      if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
+        return res.status(400).json({ error: "invalid payload" });
+      }
+      try {
+        const data = {};
+        for (const collection of LEAD_COLLECTIONS) {
+          const rows = await database(collection)
+            .select("id")
+            .where(function unsentLead() {
+              this.whereNot("confirmation_email_status", "sent")
+                .orWhereNull("confirmation_email_status")
+                .orWhereNot("staff_email_status", "sent")
+                .orWhereNull("staff_email_status");
+            })
+            .orderBy("id", "asc")
+            .limit(limit);
+          data[collection] = rows.map((row) => row.id);
+        }
+        return res.json({ data });
+      } catch (error) {
+        logger.error(error, "pending lead email lookup failed");
+        return res.status(503).json({ error: "lead delivery unavailable" });
+      }
+    });
+
     router.post("/email-delivery/claim", async (req, res) => {
       if (!validDeliveryClaim(req.body)) return res.status(400).json({ error: "invalid payload" });
       const { collection, id, statusField, lease, staleBefore } = req.body;
@@ -245,7 +362,9 @@ const endpoint = {
       try {
         const data = await database.transaction(async (trx) => {
           const row = await trx(collection).where({ id }).forUpdate().first();
-          if (!row || row.status !== "paid") return { claimed: false, completed: false };
+          if (!row || (PAYMENT_COLLECTIONS.has(collection) && row.status !== "paid")) {
+            return { claimed: false, completed: false };
+          }
           if (row[statusField] === "sent") return { claimed: false, completed: true };
           const startedAt = Date.parse(String(row[startedField] ?? ""));
           const staleSending = row[statusField] === "sending"
@@ -256,8 +375,17 @@ const endpoint = {
           const updated = await trx(collection).where({ id }).update({
             [statusField]: "sending",
             [startedField]: new Date(lease),
+            ...(LEAD_COLLECTIONS.has(collection)
+              ? { email_status: "sending", email_started_at: new Date(lease) }
+              : {}),
           });
-          return { claimed: updated === 1, completed: false };
+          return {
+            claimed: updated === 1,
+            completed: false,
+            ...(updated === 1 && LEAD_COLLECTIONS.has(collection)
+              ? { lead: leadPayload(collection, row) }
+              : {}),
+          };
         });
         return res.json({ data });
       } catch (error) {
@@ -285,6 +413,9 @@ const endpoint = {
             [statusField]: delivered ? "sent" : "failed",
             [sentField]: delivered ? new Date() : null,
             [startedField]: null,
+            ...(LEAD_COLLECTIONS.has(collection)
+              ? leadSummaryChanges(row, statusField, delivered)
+              : {}),
           });
           return affected === 1;
         });

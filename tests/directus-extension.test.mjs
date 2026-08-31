@@ -10,16 +10,60 @@ function mockDatabase(seed = {}) {
   function client(table) {
     tables[table] ??= [];
     return {
+      select(...fields) {
+        let rows = tables[table].map((row) => ({ ...row }));
+        const query = {
+          where(callback) {
+            const clauses = [];
+            const nested = {
+              whereNot(field, value) {
+                clauses.push((row) => row[field] !== null && row[field] !== value);
+                return nested;
+              },
+              orWhereNot(field, value) {
+                clauses.push((row) => row[field] !== null && row[field] !== value);
+                return nested;
+              },
+              orWhereNull(field) {
+                clauses.push((row) => row[field] === null || row[field] === undefined);
+                return nested;
+              },
+            };
+            callback.call(nested);
+            rows = rows.filter((row) => clauses.some((clause) => clause(row)));
+            return query;
+          },
+          orderBy(field, direction) {
+            rows.sort((a, b) => direction === "desc" ? b[field] - a[field] : a[field] - b[field]);
+            return query;
+          },
+          limit(value) {
+            return Promise.resolve(rows.slice(0, value).map((row) =>
+              Object.fromEntries(fields.map((field) => [field, row[field]]))));
+          },
+        };
+        return query;
+      },
       insert(data) {
+        let insertedId;
+        const insertOnce = () => {
+          if (insertedId) return insertedId;
+          insertedId = tables[table].length + 1;
+          tables[table].push({ id: insertedId, ...data });
+          return insertedId;
+        };
         return {
           onConflict(field) {
             return {
               async ignore() {
                 if (!tables[table].some((row) => row[field] === data[field])) {
-                  tables[table].push({ id: tables[table].length + 1, ...data });
+                  insertOnce();
                 }
               },
             };
+          },
+          then(resolve, reject) {
+            return Promise.resolve([insertOnce()]).then(resolve, reject);
           },
         };
       },
@@ -263,6 +307,82 @@ test("payment email delivery claims pending state and records SMTP completion at
   })).body, { data: { updated: true } });
   assert.equal(database.rows("bookings")[0].staff_email_status, "sent");
   assert.ok(database.rows("bookings")[0].staff_email_sent_at instanceof Date);
+});
+
+test("lead creation and both email channels use the MariaDB-safe delivery lease", async () => {
+  const database = mockDatabase();
+  const request = harness(database);
+  assert.equal((await request("/leads/create", {
+    collection: "quote_requests",
+    data: { name: "Unexpected partial payload", email_status: "sent" },
+  })).status, 400);
+  assert.deepEqual(database.rows("quote_requests") ?? [], []);
+
+  const created = await request("/leads/create", {
+    collection: "quote_requests",
+    data: {
+      name: "Test Customer",
+      email: "customer@example.test",
+      phone: "020 0000 0000",
+      pickup: "Iver",
+      destination: "Birmingham",
+      outbound_date: "2026-09-15",
+      return_date: null,
+      passengers: 30,
+      coach_size: "35 seats",
+      journey_details: "Private coach hire regression test",
+    },
+  });
+  assert.deepEqual(created.body, { data: { id: 1 } });
+  assert.equal(database.rows("quote_requests")[0].confirmation_email_status, "pending");
+  assert.equal(database.rows("quote_requests")[0].staff_email_status, "pending");
+  assert.ok(database.rows("quote_requests")[0].created_at instanceof Date);
+  assert.deepEqual((await request("/lead-delivery/pending", { limit: 20 })).body, {
+    data: { contact_submissions: [], quote_requests: [1] },
+  });
+
+  const customerLease = "2026-08-31T10:00:00.654Z";
+  const customerClaim = await request("/email-delivery/claim", {
+    collection: "quote_requests",
+    id: 1,
+    statusField: "confirmation_email_status",
+    lease: customerLease,
+    staleBefore: "2026-08-31T09:50:00.000Z",
+  });
+  assert.equal(customerClaim.body.data.claimed, true);
+  assert.equal(customerClaim.body.data.lead.email, "customer@example.test");
+  database.rows("quote_requests")[0].confirmation_email_started_at = "2026-08-31T10:00:00.000Z";
+  assert.deepEqual((await request("/email-delivery/finish", {
+    collection: "quote_requests",
+    id: 1,
+    statusField: "confirmation_email_status",
+    lease: customerLease,
+    delivered: true,
+  })).body, { data: { updated: true } });
+  assert.equal(database.rows("quote_requests")[0].confirmation_email_status, "sent");
+  assert.equal(database.rows("quote_requests")[0].email_status, "sending");
+
+  const staffLease = "2026-08-31T10:01:00.000Z";
+  await request("/email-delivery/claim", {
+    collection: "quote_requests",
+    id: 1,
+    statusField: "staff_email_status",
+    lease: staffLease,
+    staleBefore: "2026-08-31T09:51:00.000Z",
+  });
+  assert.deepEqual((await request("/email-delivery/finish", {
+    collection: "quote_requests",
+    id: 1,
+    statusField: "staff_email_status",
+    lease: staffLease,
+    delivered: true,
+  })).body, { data: { updated: true } });
+  assert.equal(database.rows("quote_requests")[0].staff_email_status, "sent");
+  assert.equal(database.rows("quote_requests")[0].email_status, "sent");
+  assert.ok(database.rows("quote_requests")[0].email_sent_at instanceof Date);
+  assert.deepEqual((await request("/lead-delivery/pending", { limit: 20 })).body, {
+    data: { contact_submissions: [], quote_requests: [] },
+  });
 });
 
 test("CMS-paid booking reconciliation creates inventory once", async () => {

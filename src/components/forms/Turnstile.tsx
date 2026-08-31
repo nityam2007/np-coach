@@ -82,7 +82,7 @@ export function Turnstile({ resetSignal }: { resetSignal?: unknown }) {
         strategy="afterInteractive"
         onReady={renderWidget}
       />
-      <div ref={containerRef} />
+      <div ref={containerRef} className="min-h-[65px]" aria-label="Spam protection" />
     </>
   );
 }

@@ -114,7 +114,7 @@ Before enabling forms, customer accounts, booking, or Stripe:
 
 1. In Directus, create a dedicated API-only role/user with no Data Studio access.
 2. Grant only these collection permissions:
-   - `contact_submissions`, `quote_requests`: create.
+   - Contact and quote writes/delivery use the secret-protected internal extension; do not grant the app user direct lead-collection access.
    - `bookings`, `pass_purchases`: read, create, update.
    - `customers`: read, create, update.
    - `otp_codes`: read, create, update, delete.

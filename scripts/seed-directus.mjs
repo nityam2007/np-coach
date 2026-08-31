@@ -181,6 +181,12 @@ const CONTACT_SUBMISSIONS_FIELDS = [
   deliveryStatus("email_status"),
   deliveryStartedAt("email_started_at"),
   deliverySentAt("email_sent_at"),
+  deliveryStatus("confirmation_email_status"),
+  deliveryStartedAt("confirmation_email_started_at"),
+  deliverySentAt("confirmation_email_sent_at"),
+  deliveryStatus("staff_email_status"),
+  deliveryStartedAt("staff_email_started_at"),
+  deliverySentAt("staff_email_sent_at"),
   datetimeCreated,
 ];
 
@@ -194,6 +200,12 @@ const QUOTE_REQUESTS_FIELDS = [
   deliveryStatus("email_status"),
   deliveryStartedAt("email_started_at"),
   deliverySentAt("email_sent_at"),
+  deliveryStatus("confirmation_email_status"),
+  deliveryStartedAt("confirmation_email_started_at"),
+  deliverySentAt("confirmation_email_sent_at"),
+  deliveryStatus("staff_email_status"),
+  deliveryStartedAt("staff_email_started_at"),
+  deliverySentAt("staff_email_sent_at"),
 ];
 
 // server token; the public can neither read nor write them. Identified by email.
@@ -643,6 +655,12 @@ async function run() {
     await ensureField(collection, deliveryStatus("email_status"));
     await ensureField(collection, deliveryStartedAt("email_started_at"));
     await ensureField(collection, deliverySentAt("email_sent_at"));
+    await ensureField(collection, deliveryStatus("confirmation_email_status"));
+    await ensureField(collection, deliveryStartedAt("confirmation_email_started_at"));
+    await ensureField(collection, deliverySentAt("confirmation_email_sent_at"));
+    await ensureField(collection, deliveryStatus("staff_email_status"));
+    await ensureField(collection, deliveryStartedAt("staff_email_started_at"));
+    await ensureField(collection, deliverySentAt("staff_email_sent_at"));
   }
   await ensureField("bookings", deliveryStatus("confirmation_email_status"));
   await ensureField("bookings", deliveryStartedAt("confirmation_email_started_at"));

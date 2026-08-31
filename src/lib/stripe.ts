@@ -1,7 +1,7 @@
 import Stripe from "stripe";
 import crypto from "node:crypto";
 import { getScheduledServices, getStops, getSettings } from "@/lib/directus";
-import { directusAtomicUpdate, directusClaimPaymentEmail, directusCommitPaidBookingInventory, directusFinishPaymentEmail, directusReconcilePaidBookingInventory, directusServerRead, directusServerWrite, type AtomicInventoryRun } from "@/lib/directus-server";
+import { directusAtomicUpdate, directusClaimEmailDelivery, directusCommitPaidBookingInventory, directusFinishEmailDelivery, directusReconcilePaidBookingInventory, directusServerRead, directusServerWrite, type AtomicInventoryRun } from "@/lib/directus-server";
 import {
   sendBookingConfirmation,
   sendBookingStaffNotification,
@@ -363,7 +363,7 @@ async function claimEmailDelivery(
   const now = new Date();
   const lease = now.toISOString();
   const staleBefore = new Date(now.getTime() - 10 * 60_000).toISOString();
-  const result = await directusClaimPaymentEmail({
+  const result = await directusClaimEmailDelivery({
     collection,
     id,
     statusField,
@@ -382,7 +382,7 @@ async function finishEmailDelivery(
   lease: string,
   delivered: boolean,
 ): Promise<boolean> {
-  return directusFinishPaymentEmail({
+  return directusFinishEmailDelivery({
     collection,
     id,
     statusField,

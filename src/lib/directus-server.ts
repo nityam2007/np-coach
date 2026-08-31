@@ -97,10 +97,16 @@ async function internalRequestResult<T>(path: string, body: unknown): Promise<In
       cache: "no-store",
       signal: AbortSignal.timeout(8_000),
     });
-    if (!res.ok) return { ok: false, status: res.status };
+    if (!res.ok) {
+      const detail = (await res.text()).replace(/[\r\n]+/g, " ").slice(0, 300);
+      console.error(`[directus] internal request ${path} failed (${res.status})${detail ? `: ${detail}` : ""}`);
+      return { ok: false, status: res.status };
+    }
     const json = (await res.json()) as { data: T };
     return { ok: true, data: json.data };
-  } catch {
+  } catch (error) {
+    const code = typeof error === "object" && error && "name" in error ? String(error.name) : "unknown";
+    console.error(`[directus] internal request ${path} failed (${code})`);
     return { ok: false, status: null };
   }
 }
@@ -233,7 +239,15 @@ export async function directusCreateLead(
   collection: "contact_submissions" | "quote_requests",
   data: Record<string, unknown>,
 ): Promise<{ id: number } | null> {
-  return internalRequest<{ id: number }>("/leads/create", { collection, data });
+  const created = await internalRequest<{ id: number }>("/leads/create", { collection, data });
+  if (created) return created;
+
+  // Rolling-deploy compatibility: preserve the lead through the scoped Directus
+  // REST permission if web is briefly newer than the private extension image.
+  const fallback = await directusServerWrite(`/items/${collection}`, "POST", data);
+  return fallback && typeof fallback === "object" && "id" in fallback
+    ? { id: Number((fallback as { id: unknown }).id) }
+    : null;
 }
 
 export async function directusPendingLeadIds(limit = 20): Promise<{

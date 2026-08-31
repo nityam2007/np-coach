@@ -306,3 +306,9 @@ Append-only. Newest entries at the bottom. Never edit or delete past entries —
 - Replaced the leads' exact ISO timestamp CAS with MariaDB-safe row-locked delivery leases and separate customer/staff status channels. Failed channels remain independently retryable and Email Logs keep stable idempotency keys.
 - Added private maintenance lookup for unsent leads, complete read-only delivery visibility in Directus, dynamic form pages to avoid stale Server Action references after deploys, clearer field error states, and stable Turnstile layout.
 - Added regression coverage for durable quote creation and both pending → sending → sent delivery channels.
+
+## 2026-08-31 — Immediate CMS lead visibility
+
+- Changed the private Contact/Get-a-Quote create endpoint to use Directus `ItemsService` instead of inserting with Knex, so item defaults, activity records and CMS/API cache invalidation run normally.
+- Kept a scoped Directus REST fallback during rolling deployments and added safe server diagnostics when the private endpoint rejects or cannot store a lead.
+- Added regression coverage proving lead creation goes through the Directus service layer while retaining the existing independent customer/staff email delivery lifecycle.

@@ -100,6 +100,30 @@ function mockDatabase(seed = {}) {
 function harness(database) {
   let middleware;
   const handlers = new Map();
+  const itemServiceCreates = [];
+  class MockItemsService {
+    constructor(collection) {
+      this.collection = collection;
+    }
+
+    async createOne(data) {
+      itemServiceCreates.push({ collection: this.collection, data });
+      const inserted = await database(this.collection).insert({
+        ...data,
+        email_status: "pending",
+        email_started_at: null,
+        email_sent_at: null,
+        confirmation_email_status: "pending",
+        confirmation_email_started_at: null,
+        confirmation_email_sent_at: null,
+        staff_email_status: "pending",
+        staff_email_started_at: null,
+        staff_email_sent_at: null,
+        created_at: new Date(),
+      });
+      return Number(inserted[0]);
+    }
+  }
   endpoint.handler({
     use(fn) { middleware = fn; },
     post(path, fn) { handlers.set(path, fn); },
@@ -107,9 +131,11 @@ function harness(database) {
     database,
     env: { INTERNAL_API_SECRET: secret },
     logger: { error() {} },
+    services: { ItemsService: MockItemsService },
+    getSchema: async () => ({}),
   });
 
-  return async function request(path, body, suppliedSecret = secret) {
+  async function request(path, body, suppliedSecret = secret) {
     const req = {
       body,
       accountability: { user: "app-user" },
@@ -124,7 +150,9 @@ function harness(database) {
     middleware(req, res, () => { authorised = true; });
     if (authorised) await handlers.get(path)(req, res);
     return result;
-  };
+  }
+  request.itemServiceCreates = itemServiceCreates;
+  return request;
 }
 
 test("internal endpoint rejects a missing shared secret", async () => {
@@ -334,6 +362,21 @@ test("lead creation and both email channels use the MariaDB-safe delivery lease"
     },
   });
   assert.deepEqual(created.body, { data: { id: 1 } });
+  assert.deepEqual(request.itemServiceCreates, [{
+    collection: "quote_requests",
+    data: {
+      name: "Test Customer",
+      email: "customer@example.test",
+      phone: "020 0000 0000",
+      pickup: "Iver",
+      destination: "Birmingham",
+      outbound_date: "2026-09-15",
+      return_date: null,
+      passengers: 30,
+      coach_size: "35 seats",
+      journey_details: "Private coach hire regression test",
+    },
+  }]);
   assert.equal(database.rows("quote_requests")[0].confirmation_email_status, "pending");
   assert.equal(database.rows("quote_requests")[0].staff_email_status, "pending");
   assert.ok(database.rows("quote_requests")[0].created_at instanceof Date);

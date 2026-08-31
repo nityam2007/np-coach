@@ -231,7 +231,7 @@ async function reserveRuns(trx, runs, seats) {
 
 const endpoint = {
   id: "np-internal",
-  handler(router, { database, env, logger }) {
+  handler(router, { database, env, logger, services, getSchema }) {
     router.use((req, res, next) => {
       if (!authorised(req, env)) return res.status(401).json({ error: "unauthorised" });
       next();
@@ -306,20 +306,14 @@ const endpoint = {
       if (!validLeadCreate(req.body)) return res.status(400).json({ error: "invalid payload" });
       const { collection, data } = req.body;
       try {
-        const inserted = await database(collection).insert({
-          ...data,
-          email_status: null,
-          email_started_at: null,
-          email_sent_at: null,
-          confirmation_email_status: "pending",
-          confirmation_email_started_at: null,
-          confirmation_email_sent_at: null,
-          staff_email_status: "pending",
-          staff_email_started_at: null,
-          staff_email_sent_at: null,
-          created_at: new Date(),
+        // Use Directus's service layer so cache purge, activity and field defaults
+        // behave exactly like an ordinary CMS/API create. The endpoint's user +
+        // shared-secret middleware is the permission boundary for this operation.
+        const service = new services.ItemsService(collection, {
+          schema: await getSchema(),
+          accountability: null,
         });
-        const id = Number(Array.isArray(inserted) ? inserted[0] : inserted);
+        const id = Number(await service.createOne(data));
         if (!Number.isSafeInteger(id) || id < 1) throw new Error("LEAD_CREATE_FAILED");
         return res.json({ data: { id } });
       } catch (error) {

@@ -25,6 +25,7 @@ import { getSettings } from "@/lib/directus";
 import { deliverLead } from "@/lib/lead-delivery";
 import { clientIp, rateLimited, rateLimitKey, RATE_LIMITS } from "@/lib/security";
 import { siteUrl } from "@/lib/site-url";
+import { quoteRequestRecord } from "@/lib/quote-request";
 
 
 export async function submitContact(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -70,11 +71,7 @@ export async function submitQuote(_prev: FormState, formData: FormData): Promise
     return { ok: false, message: "Spam check failed — please try again." };
   }
 
-  const saved = await createSubmission("quote_requests", {
-    name: data.name, email: data.email, phone: data.phone, pickup: data.pickup, destination: data.destination,
-    outbound_date: data.outboundDate, return_date: data.returnDate || null, passengers: data.passengers,
-    coach_size: data.coachSize, journey_details: data.journeyDetails,
-  });
+  const saved = await createSubmission("quote_requests", quoteRequestRecord(data));
   if (!saved) return { ok: false, message: "Something went wrong saving your request. Please call us instead." };
   const delivered = await deliverLead("quote_requests", saved.id).catch(() => false);
   return delivered

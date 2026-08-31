@@ -6,6 +6,7 @@ import {
   type EmailDeliveryStatusField,
 } from "@/lib/directus-server";
 import type { EmailResult } from "@/lib/email";
+import { quoteRequestEmailData, type StoredQuoteRequest } from "@/lib/quote-request";
 import {
   sendContactCustomerNotification,
   sendContactStaffNotification,
@@ -24,20 +25,7 @@ interface ContactRow {
   message: string;
 }
 
-interface QuoteRow {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  pickup: string;
-  destination: string;
-  outbound_date: string;
-  return_date: string | null;
-  passengers: number;
-  coach_size: string;
-  journey_details: string;
-}
-
+type QuoteRow = StoredQuoteRequest & { id: number };
 type LeadRow = ContactRow | QuoteRow;
 
 async function deliverOnce(
@@ -96,26 +84,11 @@ export async function deliverLead(collection: LeadCollection, id: number): Promi
     return customer && staff;
   }
 
-  const toQuoteData = (lead: LeadRow) => {
-    const row = lead as QuoteRow;
-    return {
-      name: row.name,
-      email: row.email,
-      phone: row.phone,
-      pickup: row.pickup,
-      destination: row.destination,
-      outboundDate: row.outbound_date,
-      returnDate: row.return_date ?? "",
-      passengers: row.passengers,
-      coachSize: row.coach_size,
-      journeyDetails: row.journey_details,
-    };
-  };
   const [customer, staff] = await Promise.all([
     deliverOnce(collection, id, "confirmation_email_status", (lead) =>
-      sendQuoteCustomerNotification(settings, toQuoteData(lead), id)),
+      sendQuoteCustomerNotification(settings, quoteRequestEmailData(lead as QuoteRow), id)),
     deliverOnce(collection, id, "staff_email_status", (lead) =>
-      sendQuoteStaffNotification(settings, toQuoteData(lead), id)),
+      sendQuoteStaffNotification(settings, quoteRequestEmailData(lead as QuoteRow), id)),
   ]);
   return customer && staff;
 }

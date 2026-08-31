@@ -193,10 +193,10 @@ const CONTACT_SUBMISSIONS_FIELDS = [
 // Customer accounts (passwordless). Server-write only — the app manages these with the
 const QUOTE_REQUESTS_FIELDS = [
   pk("id"),
-  str("name"), str("email"), str("phone"), str("pickup"), str("destination"),
-  { field: "outbound_date", type: "date", meta: { interface: "datetime" }, schema: {} },
+  str("name"), str("email"), str("phone"), str("trip_from"), str("trip_to"),
+  { field: "trip_date", type: "date", meta: { interface: "datetime" }, schema: {} },
   { field: "return_date", type: "date", meta: { interface: "datetime" }, schema: {} },
-  int("passengers"), str("coach_size"), text("journey_details"), datetimeCreated,
+  int("passengers"), str("coach_size"), text("message"), datetimeCreated,
   deliveryStatus("email_status"),
   deliveryStartedAt("email_started_at"),
   deliverySentAt("email_sent_at"),
@@ -662,6 +662,17 @@ async function run() {
     await ensureField(collection, deliveryStartedAt("staff_email_started_at"));
     await ensureField(collection, deliverySentAt("staff_email_sent_at"));
   }
+  // The production quote collection predates the current form. Retain and
+  // reconcile its established trip_* / message contract, then add the two newer
+  // form values. This also repairs environments briefly created with newer names.
+  for (const field of [
+    str("trip_from"),
+    str("trip_to"),
+    { field: "trip_date", type: "date", meta: { interface: "datetime" }, schema: {} },
+    { field: "return_date", type: "date", meta: { interface: "datetime" }, schema: {} },
+    str("coach_size"),
+    text("message"),
+  ]) await ensureField("quote_requests", field);
   await ensureField("bookings", deliveryStatus("confirmation_email_status"));
   await ensureField("bookings", deliveryStartedAt("confirmation_email_started_at"));
   await ensureField("bookings", deliverySentAt("confirmation_email_sent_at"));

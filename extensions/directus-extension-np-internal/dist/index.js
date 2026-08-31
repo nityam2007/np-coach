@@ -119,8 +119,8 @@ const LEAD_COLLECTIONS = new Set(["contact_submissions", "quote_requests"]);
 
 const CONTACT_FIELDS = ["name", "email", "phone", "subject", "message"];
 const QUOTE_FIELDS = [
-  "name", "email", "phone", "pickup", "destination", "outbound_date",
-  "return_date", "passengers", "coach_size", "journey_details",
+  "name", "email", "phone", "trip_from", "trip_to", "trip_date",
+  "return_date", "passengers", "coach_size", "message",
 ];
 
 function boundedString(value, max, allowEmpty = false) {
@@ -148,13 +148,13 @@ function validLeadCreate(body) {
     && boundedString(data.name, 120)
     && boundedString(data.email, 200)
     && boundedString(data.phone, 40)
-    && boundedString(data.pickup, 200)
-    && boundedString(data.destination, 200)
-    && typeof data.outbound_date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(data.outbound_date)
+    && boundedString(data.trip_from, 200)
+    && boundedString(data.trip_to, 200)
+    && typeof data.trip_date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(data.trip_date)
     && (data.return_date === null || (typeof data.return_date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(data.return_date)))
     && Number.isInteger(data.passengers) && data.passengers >= 1 && data.passengers <= 200
     && boundedString(data.coach_size, 80, true)
-    && boundedString(data.journey_details, 4000);
+    && boundedString(data.message, 4000);
 }
 
 function leadPayload(collection, row) {

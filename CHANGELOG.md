@@ -318,3 +318,9 @@ Append-only. Newest entries at the bottom. Never edit or delete past entries —
 - Removed the null Directus accountability from the private lead service. Directus 12 treated it as public access and silently discarded quote fields not allowed by the public role, producing `undefined` journey details in emails and blank CMS exports.
 - Kept the authenticated server token plus 32-byte shared secret as the private endpoint boundary, while allowing the internal service to persist every server-validated quote field.
 - Expanded regression coverage for pickup, destination, outward date and journey details and to prevent public accountability from being restored on this internal write.
+
+## 2026-08-31 — Production quote-schema alignment
+
+- Identified the remaining blank fields from the live CMS record: production uses the established `trip_from`, `trip_to`, `trip_date` and `message` columns, while the form pipeline had started sending unrecognised replacement names that Directus discarded.
+- Centralised the form → Directus → email mapping on the production field contract, so pickup, destination, outward date, passenger count and journey message remain identical in the CMS, exports, customer acknowledgement and staff notification.
+- Added idempotent `return_date` and `coach_size` fields for the two newer form values, updated CMS labels/display templates, and added regression coverage for the complete round trip plus production bootstrap reconciliation.

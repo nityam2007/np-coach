@@ -358,13 +358,13 @@ test("lead creation and both email channels use the MariaDB-safe delivery lease"
       name: "Test Customer",
       email: "customer@example.test",
       phone: "020 0000 0000",
-      pickup: "Iver",
-      destination: "Birmingham",
-      outbound_date: "2026-09-15",
+      trip_from: "Iver",
+      trip_to: "Birmingham",
+      trip_date: "2026-09-15",
       return_date: null,
       passengers: 30,
       coach_size: "35 seats",
-      journey_details: "Private coach hire regression test",
+      message: "Private coach hire regression test",
     },
   });
   assert.deepEqual(created.body, { data: { id: 1 } });
@@ -378,21 +378,21 @@ test("lead creation and both email channels use the MariaDB-safe delivery lease"
       name: "Test Customer",
       email: "customer@example.test",
       phone: "020 0000 0000",
-      pickup: "Iver",
-      destination: "Birmingham",
-      outbound_date: "2026-09-15",
+      trip_from: "Iver",
+      trip_to: "Birmingham",
+      trip_date: "2026-09-15",
       return_date: null,
       passengers: 30,
       coach_size: "35 seats",
-      journey_details: "Private coach hire regression test",
+      message: "Private coach hire regression test",
     },
   }]);
   assert.equal(database.rows("quote_requests")[0].confirmation_email_status, "pending");
   assert.equal(database.rows("quote_requests")[0].staff_email_status, "pending");
-  assert.equal(database.rows("quote_requests")[0].pickup, "Iver");
-  assert.equal(database.rows("quote_requests")[0].destination, "Birmingham");
-  assert.equal(database.rows("quote_requests")[0].outbound_date, "2026-09-15");
-  assert.equal(database.rows("quote_requests")[0].journey_details, "Private coach hire regression test");
+  assert.equal(database.rows("quote_requests")[0].trip_from, "Iver");
+  assert.equal(database.rows("quote_requests")[0].trip_to, "Birmingham");
+  assert.equal(database.rows("quote_requests")[0].trip_date, "2026-09-15");
+  assert.equal(database.rows("quote_requests")[0].message, "Private coach hire regression test");
   assert.ok(database.rows("quote_requests")[0].created_at instanceof Date);
   assert.deepEqual((await request("/lead-delivery/pending", { limit: 20 })).body, {
     data: { contact_submissions: [], quote_requests: [1] },

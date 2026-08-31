@@ -13,16 +13,16 @@ export interface QuoteRequestInput {
 
 export interface StoredQuoteRequest {
   id?: number;
-  name: string;
-  email: string;
-  phone: string;
-  trip_from: string;
-  trip_to: string;
-  trip_date: string;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  trip_from: string | null;
+  trip_to: string | null;
+  trip_date: string | null;
   return_date: string | null;
   passengers: number;
-  coach_size: string;
-  message: string;
+  coach_size: string | null;
+  message: string | null;
 }
 
 /** Map the public quote form onto the established production Directus schema. */
@@ -43,16 +43,17 @@ export function quoteRequestRecord(data: QuoteRequestInput): Omit<StoredQuoteReq
 
 /** Convert the persisted record into the camel-case shape used by email templates. */
 export function quoteRequestEmailData(row: StoredQuoteRequest): QuoteRequestInput {
+  const text = (value: string | null | undefined) => value?.trim() ?? "";
   return {
-    name: row.name,
-    email: row.email,
-    phone: row.phone,
-    pickup: row.trip_from,
-    destination: row.trip_to,
-    outboundDate: row.trip_date,
-    returnDate: row.return_date ?? "",
+    name: text(row.name),
+    email: text(row.email),
+    phone: text(row.phone),
+    pickup: text(row.trip_from),
+    destination: text(row.trip_to),
+    outboundDate: text(row.trip_date),
+    returnDate: text(row.return_date),
     passengers: row.passengers,
-    coachSize: row.coach_size,
-    journeyDetails: row.message,
+    coachSize: text(row.coach_size),
+    journeyDetails: text(row.message),
   };
 }

@@ -59,7 +59,7 @@ export async function upsertCustomer(email: string, name?: string): Promise<Cust
  */
 /**
  * Purge OTP rows older than the retention window (consumed or not — anything this old is
- * long past its 10-min TTL). ponytail: opportunistic sweep on login request rather than a
+ * long past its 10-min TTL). This is an opportunistic sweep on login request rather than a
  * cron — the table only grows on login attempts, so cleaning up there keeps it self-bounded.
  */
 async function sweepOldOtps(): Promise<void> {

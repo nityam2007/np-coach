@@ -34,7 +34,7 @@ export function FleetCarousel({
   const reduce = useReducedMotion();
   const count = fleet.length;
 
-  // Auto-advance so the showcase feels alive; pauses on hover/focus. ponytail: plain
+  // Auto-advance so the showcase feels alive; pauses on hover/focus. This uses plain
   // interval — no carousel lib for a single-item cross-fade.
   useEffect(() => {
     if (count < 2 || paused || userPaused || reduce) return;

@@ -339,11 +339,15 @@ export function contactStaffEmail(
 }
 
 export function quoteCustomerEmail(settings: SiteSettings, data: QuoteEmailData): EmailInput {
+  const journey = [data.pickup, data.destination]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .join(" to ") || "Not provided";
   return buildEmail(settings, data.email, {
     copy: settings.emailTemplates.quoteCustomer,
     variables: { name: data.name },
     rows: [
-      { label: "Journey", value: `${data.pickup} to ${data.destination}` },
+      { label: "Journey", value: journey },
       { label: "Outbound", value: formatDate(data.outboundDate) },
       { label: "Passengers", value: data.passengers },
     ],

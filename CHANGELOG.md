@@ -324,3 +324,9 @@ Append-only. Newest entries at the bottom. Never edit or delete past entries —
 - Identified the remaining blank fields from the live CMS record: production uses the established `trip_from`, `trip_to`, `trip_date` and `message` columns, while the form pipeline had started sending unrecognised replacement names that Directus discarded.
 - Centralised the form → Directus → email mapping on the production field contract, so pickup, destination, outward date, passenger count and journey message remain identical in the CMS, exports, customer acknowledgement and staff notification.
 - Added idempotent `return_date` and `coach_size` fields for the two newer form values, updated CMS labels/display templates, and added regression coverage for the complete round trip plus production bootstrap reconciliation.
+
+## 2026-08-31 — Transactional field-contract audit
+
+- Audited Contact, Quote Requests, Daily Express bookings, Service Runs, lost-property purchases, customers, OTPs, customer sessions and Email Logs from input schema through Directus storage and outbound email/account reads. No additional field-name drift was found outside the corrected Quote Requests contract.
+- Normalised nullable legacy quote values before email rendering and made the journey summary fail safely as “Not provided”, so incomplete historical rows can never produce literal `undefined` text.
+- Corrected two stray source-comment typos and added regression coverage for incomplete historical quote rows.

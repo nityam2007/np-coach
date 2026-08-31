@@ -100,10 +100,15 @@ function mockDatabase(seed = {}) {
 function harness(database) {
   let middleware;
   const handlers = new Map();
+  const itemServiceConstructs = [];
   const itemServiceCreates = [];
   class MockItemsService {
-    constructor(collection) {
+    constructor(collection, options) {
       this.collection = collection;
+      itemServiceConstructs.push({
+        collection,
+        hasAccountability: Object.hasOwn(options, "accountability"),
+      });
     }
 
     async createOne(data) {
@@ -151,6 +156,7 @@ function harness(database) {
     if (authorised) await handlers.get(path)(req, res);
     return result;
   }
+  request.itemServiceConstructs = itemServiceConstructs;
   request.itemServiceCreates = itemServiceCreates;
   return request;
 }
@@ -362,6 +368,10 @@ test("lead creation and both email channels use the MariaDB-safe delivery lease"
     },
   });
   assert.deepEqual(created.body, { data: { id: 1 } });
+  assert.deepEqual(request.itemServiceConstructs, [{
+    collection: "quote_requests",
+    hasAccountability: false,
+  }]);
   assert.deepEqual(request.itemServiceCreates, [{
     collection: "quote_requests",
     data: {
@@ -379,6 +389,10 @@ test("lead creation and both email channels use the MariaDB-safe delivery lease"
   }]);
   assert.equal(database.rows("quote_requests")[0].confirmation_email_status, "pending");
   assert.equal(database.rows("quote_requests")[0].staff_email_status, "pending");
+  assert.equal(database.rows("quote_requests")[0].pickup, "Iver");
+  assert.equal(database.rows("quote_requests")[0].destination, "Birmingham");
+  assert.equal(database.rows("quote_requests")[0].outbound_date, "2026-09-15");
+  assert.equal(database.rows("quote_requests")[0].journey_details, "Private coach hire regression test");
   assert.ok(database.rows("quote_requests")[0].created_at instanceof Date);
   assert.deepEqual((await request("/lead-delivery/pending", { limit: 20 })).body, {
     data: { contact_submissions: [], quote_requests: [1] },

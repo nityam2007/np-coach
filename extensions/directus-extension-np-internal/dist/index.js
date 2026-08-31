@@ -307,11 +307,12 @@ const endpoint = {
       const { collection, data } = req.body;
       try {
         // Use Directus's service layer so cache purge, activity and field defaults
-        // behave exactly like an ordinary CMS/API create. The endpoint's user +
-        // shared-secret middleware is the permission boundary for this operation.
+        // behave exactly like an ordinary CMS/API create. Do not pass a null
+        // accountability: Directus treats that as public access and silently strips
+        // fields outside the public role. The authenticated user + shared-secret
+        // middleware above is the permission boundary for this internal operation.
         const service = new services.ItemsService(collection, {
           schema: await getSchema(),
-          accountability: null,
         });
         const id = Number(await service.createOne(data));
         if (!Number.isSafeInteger(id) || id < 1) throw new Error("LEAD_CREATE_FAILED");

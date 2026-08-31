@@ -312,3 +312,9 @@ Append-only. Newest entries at the bottom. Never edit or delete past entries —
 - Changed the private Contact/Get-a-Quote create endpoint to use Directus `ItemsService` instead of inserting with Knex, so item defaults, activity records and CMS/API cache invalidation run normally.
 - Kept a scoped Directus REST fallback during rolling deployments and added safe server diagnostics when the private endpoint rejects or cannot store a lead.
 - Added regression coverage proving lead creation goes through the Directus service layer while retaining the existing independent customer/staff email delivery lifecycle.
+
+## 2026-08-31 — Complete quote journey persistence
+
+- Removed the null Directus accountability from the private lead service. Directus 12 treated it as public access and silently discarded quote fields not allowed by the public role, producing `undefined` journey details in emails and blank CMS exports.
+- Kept the authenticated server token plus 32-byte shared secret as the private endpoint boundary, while allowing the internal service to persist every server-validated quote field.
+- Expanded regression coverage for pickup, destination, outward date and journey details and to prevent public accountability from being restored on this internal write.

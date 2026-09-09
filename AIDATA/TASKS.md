@@ -4,6 +4,8 @@ This file records completed phases and remaining work. Read [../HANDOVER.md](../
 
 ## Current state (done)
 
+- **2026-09-09 — Hero video/data preservation:** allow environment-configured CMS video in CSP; use the video element's direct source for MIME detection/error fallback; guard all media seeding after initialization so cleared/editor-selected media survives deploys. Six regression tests added; full suite, types, lint and script checks pass. No production data mutations or destructive migration.
+
 - **P0** — Next.js 16 + TS + Tailwind v4 under `src/`; brand tokens (navy/grey-blue/white) + Geist/Inter; Docker dev stack (MariaDB + Directus + app); modular `Header`/`Footer`/`Hero`.
 - **P1** — Directus data layer: `settings` (singleton) + `services`, public read, typed fetch lib (`src/lib/directus.ts`) with ISR + fallback, idempotent seed (`npm run seed`).
 - **P2 foundation** — branded Directus admin; **`fleet`** collection → `/fleet` + per-vehicle SEO pages (`/[slug]`); **`pages`** collection → editable content pages via the same resolver; `robots.ts`, `sitemap.ts`, Organization JSON-LD; homepage sections.

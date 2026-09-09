@@ -24,6 +24,8 @@ Rebuild of [np-coaches.co.uk](https://np-coaches.co.uk) — a UK coach-hire oper
 
 ## Current payment and form controls
 
+**Homepage media (2026-09-09):** Settings → Hero Video takes priority over Hero Image, which is an optional poster/fallback. Use a browser-playable H.264 MP4; autoplay respects reduced-motion and data-saving preferences. The security policy permits video from `NEXT_PUBLIC_DIRECTUS_URL`, without hardcoding a deployment domain. Once `client_media_revision` is set, the entire media seed is skipped: selected and deliberately cleared media remain untouched, including across a code rollback. Add future media through Directus, not by resetting this marker. This patch needs no schema snapshot, database reset, or content migration.
+
 - Contact, quote, booking, lost-property, and OTP requests use the existing Managed Turnstile widget. Tokens are verified server-side through Cloudflare Siteverify and production fails closed when the server secret is absent or invalid.
 - Stripe Checkout receives the customer's email for receipts and accepts active customer-entered promotion codes. A booking, ticket, or lost-property claim is shown as complete only after Stripe verifies the Checkout session; the verified subtotal, discount and final total are recorded, including zero-value 100%-discount sessions, and public booking references cannot complete an order.
 - Coolify deployments run Directus system bootstrap plus additive/idempotent content, field, admin and media setup. Routine pushes never apply an exact schema snapshot, overwrite populated settings, or recreate dashboard panels; protected business-table counts are checked before and after bootstrap.

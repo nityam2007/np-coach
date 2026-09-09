@@ -1,6 +1,8 @@
 # NP Coaches — Implementation and Operations Plan
 
 The CMS-driven Next.js rebuild is implemented and deployed through Coolify; this plan records the architecture, completed phases, and remaining production acceptance.
+
+**Media preservation (2026-09-09):** CMS-hosted hero videos are explicitly allowed by the environment-driven CSP. Once media initialization is recorded, routine deploys skip all media reseeding, including empty fields; future media changes belong in Directus. No data reset or exact-schema migration is required for this fix.
 **Goals:** fast as fire · secure as a prison · best UX. Keep it **simple, modular, dynamic, responsive** — don't over-engineer.
 
 ---

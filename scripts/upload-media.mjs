@@ -5,7 +5,9 @@
 // Run AFTER `npm run seed` (collections + rows must exist):
 //   npm run media   (with Directus reachable)
 //
-// Idempotent: a file is matched by its `title`; existing files are reused, not duplicated.
+// Seed only when client_media_revision is absent. A cleared media field
+// is an editor choice, not permission to restore seed content on the next deploy.
+// During initial setup files are matched by title and reused, not duplicated.
 
 import { readFile, readdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
@@ -158,6 +160,18 @@ async function run() {
         })
       ).access_token,
     );
+  }
+
+  // Guard the whole media pass, not just the client pack. Otherwise cleared hero,
+  // gallery and logo fields are filled again before the old revision check runs.
+  // Any recorded revision wins, including a newer revision after a code rollback.
+  const mediaSettings = await api("/items/settings?fields=client_media_revision");
+  if (!mediaSettings || !Object.hasOwn(mediaSettings, "client_media_revision")) {
+    throw new Error("Cannot verify media initialization; refusing to change CMS media.");
+  }
+  if (mediaSettings.client_media_revision) {
+    console.log("• media already initialized — all CMS selections and cleared fields preserved");
+    return;
   }
 
   const files = (await readdir(MEDIA_DIR, { withFileTypes: true }))
@@ -362,10 +376,6 @@ async function run() {
       }
     }
 
-    await api("/items/settings", {
-      method: "PATCH",
-      body: JSON.stringify({ client_media_revision: CLIENT_MEDIA_REVISION }),
-    });
     console.log(`✓ applied client media revision ${CLIENT_MEDIA_REVISION}`);
   } else {
     console.log(`• client media revision ${CLIENT_MEDIA_REVISION} already applied — CMS edits preserved`);
@@ -412,7 +422,12 @@ async function run() {
     console.log("• reusable page hero slots already configured — CMS edits preserved");
   }
 
-  console.log("Done. Media uploaded and linked.");
+  // Mark completion only after every initial media stage has succeeded.
+  await api("/items/settings", {
+    method: "PATCH",
+    body: JSON.stringify({ client_media_revision: CLIENT_MEDIA_REVISION }),
+  });
+  console.log("Done. Media uploaded and linked. Future runs preserve CMS media unchanged.");
 }
 
 run().catch((err) => {

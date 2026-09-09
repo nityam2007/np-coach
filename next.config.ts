@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-// Public Directus origin (browser loads images from here) — allow it in the CSP.
+// Public Directus origin (browser loads images and videos here) — allow it in the CSP.
 const DIRECTUS = process.env.NEXT_PUBLIC_DIRECTUS_URL ?? "http://localhost:8055";
 
 
@@ -19,6 +19,8 @@ const csp = [
   `script-src 'self' 'unsafe-inline' https://js.stripe.com https://challenges.cloudflare.com https://static.cloudflareinsights.com https://www.googletagmanager.com${isDev ? " 'unsafe-eval'" : ""}`,
   `style-src 'self' 'unsafe-inline'`,
   `img-src 'self' data: blob: ${DIRECTUS} https://www.google-analytics.com`,
+  // Without media-src, CMS videos fall back to default-src 'self' and are blocked.
+  `media-src 'self' ${DIRECTUS}`,
   `font-src 'self' data:`,
   `connect-src 'self' ${DIRECTUS} https://api.stripe.com https://challenges.cloudflare.com https://cloudflareinsights.com https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com${isDev ? " ws: wss: http://localhost:*" : ""}`,
   `frame-src https://js.stripe.com https://challenges.cloudflare.com`,

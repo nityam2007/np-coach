@@ -330,3 +330,11 @@ Append-only. Newest entries at the bottom. Never edit or delete past entries —
 - Audited Contact, Quote Requests, Daily Express bookings, Service Runs, lost-property purchases, customers, OTPs, customer sessions and Email Logs from input schema through Directus storage and outbound email/account reads. No additional field-name drift was found outside the corrected Quote Requests contract.
 - Normalised nullable legacy quote values before email rendering and made the journey summary fail safely as “Not provided”, so incomplete historical rows can never produce literal `undefined` text.
 - Corrected two stray source-comment typos and added regression coverage for incomplete historical quote rows.
+
+## 2026-09-09 — Restore CMS hero video and preserve editor media
+
+- Verified read-only that Directus stored the hero video and image-removal revisions despite Studio showing “Updated 0 Fields”; the uploaded H.264/AAC MP4 and image both return HTTP 200. The live homepage CSP omitted `media-src`, blocking CMS videos under `default-src 'self'`.
+- Allow video from `NEXT_PUBLIC_DIRECTUS_URL` through an explicit media directive. Assign the asset directly to the video element so browser MIME detection and the existing media-error fallback work without a forced source type.
+- Move the media initialization guard ahead of all uploads and content/permission writes. Any existing revision preserves selected or intentionally cleared images, video, logos and galleries, including when rolling back code. Missing/inaccessible marker data fails closed; new installations record completion after the last media stage.
+- Clarify CMS hero field notes and document editor ownership. No production records/files were changed or deleted, and no schema snapshot or database reset was run.
+- Added six regression tests for the configured video origin, existing/future media revisions and unavailable initialization state. All 42 tests, TypeScript, ESLint, script syntax checks and diff whitespace checks passed. No browser or build/deployment wait.

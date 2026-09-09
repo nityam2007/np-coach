@@ -137,6 +137,7 @@ export function Hero({ settings, stops }: { settings: SiteSettings; stops: Stop[
                 {displayVideo ? (
                   <video
                     ref={videoRef}
+                    src={video ?? undefined}
                     autoPlay
                     muted
                     loop
@@ -148,9 +149,7 @@ export function Hero({ settings, stops }: { settings: SiteSettings; stops: Stop[
                     onPlay={() => setVideoPlaying(true)}
                     onPause={() => setVideoPlaying(false)}
                     onError={() => setVideoFailed(true)}
-                  >
-                    <source src={video ?? undefined} type="video/mp4" />
-                  </video>
+                  />
                 ) : coach ? (
                   <Image src={coach} alt={settings.heroImageAlt} fill priority sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />
                 ) : null}

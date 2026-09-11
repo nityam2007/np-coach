@@ -2,11 +2,13 @@
 
 This is the **single source of truth for picking up development**. For production ownership and operations, read [../HANDOVER.md](../HANDOVER.md) first. Then read [../CLAUDE.md](../CLAUDE.md) → [PLAN.md](PLAN.md) → [TASKS.md](TASKS.md). Keep this file current as work continues.
 
-> Convert relative dates to absolute. Today's reference when this file was last updated: **2026-09-09**.
+> Convert relative dates to absolute. Today's reference when this file was last updated: **2026-09-11**.
 
 ---
 
 ## 1. Where the build is
+
+**2026-09-11 frontend-only patch:** `/get-a-quote` mounts the portal widget/resize script instead of the local form, with a direct-link fallback and the necessary script/frame CSP allowance. Directus, existing quotes, local actions and email code remain untouched. The hero fleet badge is smaller below the `sm` breakpoint, with desktop/video sizing unchanged. All 45 tests, types and lint pass. Portal HTTP checks return legacy `ALLOW-FROM` for main/www referrers but `SAMEORIGIN` for demo/no referrer; verify the widget on the main domain, not demo. No browser, CMS mutation, seed/migration, or deployment wait.
 
 **2026-09-09 hero media patch:** Live API revisions confirmed that the chosen video and cleared image were saved despite Studio's “Updated 0 Fields” label. The production CSP lacked `media-src` and blocked CMS-hosted video; it now permits the environment-configured CMS. Verified the uploaded video is H.264/AAC and its asset endpoint returns 200. Media bootstrap now exits before any media/permission writes when any `client_media_revision` exists, preserving cleared images, custom logos and galleries. Do not clear that marker or bump it to reseed production. No live data writes, database reset, exact schema apply, or browser checks were performed. Verification: 42 tests, TypeScript, ESLint and script syntax checks passed; deployment/browser verification remains the operator's step.
 

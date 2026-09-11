@@ -3,7 +3,7 @@ import { getSettings } from "@/lib/directus";
 import { PageHero } from "@/components/sections/PageHero";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import { buildMetadata } from "@/lib/seo";
-import { QuoteForm } from "@/components/forms/QuoteForm";
+import { QuoteWidget } from "@/components/forms/QuoteWidget";
 
 export const metadata = buildMetadata({
   title: "Get a Quote",
@@ -12,7 +12,7 @@ export const metadata = buildMetadata({
   path: "/get-a-quote",
 });
 
-// Quote persistence is transactional; always render the current form action.
+// Keep the surrounding contact details current; quotes are handled by the portal.
 export const dynamic = "force-dynamic";
 
 export default async function GetAQuotePage() {
@@ -37,7 +37,7 @@ export default async function GetAQuotePage() {
         <div className="lg:col-span-2">
           <h2 className="font-display text-2xl font-bold text-navy">Quick quote</h2>
 
-          <div className="mt-6 rounded-2xl border border-greyblue/30 bg-white p-5 sm:p-7"><QuoteForm /></div>
+          <div className="mt-6 rounded-2xl border border-greyblue/30 bg-white p-2 sm:p-7"><QuoteWidget /></div>
         </div>
 
         <aside className="rounded-xl bg-greyblue/10 p-6 text-sm text-navy/80 lg:self-start">

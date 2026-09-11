@@ -165,13 +165,13 @@ export function Hero({ settings, stops }: { settings: SiteSettings; stops: Stop[
                 )}
 
                 {/* Fleet trust badge */}
-                <div className="absolute bottom-4 left-4 flex items-center gap-3 rounded-2xl bg-white/90 px-4 py-3 shadow-sm shadow-navy/10 ring-1 ring-white/60 backdrop-blur">
-                  <span className="grid h-10 w-10 place-items-center rounded-xl bg-accent/10 text-accent">
-                    <Icon name="shield" className="h-5 w-5" />
+                <div className="absolute bottom-3 left-3 flex items-center gap-2 rounded-xl bg-white/90 px-2.5 py-2 shadow-sm shadow-navy/10 ring-1 ring-white/60 backdrop-blur sm:bottom-4 sm:left-4 sm:gap-3 sm:rounded-2xl sm:px-4 sm:py-3">
+                  <span className="grid h-7 w-7 place-items-center rounded-lg bg-accent/10 text-accent sm:h-10 sm:w-10 sm:rounded-xl">
+                    <Icon name="shield" className="h-4 w-4 sm:h-5 sm:w-5" />
                   </span>
                   <span className="leading-tight">
-                    <span className="block font-display text-lg font-bold text-navy">15+</span>
-                    <span className="block text-xs font-medium text-navy/70">Euro-6 coaches</span>
+                    <span className="block font-display text-sm font-bold text-navy sm:text-lg">15+</span>
+                    <span className="block text-[10px] font-medium text-navy/70 sm:text-xs">Euro-6 coaches</span>
                   </span>
                 </div>
               </div>

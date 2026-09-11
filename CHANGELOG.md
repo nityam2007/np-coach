@@ -338,3 +338,10 @@ Append-only. Newest entries at the bottom. Never edit or delete past entries —
 - Move the media initialization guard ahead of all uploads and content/permission writes. Any existing revision preserves selected or intentionally cleared images, video, logos and galleries, including when rolling back code. Missing/inaccessible marker data fails closed; new installations record completion after the last media stage.
 - Clarify CMS hero field notes and document editor ownership. No production records/files were changed or deleted, and no schema snapshot or database reset was run.
 - Added six regression tests for the configured video origin, existing/future media revisions and unavailable initialization state. All 42 tests, TypeScript, ESLint, script syntax checks and diff whitespace checks passed. No browser or build/deployment wait.
+
+## 2026-09-11 — Portal quote widget and compact mobile hero badge
+
+- Replaced only the rendered `/get-a-quote` form with the supplied portal iframe and resize-handler script. Initialize the handler before loading the frame, retain an accessible direct portal link, and allow iframe scrolling if the script fails. Existing quote actions, form source, Directus collections, emails and stored records are untouched.
+- Allow the portal origin in the website's script/frame CSP directives. Read-only HTTP checks found the widget and handler available; widget responses use legacy `ALLOW-FROM` for apex/www referrers, but `SAMEORIGIN` for demo or absent referrers. Actual in-browser embedding remains unverified; no browser or submission was used.
+- Reduce the homepage video's fleet badge padding, icon and type on mobile; retain its existing desktop size and leave video dimensions/playback unchanged.
+- All 45 tests, TypeScript and ESLint passed. No CMS requests, seed scripts, schema migrations or data changes were made for this patch.

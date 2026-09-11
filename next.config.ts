@@ -16,14 +16,14 @@ const isDev = process.env.NODE_ENV !== "production";
 // 'unsafe-inline' once inline JSON-LD/styles are nonce'd.
 const csp = [
   `default-src 'self'`,
-  `script-src 'self' 'unsafe-inline' https://js.stripe.com https://challenges.cloudflare.com https://static.cloudflareinsights.com https://www.googletagmanager.com${isDev ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' 'unsafe-inline' https://js.stripe.com https://challenges.cloudflare.com https://static.cloudflareinsights.com https://www.googletagmanager.com https://portal.np-coaches.co.uk${isDev ? " 'unsafe-eval'" : ""}`,
   `style-src 'self' 'unsafe-inline'`,
   `img-src 'self' data: blob: ${DIRECTUS} https://www.google-analytics.com`,
   // Without media-src, CMS videos fall back to default-src 'self' and are blocked.
   `media-src 'self' ${DIRECTUS}`,
   `font-src 'self' data:`,
   `connect-src 'self' ${DIRECTUS} https://api.stripe.com https://challenges.cloudflare.com https://cloudflareinsights.com https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com${isDev ? " ws: wss: http://localhost:*" : ""}`,
-  `frame-src https://js.stripe.com https://challenges.cloudflare.com`,
+  `frame-src https://js.stripe.com https://challenges.cloudflare.com https://portal.np-coaches.co.uk`,
   `form-action 'self' https://checkout.stripe.com`,
   `frame-ancestors 'none'`,
   `base-uri 'self'`,

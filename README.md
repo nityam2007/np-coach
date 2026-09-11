@@ -24,6 +24,8 @@ Rebuild of [np-coaches.co.uk](https://np-coaches.co.uk) — a UK coach-hire oper
 
 ## Current payment and form controls
 
+**Quote UI (2026-09-11):** `/get-a-quote` now embeds the NP Coaches portal quick-quote widget and its supplied resize script, with a direct portal link as a fallback. New requests through this UI are handled by the portal, not the local quote action. Existing Directus quote records, backend actions and email/retry code remain unchanged. The portal currently varies framing headers by referrer: apex/www receive legacy `ALLOW-FROM`, while demo/no referrer receive `SAMEORIGIN`. Verify the embedded flow on the main domain; no browser submission was performed during implementation.
+
 **Homepage media (2026-09-09):** Settings → Hero Video takes priority over Hero Image, which is an optional poster/fallback. Use a browser-playable H.264 MP4; autoplay respects reduced-motion and data-saving preferences. The security policy permits video from `NEXT_PUBLIC_DIRECTUS_URL`, without hardcoding a deployment domain. Once `client_media_revision` is set, the entire media seed is skipped: selected and deliberately cleared media remain untouched, including across a code rollback. Add future media through Directus, not by resetting this marker. This patch needs no schema snapshot, database reset, or content migration.
 
 - Contact, quote, booking, lost-property, and OTP requests use the existing Managed Turnstile widget. Tokens are verified server-side through Cloudflare Siteverify and production fails closed when the server secret is absent or invalid.

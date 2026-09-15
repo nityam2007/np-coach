@@ -5,92 +5,13 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   analyticsPageLocation,
-  CONSENT_COOKIE,
+  applyAnalyticsChoice,
   CONSENT_EVENT,
+  gtag,
   isGoogleAnalyticsId,
   parseConsentCookie,
   type ConsentChoice,
 } from "@/lib/analytics";
-
-type GtagCommand = [command: string, ...args: unknown[]];
-
-declare global {
-  interface Window {
-    dataLayer?: GtagCommand[];
-    gtag?: (...args: GtagCommand) => void;
-    __npGaConfigured?: boolean;
-  }
-}
-
-function gtag(...args: GtagCommand) {
-  window.dataLayer ??= [];
-  window.dataLayer.push(args);
-}
-
-function setDisabled(measurementId: string, disabled: boolean) {
-  (window as unknown as Record<string, boolean>)[`ga-disable-${measurementId}`] = disabled;
-}
-
-function clearAnalyticsCookies() {
-  const names = document.cookie
-    .split(";")
-    .map((part) => part.trim().split("=", 1)[0])
-    .filter((name) => name === "_ga" || name.startsWith("_ga_"));
-  const labels = location.hostname.split(".");
-  const registrableDomain = labels.length >= 3 ? `.${labels.slice(-3).join(".")}` : `.${location.hostname}`;
-  const domains = ["", `; Domain=${location.hostname}`, `; Domain=${registrableDomain}`];
-
-  for (const name of names) {
-    for (const domain of domains) {
-      document.cookie = `${name}=; Max-Age=0; Path=/${domain}; SameSite=Lax; Secure`;
-    }
-  }
-}
-
-function applyDeniedConsent(measurementId: string) {
-  setDisabled(measurementId, true);
-  if (window.dataLayer) {
-    gtag("consent", "update", {
-      analytics_storage: "denied",
-      ad_storage: "denied",
-      ad_user_data: "denied",
-      ad_personalization: "denied",
-    });
-  }
-  clearAnalyticsCookies();
-}
-
-function initialiseAnalytics(measurementId: string, pathname: string) {
-  setDisabled(measurementId, false);
-  window.gtag = gtag;
-  const pageLocation = analyticsPageLocation(location.origin, pathname);
-
-  if (!window.__npGaConfigured) {
-    gtag("consent", "default", {
-      analytics_storage: "denied",
-      ad_storage: "denied",
-      ad_user_data: "denied",
-      ad_personalization: "denied",
-    });
-    gtag("consent", "update", {
-      analytics_storage: "granted",
-      ad_storage: "denied",
-      ad_user_data: "denied",
-      ad_personalization: "denied",
-    });
-    gtag("js", new Date());
-    gtag("config", measurementId, {
-      send_page_view: false,
-      page_location: pageLocation,
-      allow_google_signals: false,
-      allow_ad_personalization_signals: false,
-      cookie_flags: "SameSite=Lax;Secure",
-    });
-    window.__npGaConfigured = true;
-  } else {
-    gtag("consent", "update", { analytics_storage: "granted" });
-  }
-}
 
 export function GoogleAnalytics({ measurementId }: { measurementId?: string }) {
   const pathname = usePathname();
@@ -101,13 +22,7 @@ export function GoogleAnalytics({ measurementId }: { measurementId?: string }) {
     if (!validId) return;
 
     const applyChoice = (choice: ConsentChoice | null) => {
-      if (choice === "accepted") {
-        initialiseAnalytics(validId, pathname);
-        setEnabled(true);
-      } else {
-        applyDeniedConsent(validId);
-        setEnabled(false);
-      }
+      setEnabled(applyAnalyticsChoice(validId, pathname, choice));
     };
     applyChoice(parseConsentCookie(document.cookie));
 
@@ -119,13 +34,15 @@ export function GoogleAnalytics({ measurementId }: { measurementId?: string }) {
   }, [pathname, validId]);
 
   useEffect(() => {
-    if (!enabled || !validId) return;
+    // Recheck the stored choice: a rejection can precede this effect's rerender.
+    if (!enabled || !validId || parseConsentCookie(document.cookie) === "rejected") return;
     const pageLocation = analyticsPageLocation(location.origin, pathname);
-    gtag("set", { page_location: pageLocation, page_path: pathname });
+    const pagePath = new URL(pageLocation).pathname;
+    gtag("set", { page_location: pageLocation, page_path: pagePath });
     gtag("event", "page_view", {
       page_title: document.title,
       page_location: pageLocation,
-      page_path: pathname,
+      page_path: pagePath,
     });
   }, [enabled, pathname, validId]);
 

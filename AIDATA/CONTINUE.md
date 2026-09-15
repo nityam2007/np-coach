@@ -2,11 +2,13 @@
 
 This is the **single source of truth for picking up development**. For production ownership and operations, read [../HANDOVER.md](../HANDOVER.md) first. Then read [../CLAUDE.md](../CLAUDE.md) → [PLAN.md](PLAN.md) → [TASKS.md](TASKS.md). Keep this file current as work continues.
 
-> Convert relative dates to absolute. Today's reference when this file was last updated: **2026-09-11**.
+> Convert relative dates to absolute. Today's reference when this file was last updated: **2026-09-15**.
 
 ---
 
 ## 1. Where the build is
+
+**2026-09-15 analytics patch:** fixed the tag command queue (Arguments objects, not arrays). User explicitly chose cookieless measurement before a decision; Accept grants analytics storage, Reject sets Google's disable flag, clears accessible GA cookies, suppresses future page views and prevents loading on subsequent rejected visits. Ads stay denied. Reused the existing GA integration with no new dependencies. Sanitized ticket paths and referrer query strings. Updated only the live consent banner message and known analytics sentences in policy pages 7/8, preserving other text and verifying each write; seed JSON matches without bumping/resetting the legal revision or running migrations. All 47 tests, TypeScript and ESLint pass. GA4 account/reporting and browser receipt remain unverified: test Realtime after accepting on a fresh deployed page. Cookieless is not anonymous/no-data and reporting/modeling eligibility is controlled by Google; owner privacy review remains appropriate.
 
 **2026-09-11 frontend-only patch:** `/get-a-quote` mounts the portal widget/resize script instead of the local form, with a direct-link fallback and the necessary script/frame CSP allowance. Directus, existing quotes, local actions and email code remain untouched. The hero fleet badge is smaller below the `sm` breakpoint, with desktop/video sizing unchanged. All 45 tests, types and lint pass. Portal HTTP checks return legacy `ALLOW-FROM` for main/www referrers but `SAMEORIGIN` for demo/no referrer; verify the widget on the main domain, not demo. No browser, CMS mutation, seed/migration, or deployment wait.
 

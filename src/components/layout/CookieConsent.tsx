@@ -11,10 +11,9 @@ import {
 import type { CookieConsentContent } from "@/lib/site-config";
 
 /**
- * UK PECR cookie-consent banner. The site sets only essential cookies today; this
- * records the visitor's choice (first-party cookie `np_consent`) and is the gate any
- * future non-essential cookies/analytics must check before loading. Accept OR reject
- * both dismiss it (no pre-ticked consent, no nagging) — required under UK GDPR/PECR.
+ * Records the choice in np_consent: no choice means cookieless measurement,
+ * Accept permits analytics cookies, and Reject disables Google measurement.
+ * Both buttons dismiss the banner; Cookie settings can reopen it at any time.
  */
 const ONE_YEAR = 60 * 60 * 24 * 365;
 

@@ -2,13 +2,12 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { motion, useReducedMotion } from "motion/react";
+import { useReducedMotion } from "motion/react";
 import { useRef, useState, useSyncExternalStore } from "react";
 import type { SiteSettings } from "@/lib/directus";
 import { assetUrl } from "@/lib/directus";
 import type { Stop } from "@/lib/site-config";
 import { HeroSearch } from "@/components/sections/HeroSearch";
-import { Eyebrow, Stars } from "@/components/ui/Eyebrow";
 import { Icon } from "@/components/ui/Icon";
 
 type NetworkInformation = {
@@ -30,26 +29,24 @@ function subscribeToSaveData(onChange: () => void) {
 const saveDataSnapshot = () => Boolean(connection()?.saveData);
 const saveDataServerSnapshot = () => true;
 
-/** Wrap the highlighted word of the tagline in the accent colour (e.g. "…the UK"). */
+/** Keep the highlighted phrase readable over the dark video overlay. */
 function withHighlight(text: string, word: string) {
   const idx = word ? text.lastIndexOf(word) : -1;
   if (idx === -1) return text;
   return (
     <>
       {text.slice(0, idx)}
-      <span className="text-accent">{word}</span>
+      <span className="text-blue-200">{word}</span>
       {text.slice(idx + word.length)}
     </>
   );
 }
 
-/** Homepage hero: light split layout — headline + CTAs + rating on the left, coach
- *  photo on the right, and the booking/quote search bar overlapping below. */
+/** Full-bleed media hero. Presentation changes do not alter stored CMS content. */
 export function Hero({ settings, stops }: { settings: SiteSettings; stops: Stop[] }) {
   const { homepage } = settings;
   const coach = assetUrl(settings.heroImage);
   const video = assetUrl(settings.heroVideo);
-  const rating = homepage.heroRating;
   const reduce = useReducedMotion();
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -73,120 +70,79 @@ export function Hero({ settings, stops }: { settings: SiteSettings; stops: Stop[
       element.pause();
     }
   }
-  /** Simple fade-up entrance — calm and professional, no blur or stagger effects. */
-  const entrance = (delay = 0) =>
-    reduce
-      ? {}
-      : ({
-          initial: { opacity: 0, y: 16 },
-          animate: { opacity: 1, y: 0 },
-          transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const, delay },
-        } as const);
 
   return (
-    <section className="relative overflow-visible">
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-tint via-tint-soft to-offwhite" aria-hidden="true" />
+    <section className="relative isolate" aria-labelledby="homepage-hero-heading">
+      <div className="relative flex min-h-[calc(100dvh-5rem)] items-center bg-navy">
+        {/* The media is decorative; keep controls and copy outside this layer. */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+          {displayVideo ? (
+            <video
+              id="homepage-hero-video"
+              ref={videoRef}
+              src={video ?? undefined}
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              poster={coach ?? undefined}
+              className="absolute inset-0 h-full w-full object-cover"
+              onPlay={() => setVideoPlaying(true)}
+              onPause={() => setVideoPlaying(false)}
+              onError={() => setVideoFailed(true)}
+            />
+          ) : coach ? (
+            <Image src={coach} alt="" fill priority sizes="100vw" className="object-cover" />
+          ) : null}
+          <div className="absolute inset-0 bg-gradient-to-r from-navy/90 via-navy/65 to-navy/25" />
+          <div className="absolute inset-0 bg-gradient-to-t from-navy via-transparent to-navy/20" />
+        </div>
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="grid items-center gap-10 pt-12 pb-8 lg:grid-cols-2 lg:gap-12 lg:pt-16">
-          {/* Left: copy */}
-          <motion.div {...entrance()}>
-            <Eyebrow className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1 shadow-sm ring-1 ring-greyblue/30 backdrop-blur">
-              <span className="h-2 w-2 rounded-full bg-accent" aria-hidden="true" />
+        {displayVideo && (
+          <button
+            type="button"
+            onClick={toggleVideo}
+            aria-controls="homepage-hero-video"
+            className="absolute right-4 top-5 z-10 min-h-11 rounded-full border border-white/30 bg-navy/70 px-4 text-xs font-semibold text-white backdrop-blur-sm transition-colors hover:bg-navy focus-visible:outline-white sm:right-6 sm:top-6"
+          >
+            {videoPlaying ? "Pause video" : "Play video"}
+          </button>
+        )}
+
+        <div className="relative mx-auto w-full max-w-7xl px-5 pt-24 pb-28 sm:px-6 sm:pt-28 sm:pb-32 lg:pb-44">
+          <div className="max-w-3xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-100 sm:text-sm">
               {homepage.heroEyebrow}
-            </Eyebrow>
-            <h1 className="mt-5 font-display text-4xl font-bold leading-[1.05] text-navy sm:text-5xl lg:text-6xl">
+            </p>
+            <h1 id="homepage-hero-heading" className="mt-5 text-balance font-display text-[clamp(2.5rem,5.5vw,4.75rem)] font-semibold leading-[1.04] tracking-tight text-white">
               {withHighlight(settings.tagline, homepage.heroHighlight)}
             </h1>
-            <p className="mt-6 max-w-xl text-lg text-navy/70">{settings.subtitle}</p>
+            <p className="mt-6 max-w-lg text-base leading-relaxed text-white/85 sm:text-lg">{settings.subtitle}</p>
 
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-8 flex flex-wrap gap-3 sm:mt-9">
               <Link
                 href={homepage.heroPrimaryCta.href}
-                className="group inline-flex items-center gap-2 rounded-xl bg-accent px-6 py-3 font-semibold text-white shadow-sm shadow-accent/20 transition-all hover:bg-brand-hover hover:shadow-md active:scale-[0.98]"
+                className="group inline-flex min-h-12 items-center justify-center gap-3 rounded-xl bg-accent px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-hover focus-visible:outline-white sm:px-6 sm:text-base"
               >
                 {homepage.heroPrimaryCta.label}
                 <Icon name="arrowRight" className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Link>
               <Link
                 href={homepage.heroSecondaryCta.href}
-                className="inline-flex items-center gap-2 rounded-xl border border-navy/15 bg-white px-6 py-3 font-semibold text-navy shadow-sm transition-all hover:border-accent/40 hover:bg-navy hover:text-white active:scale-[0.98]"
+                className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/50 bg-navy/20 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-white hover:text-navy focus-visible:outline-white sm:px-6 sm:text-base"
               >
                 {homepage.heroSecondaryCta.label}
               </Link>
             </div>
-
-            {rating.platform && (
-              <div className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-2">
-                <span className="inline-flex items-center gap-1.5 font-semibold text-navy">
-                  <Icon name="star" className="h-5 w-5 text-emerald-500" />
-                  {rating.platform}
-                </span>
-                <Stars rating={5} className="h-4 w-4 text-emerald-500" />
-                <span className="text-sm text-navy/70">
-                  {rating.score} {rating.reviews}
-                </span>
-              </div>
-            )}
-          </motion.div>
-
-          {/* Right: coach photo */}
-          <motion.div className="relative" {...entrance(0.1)}>
-            {displayVideo || coach ? (
-              <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-navy/5 shadow-lg shadow-navy/10 ring-1 ring-white/60" role="img" aria-label={settings.heroImageAlt}>
-                {displayVideo ? (
-                  <video
-                    ref={videoRef}
-                    src={video ?? undefined}
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    preload="metadata"
-                    poster={coach ?? undefined}
-                    className="absolute inset-0 h-full w-full object-cover"
-                    aria-hidden="true"
-                    onPlay={() => setVideoPlaying(true)}
-                    onPause={() => setVideoPlaying(false)}
-                    onError={() => setVideoFailed(true)}
-                  />
-                ) : coach ? (
-                  <Image src={coach} alt={settings.heroImageAlt} fill priority sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />
-                ) : null}
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-navy/30 via-transparent to-transparent" />
-                {displayVideo && (
-                  <button
-                    type="button"
-                    onClick={toggleVideo}
-                    className="absolute right-4 top-4 z-10 rounded-full bg-navy/85 px-3 py-2 text-xs font-semibold text-white shadow-sm backdrop-blur hover:bg-navy focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-                  >
-                    {videoPlaying ? "Pause video" : "Play video"}
-                  </button>
-                )}
-
-                {/* Fleet trust badge */}
-                <div className="absolute bottom-3 left-3 flex items-center gap-2 rounded-xl bg-white/90 px-2.5 py-2 shadow-sm shadow-navy/10 ring-1 ring-white/60 backdrop-blur sm:bottom-4 sm:left-4 sm:gap-3 sm:rounded-2xl sm:px-4 sm:py-3">
-                  <span className="grid h-7 w-7 place-items-center rounded-lg bg-accent/10 text-accent sm:h-10 sm:w-10 sm:rounded-xl">
-                    <Icon name="shield" className="h-4 w-4 sm:h-5 sm:w-5" />
-                  </span>
-                  <span className="leading-tight">
-                    <span className="block font-display text-sm font-bold text-navy sm:text-lg">15+</span>
-                    <span className="block text-[10px] font-medium text-navy/70 sm:text-xs">Euro-6 coaches</span>
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <div className="grid aspect-[4/3] place-items-center rounded-3xl bg-navy text-greyblue shadow-lg shadow-navy/10">
-                <Icon name="bus" className="h-16 w-16" />
-              </div>
-            )}
-          </motion.div>
+          </div>
         </div>
+      </div>
 
-        {/* Search bar (overlaps the hero / next section) */}
-        <motion.div className="relative z-50 pb-14" {...entrance(0.2)}>
-          <HeroSearch stops={stops} features={homepage.searchFeatures} />
-        </motion.div>
+      {/* Desktop straddles the video edge by half the card's own height.
+          Keep the tall mobile form in normal flow below the video. */}
+      <div className="relative mx-auto -mt-12 max-w-7xl px-4 pb-10 sm:px-6 lg:mt-0 lg:-translate-y-1/2 lg:pb-0">
+        <HeroSearch stops={stops} compact />
       </div>
     </section>
   );

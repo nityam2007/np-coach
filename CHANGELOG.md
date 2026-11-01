@@ -364,6 +364,15 @@ Append-only. Newest entries at the bottom. Never edit or delete past entries —
 - Follow-up: center the desktop booking bar on the video's bottom edge using half its own height instead of a fixed overlap. Preserve the mobile layout and keep the adjustment local and unpushed.
 - After local review, the user authorized committing and pushing this hero preview and alignment adjustment. Unrelated environment, generated and archive files remain excluded.
 
+## 2026-11-01 — SEO quick fixes (audit PR 1)
+
+- `FaqAccordion` now renders every answer in the server HTML and collapses closed ones (height 0, `inert`) instead of unmounting them. Previously only the open answer existed, so 12 of 13 `/faqs` answers (and 3 of 4 on the homepage) were invisible to crawlers and did not match the FAQPage JSON-LD. Same component covers `/`, `/faqs` and `/home-to-school`.
+- Route page H1 now reads "London to Wolverhampton" for crawlers and screen readers (sr-only "to" beside the decorative arrow); visual design unchanged.
+- 404 page sets its own title ("Page not found") and `noindex` instead of inheriting the homepage title.
+- Sitemap drops the transactional `/daily-express-service/book` and `/lost-property/claim` URLs and the `priority` values Google ignores.
+- `public/llms.txt`: canonical no-trailing-slash URLs, removed the unpublished `/35-seat-coaches` link (404), added London–Wolverhampton, the fleet overview, timetable and the 12 blog guides, and corrected county grouping (Slough/Langley in Berkshire, Uxbridge in West London).
+- Not changed: desktop header phone (removed earlier at client request — flagged for decision). CMS content issues (route `scheduled_services.notice` text, homepage rating claim, 35-seat publish) are Directus edits, not code.
+- All 47 tests, TypeScript, ESLint and whitespace checks pass. No CMS writes, seed, build or deploy.
 ## 2026-11-01 — Structured data, homepage LCP and cookie banner (audit PR 2)
 
 - **One business entity in JSON-LD.** New `organizationId()` helper in `OrganizationJsonLd.tsx` is the single `@id` source. Fleet, route, tour, blog and contact nodes now reference it instead of re-declaring an unlinked Organization / second LocalBusiness. `ContactPageJsonLd` now takes only `organizationId` (address and phone live once, on the site-wide node).

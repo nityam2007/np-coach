@@ -4,42 +4,60 @@
 
 ## About
 
-- [About NP Coaches](https://np-coaches.co.uk/about-us/): Company history, leadership, accreditations.
-- [Contact](https://np-coaches.co.uk/contact-us/): Address, phone, email, depot map.
+- [About NP Coaches](https://np-coaches.co.uk/about-us): Company history, leadership, accreditations.
+- [Contact](https://np-coaches.co.uk/contact-us): Address, phone, email, depot map.
 - [routeone industry feature, March 2025](https://www.route-one.net/features/np-coaches-strong-investment-delivering-results-for-iver-business/): Independent industry coverage.
 
 ## Services
 
-- [Charter coach hire and UK tours](https://np-coaches.co.uk/uk-tours/): Private hire for groups, day tours, corporate events, weddings, sports teams, and tour operators. Coverage UK-wide from West London depot.
-- [Home-to-school transport](https://np-coaches.co.uk/home-to-school/): Daily routes to Pioneer Secondary Academy (Burnham and Langley campuses) and Herschel Grammar School in Slough. ShuttleID tracking, QR code boarding, GoCardless billing.
-- [Daily Express scheduled coach service](https://np-coaches.co.uk/daily-express-service/): Daily AM and PM services between London (Southall, Slough) and Coventry, Birmingham, Wolverhampton. London–Leicester service runs Fri–Mon only.
+- [Charter coach hire](https://np-coaches.co.uk/get-a-quote): Private hire for groups, corporate events, weddings, sports teams, airport transfers and tour operators. Coverage UK-wide from the West London depot.
+- [UK coach tours](https://np-coaches.co.uk/uk-tours): Group day trips and tours to London, Windsor, Hampton Court, Bath, Salisbury & Stonehenge and Cornwall.
+- [Home-to-school transport](https://np-coaches.co.uk/home-to-school): Daily routes to Pioneer Secondary Academy (Burnham and Langley campuses) and Herschel Grammar School in Slough. ShuttleID tracking, QR code boarding, GoCardless billing.
+- [Daily Express scheduled coach service](https://np-coaches.co.uk/daily-express-service): Daily AM and PM services between London (Southall, Slough) and Coventry, Birmingham, Wolverhampton. London–Leicester service runs Fri–Mon only.
 
 ## Routes
 
-- [Wolverhampton to London](https://np-coaches.co.uk/wolverhampton-to-london/)
-- [London to Leicester](https://np-coaches.co.uk/london-to-leicester/)
-- [Leicester to London](https://np-coaches.co.uk/leicester-to-london/)
+- [London to Wolverhampton](https://np-coaches.co.uk/london-to-wolverhampton)
+- [Wolverhampton to London](https://np-coaches.co.uk/wolverhampton-to-london)
+- [London to Leicester](https://np-coaches.co.uk/london-to-leicester)
+- [Leicester to London](https://np-coaches.co.uk/leicester-to-london)
+- [Timetable](https://np-coaches.co.uk/timetable)
 
 ## Fleet
 
-- [19 seat mini coaches](https://np-coaches.co.uk/19-seat-coaches/): Reclining leather seats, air-con, USB charging, DVD, luggage hold.
-- [35 seat midi coaches](https://np-coaches.co.uk/35-seat-coaches/): Adds seat-back tables, on-board fridge, PA system.
-- [53 seat executive coaches](https://np-coaches.co.uk/53-seat-coaches/): Full executive spec, ideal for groups of 40–53.
-- [72 seat coaches](https://np-coaches.co.uk/72-seat-coaches/): Large group capacity with executive amenities.
-- [86 seat double deckers](https://np-coaches.co.uk/86-seat-coaches/): Forward and back-facing seating.
-- [98 seat double deckers](https://np-coaches.co.uk/98-seat-coaches/): Maximum capacity, back-facing seating throughout.
+- [Fleet overview](https://np-coaches.co.uk/fleet): All vehicles from 19 to 98 seats.
+- [19 seat mini coaches](https://np-coaches.co.uk/19-seat-coaches): Reclining leather seats, air-con, USB charging, DVD, luggage hold.
+- [53 seat executive coaches](https://np-coaches.co.uk/53-seat-coaches): Full executive spec, ideal for groups of 40–53.
+- [72 seat coaches](https://np-coaches.co.uk/72-seat-coaches): Large group capacity with executive amenities.
+- [86 seat double deckers](https://np-coaches.co.uk/86-seat-coaches): Forward and back-facing seating.
+- [98 seat double deckers](https://np-coaches.co.uk/98-seat-coaches): Maximum-capacity double decker.
+
+## Guides
+
+- [Coach hire cost guide](https://np-coaches.co.uk/blog/coach-hire-cost-guide): What affects the price of hiring a coach in the UK.
+- [Choosing the right coach size](https://np-coaches.co.uk/blog/choosing-the-right-coach-size)
+- [What ULEZ-compliant means for coach hire](https://np-coaches.co.uk/blog/what-ulez-compliant-means)
+- [London to Birmingham by coach](https://np-coaches.co.uk/blog/london-to-birmingham-by-coach): Daily Express from Southall and Slough to the Midlands.
+- [Heathrow group coach transfers](https://np-coaches.co.uk/blog/heathrow-airport-group-coach-transfers)
+- [Corporate coach hire guide](https://np-coaches.co.uk/blog/corporate-coach-hire-guide)
+- [Wedding coach hire guide](https://np-coaches.co.uk/blog/wedding-coach-hire-guide)
+- [School trip coach hire checklist](https://np-coaches.co.uk/blog/school-trip-coach-hire-checklist)
+- [Home-to-school transport: parents' guide](https://np-coaches.co.uk/blog/home-to-school-transport-parents-guide)
+- [Sports team coach hire](https://np-coaches.co.uk/blog/sports-team-coach-hire)
+- [Coach day trips from London](https://np-coaches.co.uk/blog/coach-day-trips-from-london)
+- [Christmas party coach hire](https://np-coaches.co.uk/blog/christmas-party-coach-hire)
 
 ## Information
 
-- [FAQs](https://np-coaches.co.uk/faqs/): Booking, pricing, routes, luggage.
-- [Lost property](https://np-coaches.co.uk/lost-property/): £5 admin fee, items held 14 days.
-- [Safeguarding policy](https://np-coaches.co.uk/safeguarding/): Child protection standards.
-- [Driver vacancies](https://np-coaches.co.uk/vacancies/): PCV Cat D drivers, 21+, 45 guaranteed hours/week.
-- [Compliance Packs](https://np-coaches.co.uk/downloads/): Annual operator compliance documentation.
+- [FAQs](https://np-coaches.co.uk/faqs): Booking, pricing, routes, luggage.
+- [Lost property](https://np-coaches.co.uk/lost-property): £5 admin fee, items held 14 days.
+- [Safeguarding policy](https://np-coaches.co.uk/safeguarding): Child protection standards.
+- [Driver vacancies](https://np-coaches.co.uk/vacancies): PCV Cat D drivers, 21+, 45 guaranteed hours/week.
+- [Compliance Packs](https://np-coaches.co.uk/downloads): Annual operator compliance documentation.
 
 ## Booking & contact
 
-- [Get a quote](https://np-coaches.co.uk/get-a-quote/) for charter and tour services
+- [Get a quote](https://np-coaches.co.uk/get-a-quote) for charter and tour services
 - Phone: +44 208 843 1000
 - Bookings: Bookings@np-coaches.co.uk
 - General enquiries: Info@np-coaches.co.uk
@@ -47,8 +65,8 @@
 
 ## Service area
 
-London (West London, Southall, Heathrow), Buckinghamshire (Iver, Slough, Burnham, Langley, Beaconsfield, Uxbridge), Berkshire (Reading, Maidenhead, Windsor), and UK-wide for charter work.
+West London (Southall, Uxbridge, Heathrow), Buckinghamshire (Iver, Burnham, Beaconsfield), Berkshire (Slough, Langley, Windsor, Maidenhead, Reading), and UK-wide for charter work.
 
 ## Accreditations
 
-ULEZ-compliant Euro 6 fleet, DBS-checked drivers, CPT member, full UK PSV operator licence. See `/downloads/` for the current annual Compliance Pack.
+ULEZ-compliant Euro 6 fleet, DBS-checked drivers, CPT member, full UK PSV operator licence. See `/downloads` for the current annual Compliance Pack.

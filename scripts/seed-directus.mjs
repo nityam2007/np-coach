@@ -102,6 +102,18 @@ const TOURS_FIELDS = [
   str("seo_title"), text("seo_description"),
 ];
 
+// Local "coach hire in <town>" landing pages, served at the root slug (e.g. /coach-hire-slough).
+// `faqs` is JSON: [{question, answer}]. New rows arrive as drafts for client review.
+const SERVICE_AREAS_FIELDS = [
+  pk("id"),
+  { field: "sort", type: "integer", meta: { interface: "input", hidden: false }, schema: {} },
+  str("slug"), str("town"), str("title"), text("summary"), wysiwyg("body"),
+  json("faqs"),
+  fileField("image", "Hero photo for the area page."),
+  str("image_alt"),
+  str("seo_title"), text("seo_description"),
+];
+
 // T3 — Daily Express routes (timetable + days). `stops` is JSON: [{time, place, detail}].
 // price_single / price_return are fares in pence (GBP); the server computes totals from these.
 const ROUTES_FIELDS = [
@@ -553,6 +565,7 @@ async function run() {
   await ensureCollection("fleet", { sort_field: "sort", icon: "directions_bus", note: "Fleet vehicles (SEO landing pages)" }, FLEET_FIELDS);
   await ensureCollection("pages", { sort_field: "sort", icon: "article", note: "Editable content pages (About, Contact, …)" }, PAGES_FIELDS);
   await ensureCollection("tours", { sort_field: "sort", icon: "tour", note: "UK Tours destinations (SEO landing pages)" }, TOURS_FIELDS);
+  await ensureCollection("service_areas", { sort_field: "sort", icon: "location_city", note: "Local coach hire pages per town (SEO landing pages)" }, SERVICE_AREAS_FIELDS);
   await ensureCollection("routes", { sort_field: "sort", icon: "route", note: "Daily Express routes + timetables" }, ROUTES_FIELDS);
   await ensureCollection("stops", { sort_field: "sort", icon: "pin_drop", note: "Daily Express corridor stops (booking From/To)" }, STOPS_FIELDS);
   await ensureCollection("scheduled_services", { sort_field: "sort", icon: "departure_board", note: "Individual Daily Express departures, schedules and stop-pair fares" }, SCHEDULED_SERVICES_FIELDS);
@@ -700,7 +713,7 @@ async function run() {
 
   await ensureField("blog_posts", fileField("thumbnail", "Blog card and article preview image."));
   await ensureFileRelations();
-  const publishableCollections = ["services", "fleet", "pages", "tours", "routes", "scheduled_services", "stops", "school_routes", "blog_posts", "testimonials"];
+  const publishableCollections = ["services", "fleet", "pages", "tours", "service_areas", "routes", "scheduled_services", "stops", "school_routes", "blog_posts", "testimonials"];
   for (const collection of publishableCollections) {
     await ensureField(collection, publishedStatus);
     await publishRowsWithoutStatus(collection);
@@ -717,6 +730,7 @@ async function run() {
   await ensureUniqueField("scheduled_services", "code");
   await ensureUniqueField("pass_purchases", "stripe_payment_intent");
   await ensurePublicRead("tours");
+  await ensurePublicRead("service_areas");
   await ensurePublicRead("routes");
   await ensurePublicRead("stops");
   await ensurePublicRead("school_routes");
@@ -998,6 +1012,25 @@ async function run() {
       }),
     });
     console.log(`✓ added tour "${t.slug}"`);
+  }
+
+  // Service areas — insert any slug not yet in Directus, keeping its seed status (drafts stay
+  // unpublished until the client reviews them). Never overwrites existing rows.
+  const existingAreaSlugs = new Set((await api("/items/service_areas?fields=slug&limit=-1")).map((a) => a.slug));
+  let areaSort = Math.max(0, ...(await api("/items/service_areas?fields=sort&limit=-1")).map((a) => a.sort ?? 0));
+  for (const a of content.serviceAreas) {
+    if (existingAreaSlugs.has(a.slug)) continue;
+    areaSort += 1;
+    await api("/items/service_areas", {
+      method: "POST",
+      body: JSON.stringify({
+        slug: a.slug, town: a.town, title: a.title, summary: a.summary, body: a.body, faqs: a.faqs,
+        image_alt: a.imageAlt,
+        seo_title: a.seoTitle, seo_description: a.seoDescription,
+        status: a.status ?? "draft", sort: areaSort,
+      }),
+    });
+    console.log(`✓ added service area "${a.slug}" (${a.status ?? "draft"})`);
   }
 
   // Routes — only seed if empty.

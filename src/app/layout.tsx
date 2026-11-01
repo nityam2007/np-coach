@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { preconnect } from "react-dom";
 import localFont from "next/font/local";
 import { GeistSans } from "geist/font/sans";
 import "./globals.css";
@@ -48,6 +49,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const [settings, services] = await Promise.all([getSettings(), getServices()]);
+  // Every hero/card image and the homepage video come from Directus — open that connection early.
+  if (process.env.NEXT_PUBLIC_DIRECTUS_URL) preconnect(process.env.NEXT_PUBLIC_DIRECTUS_URL);
 
   return (
     <html lang="en-GB" className={`${GeistSans.variable} ${inter.variable}`}>

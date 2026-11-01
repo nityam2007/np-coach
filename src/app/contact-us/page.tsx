@@ -2,7 +2,9 @@ import { ContactForm } from "@/components/forms/ContactForm";
 import { getSettings } from "@/lib/directus";
 import { PageHero } from "@/components/sections/PageHero";
 import { BreadcrumbJsonLd, ContactPageJsonLd } from "@/components/seo/JsonLd";
+import { organizationId } from "@/components/seo/OrganizationJsonLd";
 import { buildMetadata } from "@/lib/seo";
+import { siteUrl } from "@/lib/site-url";
 
 export const metadata = buildMetadata({
   title: "Contact Us",
@@ -21,12 +23,7 @@ export default async function ContactPage() {
   return (
     <article>
       <BreadcrumbJsonLd items={[{ label: "Home", path: "/" }, { label: "Contact Us", path: "/contact-us" }]} />
-      <ContactPageJsonLd
-        name={settings.name}
-        telephone={settings.phone.display}
-        email={settings.email.general}
-        address={address}
-      />
+      <ContactPageJsonLd organizationId={organizationId(siteUrl(settings.url))} />
 
       <PageHero
         eyebrow="Get in touch"

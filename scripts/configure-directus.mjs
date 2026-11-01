@@ -54,6 +54,7 @@ const COLLECTION_META = {
   // Marketing
   fleet: { group: "grp_marketing", sort: 1, icon: "directions_bus", display_template: "{{name}} ({{seats}} seats)", note: "Your coaches. Each vehicle gets its own page. Add a photo, seats and features." },
   tours: { group: "grp_marketing", sort: 2, icon: "tour", display_template: "{{destination}}", note: "UK Tours destinations. Each gets its own landing page." },
+  service_areas: { group: "grp_marketing", sort: 5, icon: "location_city", display_template: "{{town}}", note: "Local coach hire pages, one per town (e.g. /coach-hire-slough). New pages arrive as Draft — review the copy, then set Status to Published." },
   testimonials: { group: "grp_marketing", sort: 3, icon: "format_quote", display_template: "{{author}} — {{role}}", note: "Customer reviews shown on the homepage." },
   services: { group: "grp_marketing", sort: 4, icon: "category", display_template: "{{title}}", note: "The four service cards on the homepage." },
   // Daily Express
@@ -254,6 +255,18 @@ const FIELD_META = {
     { field: "hero_image_alt", meta: { width: "half" } },
     { field: "card_image", meta: { width: "half", note: "UK Tours listing-card photo." } },
     { field: "card_image_alt", meta: { width: "half" } },
+    { field: "seo_title", meta: { width: "full" } },
+    { field: "seo_description", meta: { width: "full" } },
+  ],
+  service_areas: [
+    { field: "town", meta: { width: "half", note: "Town or area name, e.g. 'Slough'." } },
+    { field: "slug", meta: { width: "half", note: "URL identifier, e.g. coach-hire-slough. Avoid changing after publication." } },
+    { field: "title", meta: { width: "full", note: "Page heading (H1)." } },
+    { field: "summary", meta: { width: "full", note: "Intro under the heading." } },
+    { field: "body", meta: { width: "full" } },
+    { field: "faqs", meta: { width: "full", note: "JSON list: [{\"question\": \"…\", \"answer\": \"…\"}]." } },
+    { field: "image", meta: { width: "half", note: "Hero background photo." } },
+    { field: "image_alt", meta: { width: "half" } },
     { field: "seo_title", meta: { width: "full" } },
     { field: "seo_description", meta: { width: "full" } },
   ],

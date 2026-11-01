@@ -6,20 +6,24 @@ import { notFound } from "next/navigation";
 import { PageTemplate } from "@/components/sections/PageTemplate";
 import { RouteTimetable } from "@/components/sections/RouteTimetable";
 import { BreadcrumbJsonLd, JsonLdScript } from "@/components/seo/JsonLd";
+import { organizationId } from "@/components/seo/OrganizationJsonLd";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Icon } from "@/components/ui/Icon";
 import { Reveal } from "@/components/ui/motion";
 import { ButtonLink, buttonCls } from "@/components/ui/Button";
-import { assetUrl, getFleet, getFleetVehicle, getPage, getPages, getRoute, getRoutes, getScheduledServices, getSettings, getStops, selectPageHeroFallback } from "@/lib/directus";
+import { ServiceAreaPage } from "@/components/sections/ServiceAreaPage";
+import { assetUrl, getFleet, getFleetVehicle, getPage, getPages, getRoute, getRoutes, getScheduledServices, getServiceArea, getServiceAreas, getSettings, getStops, selectPageHeroFallback } from "@/lib/directus";
 import { siteUrl } from "@/lib/site-url";
 
-// Root-level slugs resolve to a fleet vehicle, an editable content page, or a Daily Express route.
+// Root-level slugs resolve to a fleet vehicle, an editable content page, a Daily Express route,
+// or a local service-area page.
 export async function generateStaticParams() {
-  const [fleet, pages, routes] = await Promise.all([getFleet(), getPages(), getRoutes()]);
+  const [fleet, pages, routes, areas] = await Promise.all([getFleet(), getPages(), getRoutes(), getServiceAreas()]);
   return [
     ...fleet.map((v) => ({ slug: v.slug })),
     ...pages.map((p) => ({ slug: p.slug })),
     ...routes.map((r) => ({ slug: r.slug })),
+    ...areas.map((a) => ({ slug: a.slug })),
   ];
 }
 
@@ -34,6 +38,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const route = await getRoute(slug);
   if (route)
     return { title: { absolute: route.seoTitle }, description: route.seoDescription, alternates: { canonical: `/${slug}` } };
+  const area = await getServiceArea(slug);
+  if (area)
+    return { title: { absolute: area.seoTitle }, description: area.seoDescription, alternates: { canonical: `/${slug}` } };
   return {};
 }
 
@@ -44,13 +51,16 @@ export default async function SlugPage({ params }: { params: Promise<{ slug: str
   const vehicle = await getFleetVehicle(slug);
   if (vehicle) {
     const settings = await getSettings();
+    const publicUrl = siteUrl(settings.url);
     const jsonLd = {
       "@context": "https://schema.org",
       "@type": "Service",
+      serviceType: "Coach hire",
       name: `${vehicle.name} Hire`,
       description: vehicle.seoDescription,
+      url: `${publicUrl}/${vehicle.slug}`,
       areaServed: "United Kingdom",
-      provider: { "@type": "Organization", name: settings.name, telephone: settings.phone.display },
+      provider: { "@id": organizationId(publicUrl) },
     };
     return (
       <>
@@ -93,8 +103,8 @@ export default async function SlugPage({ params }: { params: Promise<{ slug: str
       name: `${route.from} to ${route.to} coach service`,
       description: route.seoDescription,
       url: `${publicUrl}/${route.slug}`,
-      areaServed: "United Kingdom",
-      provider: { "@type": "Organization", "@id": `${publicUrl}/#organization`, name: settings.name },
+      areaServed: [route.from, route.to].map((name) => ({ "@type": "City", name })),
+      provider: { "@id": organizationId(publicUrl) },
       offers: onlineFare !== null ? {
         "@type": "Offer",
         price: (onlineFare / 100).toFixed(2),
@@ -185,6 +195,13 @@ export default async function SlugPage({ params }: { params: Promise<{ slug: str
     );
   }
 
-  // 4) None.
+  // 4) Local service-area page?
+  const area = await getServiceArea(slug);
+  if (area) {
+    const [settings, fleet, areas] = await Promise.all([getSettings(), getFleet(), getServiceAreas()]);
+    return <ServiceAreaPage area={area} otherAreas={areas.filter((a) => a.slug !== slug)} fleet={fleet} settings={settings} />;
+  }
+
+  // 5) None.
   notFound();
 }

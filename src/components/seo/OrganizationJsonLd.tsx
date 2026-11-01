@@ -3,12 +3,17 @@ import type { ServiceCard } from "@/lib/site-config";
 import { JsonLdScript } from "@/components/seo/JsonLd";
 import { siteUrl } from "@/lib/site-url";
 
-/** Site-wide Organization / LocalBusiness structured data. */
+/** The one `@id` every page's JSON-LD uses to reference the business node below. */
+export const organizationId = (publicUrl: string) => `${publicUrl}/#organization`;
+
+/** Site-wide Organization / LocalBusiness + WebSite structured data. */
 export function OrganizationJsonLd({ settings, services }: { settings: SiteSettings; services: ServiceCard[] }) {
   const publicUrl = siteUrl(settings.url);
   const logo = assetUrl(settings.logo);
   const image = assetUrl(settings.heroImage);
   const sameAs = settings.socialLinks.map((link) => link.href).filter(Boolean);
+  // E.164 (+44…) from the tel: link; the display form keeps the local spacing for people.
+  const telephone = settings.phone.href.replace(/^tel:/, "") || settings.phone.display;
   const offerCatalog = services.length ? {
     "@type": "OfferCatalog",
     name: "Coach transport services",
@@ -21,15 +26,14 @@ export function OrganizationJsonLd({ settings, services }: { settings: SiteSetti
   const data = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
-    "@id": `${publicUrl}/#organization`,
+    "@id": organizationId(publicUrl),
     name: settings.name,
-    alternateName: "NP Coaches",
     legalName: settings.legalName,
     url: publicUrl,
     logo: logo ?? undefined,
     image: image ?? logo ?? undefined,
     description: settings.description,
-    telephone: settings.phone.display,
+    telephone,
     email: settings.email.general,
     foundingDate: String(settings.founded),
     identifier: {
@@ -48,7 +52,7 @@ export function OrganizationJsonLd({ settings, services }: { settings: SiteSetti
     },
     contactPoint: [{
       "@type": "ContactPoint",
-      telephone: settings.phone.display,
+      telephone,
       email: settings.email.general,
       contactType: "customer service",
       areaServed: "GB",
@@ -62,5 +66,20 @@ export function OrganizationJsonLd({ settings, services }: { settings: SiteSetti
     sameAs: sameAs.length ? sameAs : undefined,
   };
 
-  return <JsonLdScript data={data} />;
+  const website = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": `${publicUrl}/#website`,
+    url: publicUrl,
+    name: settings.name,
+    inLanguage: "en-GB",
+    publisher: { "@id": organizationId(publicUrl) },
+  };
+
+  return (
+    <>
+      <JsonLdScript data={data} />
+      <JsonLdScript data={website} />
+    </>
+  );
 }

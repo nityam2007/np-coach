@@ -1,16 +1,17 @@
 import type { MetadataRoute } from "next";
 import { siteConfig } from "@/lib/site-config";
-import { getFleet, getPages, getTours, getRoutes, getBlogPosts, getSettings } from "@/lib/directus";
+import { getFleet, getPages, getTours, getRoutes, getBlogPosts, getSettings, getServiceAreas } from "@/lib/directus";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = siteConfig.url;
-  const [fleet, pages, tours, routes, posts, settings] = await Promise.all([
+  const [fleet, pages, tours, routes, posts, settings, areas] = await Promise.all([
     getFleet(),
     getPages(),
     getTours(),
     getRoutes(),
     getBlogPosts(),
     getSettings(),
+    getServiceAreas(),
   ]);
 
   return [
@@ -28,6 +29,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...pages.map((page) => ({ url: `${base}/${page.slug}`, priority: 0.6 })),
     ...tours.map((tour) => ({ url: `${base}/uk-tours/${tour.slug}`, priority: 0.7 })),
     ...routes.map((route) => ({ url: `${base}/${route.slug}`, priority: 0.7 })),
+    ...areas.map((area) => ({ url: `${base}/${area.slug}`, priority: 0.7 })),
     ...settings.schoolTransport.schools.map((s) => ({ url: `${base}/home-to-school/${s.slug}`, priority: 0.6 })),
     ...posts.map((post) => ({ url: `${base}/blog/${post.slug}`, priority: 0.5, lastModified: post.date })),
   ];

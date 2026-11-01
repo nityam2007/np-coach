@@ -3,7 +3,7 @@ import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 
 const allowedCollections = new Set([
-  "settings", "services", "fleet", "pages", "tours", "routes", "stops",
+  "settings", "services", "fleet", "pages", "tours", "service_areas", "routes", "stops",
   "school_routes", "blog_posts", "testimonials",
 ]);
 

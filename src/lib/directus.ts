@@ -7,6 +7,7 @@ import {
   type FleetVehicle,
   type Page,
   type Tour,
+  type ServiceArea,
   type CoachRoute,
   type RouteStop,
   type BlogPost,
@@ -441,6 +442,53 @@ export async function getPage(slug: string): Promise<Page | null> {
   );
   if (rows === undefined) return siteConfig.pages.find((p) => p.slug === slug) ?? null;
   return rows[0] ? toPage(rows[0]) : null;
+}
+
+// ---- service areas (local "coach hire in <town>" landing pages) ----
+interface ServiceAreaRow {
+  slug: string;
+  town: string;
+  title: string;
+  summary: string;
+  body: string;
+  faqs: Faq[] | null;
+  image: string | null;
+  image_alt: string | null;
+  seo_title: string;
+  seo_description: string;
+}
+
+function toServiceArea(row: ServiceAreaRow): ServiceArea {
+  return {
+    slug: row.slug,
+    town: row.town,
+    title: row.title,
+    summary: row.summary,
+    body: row.body,
+    faqs: Array.isArray(row.faqs) ? row.faqs : [],
+    image: row.image ?? null,
+    imageAlt: row.image_alt ?? undefined,
+    seoTitle: row.seo_title,
+    seoDescription: row.seo_description,
+  };
+}
+
+// Fallback rows are seeded as drafts for client review; only published ones may render offline.
+const publishedFallbackAreas = () => siteConfig.serviceAreas.filter((area) => area.status === "published");
+
+export async function getServiceAreas(): Promise<ServiceArea[]> {
+  const rows = await fetchData<ServiceAreaRow[]>("/items/service_areas?filter[status][_eq]=published&sort=sort&limit=-1", "service_areas");
+  if (rows === undefined) return publishedFallbackAreas();
+  return rows.map(toServiceArea);
+}
+
+export async function getServiceArea(slug: string): Promise<ServiceArea | null> {
+  const rows = await fetchData<ServiceAreaRow[]>(
+    `/items/service_areas?filter[slug][_eq]=${encodeURIComponent(slug)}&filter[status][_eq]=published&limit=1`,
+    `service_areas:${slug}`,
+  );
+  if (rows === undefined) return publishedFallbackAreas().find((area) => area.slug === slug) ?? null;
+  return rows[0] ? toServiceArea(rows[0]) : null;
 }
 
 // ---- tours (T2: UK Tours) ----

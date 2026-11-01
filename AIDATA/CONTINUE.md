@@ -96,7 +96,7 @@ Directus collection → seed (`scripts/seed-directus.mjs`) → typed in `src/lib
 
 Grouped (via `npm run configure`):
 - **Content:** `pages` (+ optional `image`), `blog_posts` (+ `thumbnail`)
-- **Marketing:** `fleet` (+`image`,`gallery`,`layout_images`,`group_label`), `tours` (+`image`), `testimonials`, `services`
+- **Marketing:** `fleet` (+`image`,`gallery`,`layout_images`,`group_label`), `tours` (+`image`), `testimonials`, `services`, `service_areas` (local `/coach-hire-<town>` pages via `[slug]`; seeded as Draft for client review — `getServiceAreas()` and the offline fallback only return Published rows)
 - **Daily Express:** `routes` (direction/SEO pages; legacy timetable/fare fields retained), `scheduled_services` (individual departures, ordered stops, explicit fares and sales mode), `stops` (online selectors derive only from online services), `school_routes` (home-to-school timetables)
 - **Bookings & Payments:** `bookings`, `pass_purchases`, `service_runs` (server-write only; transactional inventory uses the private Directus extension)
 - **Leads:** `contact_submissions`, `quote_requests` (private extension → Directus `ItemsService`; no anonymous access)

@@ -3,6 +3,7 @@ const PUBLISHABLE_COLLECTIONS = new Set([
   "fleet",
   "pages",
   "tours",
+  "service_areas",
   "routes",
   "stops",
   "scheduled_services",

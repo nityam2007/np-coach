@@ -140,6 +140,24 @@ export interface Tour {
   seoDescription: string;
 }
 
+/** Local "coach hire in <town>" landing page (root-level slug, e.g. /coach-hire-slough). */
+export interface ServiceArea {
+  slug: string;
+  /** Town or area name used in headings, breadcrumbs and `areaServed`. */
+  town: string;
+  title: string;
+  summary: string;
+  body: string;
+  faqs: Faq[];
+  /** Directus file id for the hero photo. */
+  image?: string | null;
+  imageAlt?: string;
+  seoTitle: string;
+  seoDescription: string;
+  /** Fallback rows carry a status so drafts never render when Directus is unreachable. */
+  status?: "draft" | "published";
+}
+
 export interface TourPageContent {
   amenities: string[];
   journeyEyebrow: string;
@@ -425,6 +443,7 @@ export interface SiteContent {
   fleetPage: FleetPageContent;
   pages: Page[];
   tours: Tour[];
+  serviceAreas: ServiceArea[];
   routes: CoachRoute[];
   scheduledServices: ScheduledService[];
   stops: Stop[];

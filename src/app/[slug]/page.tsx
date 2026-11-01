@@ -11,16 +11,19 @@ import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Icon } from "@/components/ui/Icon";
 import { Reveal } from "@/components/ui/motion";
 import { ButtonLink, buttonCls } from "@/components/ui/Button";
-import { assetUrl, getFleet, getFleetVehicle, getPage, getPages, getRoute, getRoutes, getScheduledServices, getSettings, getStops, selectPageHeroFallback } from "@/lib/directus";
+import { ServiceAreaPage } from "@/components/sections/ServiceAreaPage";
+import { assetUrl, getFleet, getFleetVehicle, getPage, getPages, getRoute, getRoutes, getScheduledServices, getServiceArea, getServiceAreas, getSettings, getStops, selectPageHeroFallback } from "@/lib/directus";
 import { siteUrl } from "@/lib/site-url";
 
-// Root-level slugs resolve to a fleet vehicle, an editable content page, or a Daily Express route.
+// Root-level slugs resolve to a fleet vehicle, an editable content page, a Daily Express route,
+// or a local service-area page.
 export async function generateStaticParams() {
-  const [fleet, pages, routes] = await Promise.all([getFleet(), getPages(), getRoutes()]);
+  const [fleet, pages, routes, areas] = await Promise.all([getFleet(), getPages(), getRoutes(), getServiceAreas()]);
   return [
     ...fleet.map((v) => ({ slug: v.slug })),
     ...pages.map((p) => ({ slug: p.slug })),
     ...routes.map((r) => ({ slug: r.slug })),
+    ...areas.map((a) => ({ slug: a.slug })),
   ];
 }
 
@@ -35,6 +38,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const route = await getRoute(slug);
   if (route)
     return { title: { absolute: route.seoTitle }, description: route.seoDescription, alternates: { canonical: `/${slug}` } };
+  const area = await getServiceArea(slug);
+  if (area)
+    return { title: { absolute: area.seoTitle }, description: area.seoDescription, alternates: { canonical: `/${slug}` } };
   return {};
 }
 
@@ -188,6 +194,13 @@ export default async function SlugPage({ params }: { params: Promise<{ slug: str
     );
   }
 
-  // 4) None.
+  // 4) Local service-area page?
+  const area = await getServiceArea(slug);
+  if (area) {
+    const [settings, fleet, areas] = await Promise.all([getSettings(), getFleet(), getServiceAreas()]);
+    return <ServiceAreaPage area={area} otherAreas={areas.filter((a) => a.slug !== slug)} fleet={fleet} settings={settings} />;
+  }
+
+  // 5) None.
   notFound();
 }

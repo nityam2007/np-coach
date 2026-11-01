@@ -43,37 +43,14 @@ export function ItemListJsonLd({ name, items }: { name: string; items: { name: s
   );
 }
 
-/** ContactPage / LocalBusiness for the contact page (address + phone from settings). */
-export function ContactPageJsonLd({
-  name,
-  telephone,
-  email,
-  address,
-}: {
-  name: string;
-  telephone: string;
-  email: string;
-  address: { line1: string; line2: string; city: string; county: string; postcode: string };
-}) {
+/** ContactPage pointing at the site-wide LocalBusiness node (address + phone live there, once). */
+export function ContactPageJsonLd({ organizationId }: { organizationId: string }) {
   return (
     <JsonLdScript
       data={{
         "@context": "https://schema.org",
         "@type": "ContactPage",
-        about: {
-          "@type": "LocalBusiness",
-          name,
-          telephone,
-          email,
-          address: {
-            "@type": "PostalAddress",
-            streetAddress: `${address.line1}, ${address.line2}`,
-            addressLocality: address.city,
-            addressRegion: address.county,
-            postalCode: address.postcode,
-            addressCountry: "GB",
-          },
-        },
+        about: { "@id": organizationId },
       }}
     />
   );

@@ -51,7 +51,9 @@ export function GoogleAnalytics({ measurementId }: { measurementId?: string }) {
     <Script
       id="google-analytics"
       src={`https://www.googletagmanager.com/gtag/js?id=${validId}`}
-      strategy="afterInteractive"
+      // Commands queue in dataLayer until the tag arrives, so loading it after page load loses nothing
+      // and keeps ~178 KiB of third-party JS off the critical path.
+      strategy="lazyOnload"
     />
   );
 }

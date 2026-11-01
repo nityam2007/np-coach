@@ -51,6 +51,7 @@ export function Hero({ settings, stops }: { settings: SiteSettings; stops: Stop[
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoPlaying, setVideoPlaying] = useState(false);
+  const [videoShown, setVideoShown] = useState(false);
   const [videoFailed, setVideoFailed] = useState(false);
   const saveData = useSyncExternalStore(subscribeToSaveData, saveDataSnapshot, saveDataServerSnapshot);
   const displayVideo = Boolean(video && !reduce && !saveData && !videoFailed);
@@ -76,7 +77,10 @@ export function Hero({ settings, stops }: { settings: SiteSettings; stops: Stop[
       <div className="relative flex min-h-[calc(100dvh-5rem)] items-center bg-navy">
         {/* The media is decorative; keep controls and copy outside this layer. */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-          {displayVideo ? (
+          {/* The optimised image is always the first paint (LCP); the video fades in over it once playing,
+              so the raw full-size poster is never downloaded. */}
+          {coach && <Image src={coach} alt="" fill priority sizes="100vw" className="object-cover" />}
+          {displayVideo && (
             <video
               id="homepage-hero-video"
               ref={videoRef}
@@ -86,15 +90,13 @@ export function Hero({ settings, stops }: { settings: SiteSettings; stops: Stop[
               loop
               playsInline
               preload="metadata"
-              poster={coach ?? undefined}
-              className="absolute inset-0 h-full w-full object-cover"
+              className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${videoShown ? "opacity-100" : "opacity-0"}`}
+              onPlaying={() => setVideoShown(true)}
               onPlay={() => setVideoPlaying(true)}
               onPause={() => setVideoPlaying(false)}
               onError={() => setVideoFailed(true)}
             />
-          ) : coach ? (
-            <Image src={coach} alt="" fill priority sizes="100vw" className="object-cover" />
-          ) : null}
+          )}
           <div className="absolute inset-0 bg-gradient-to-r from-navy/90 via-navy/65 to-navy/25" />
           <div className="absolute inset-0 bg-gradient-to-t from-navy via-transparent to-navy/20" />
         </div>

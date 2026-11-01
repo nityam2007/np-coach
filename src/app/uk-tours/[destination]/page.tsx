@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { BreadcrumbJsonLd, JsonLdScript } from "@/components/seo/JsonLd";
+import { organizationId } from "@/components/seo/OrganizationJsonLd";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Icon } from "@/components/ui/Icon";
 import { Reveal } from "@/components/ui/motion";
@@ -36,13 +37,14 @@ export default async function TourPage({ params }: { params: Promise<{ destinati
   const detail = assetUrl(tour.image ?? tour.cardImage);
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "Service",
+    "@type": ["Service", "TouristTrip"],
     serviceType: "Coach hire and UK tours",
     name: `${tour.destination} coach tours from West London`,
     description: tour.seoDescription,
     url: `${publicUrl}/uk-tours/${tour.slug}`,
     areaServed: "United Kingdom",
-    provider: { "@type": "Organization", "@id": `${publicUrl}/#organization`, name: settings.name },
+    touristType: "Group travel",
+    provider: { "@id": organizationId(publicUrl) },
   };
 
   return (

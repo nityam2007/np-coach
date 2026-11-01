@@ -363,3 +363,14 @@ Append-only. Newest entries at the bottom. Never edit or delete past entries —
 - All 47 existing tests, TypeScript, full ESLint and diff whitespace checks pass. Browser/mobile visual review remains for the user's existing localhost server.
 - Follow-up: center the desktop booking bar on the video's bottom edge using half its own height instead of a fixed overlap. Preserve the mobile layout and keep the adjustment local and unpushed.
 - After local review, the user authorized committing and pushing this hero preview and alignment adjustment. Unrelated environment, generated and archive files remain excluded.
+
+## 2026-11-01 — Structured data, homepage LCP and cookie banner (audit PR 2)
+
+- **One business entity in JSON-LD.** New `organizationId()` helper in `OrganizationJsonLd.tsx` is the single `@id` source. Fleet, route, tour, blog and contact nodes now reference it instead of re-declaring an unlinked Organization / second LocalBusiness. `ContactPageJsonLd` now takes only `organizationId` (address and phone live once, on the site-wide node).
+- LocalBusiness `telephone` uses E.164 from the CMS `tel:` link; removed the duplicate `alternateName`. Added a site-wide `WebSite` node (`en-GB`, publisher → organisation).
+- Routes: `areaServed` is the two cities instead of "United Kingdom". Tours: typed `Service` + `TouristTrip`. Fleet: adds `url` and `serviceType`. Blog: `inLanguage`; a CMS author other than the company name is emitted as a `Person`.
+- **Homepage LCP.** Lighthouse showed the LCP element was the video's raw 681 KiB poster, swapped in after hydration over the optimised SSR image. The optimised `<Image>` now always renders; the video sits on top at `opacity-0` and fades in on `playing`, and the `poster` attribute is gone. Pause/play behaviour unchanged.
+- Preconnect to `NEXT_PUBLIC_DIRECTUS_URL` (all hero/card media). GA4 tag loads `lazyOnload`; commands already queue in `dataLayer` (`src/lib/analytics.ts`), so consent handling and page views are unchanged.
+- Cookie banner: compact on phones (smaller copy, tighter padding), equal-width Reject/Accept with 44px tap targets and no label wrapping.
+- Checked and left unchanged: `BookingForm` inputs are all wrapped in `<label>` (audit flag was a heuristic false positive; the only unlabelled input is the honeypot). `FleetExperience` `sizes="100vw"` is a full-bleed background, so it is correct.
+- All 47 tests, TypeScript, ESLint and whitespace checks pass. CI's `npm audit` step already fails on `main` (nodemailer, sharp, zod, source-map-js advisories) — unrelated to this change. No CMS writes, seed, build or deploy.

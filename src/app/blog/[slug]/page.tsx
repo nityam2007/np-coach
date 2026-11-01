@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BreadcrumbJsonLd, JsonLdScript } from "@/components/seo/JsonLd";
+import { organizationId } from "@/components/seo/OrganizationJsonLd";
 import { PageHero } from "@/components/sections/PageHero";
 import { Icon } from "@/components/ui/Icon";
 import { Reveal } from "@/components/ui/motion";
@@ -47,10 +48,12 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     headline: post.title,
     description: post.excerpt,
     datePublished: post.date,
-    author: { "@type": "Organization", name: post.author },
+    inLanguage: "en-GB",
+    // A CMS author other than the company name is a named person (stronger E-E-A-T signal).
+    author: post.author === settings.name ? { "@id": organizationId(publicUrl) } : { "@type": "Person", name: post.author },
     publisher: {
       "@type": "Organization",
-      "@id": `${publicUrl}/#organization`,
+      "@id": organizationId(publicUrl),
       name: settings.name,
       logo: logo ? { "@type": "ImageObject", url: logo } : undefined,
     },

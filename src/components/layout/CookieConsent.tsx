@@ -55,8 +55,9 @@ export function CookieConsent({ content }: { content: CookieConsentContent }) {
       aria-label={content.dialogLabel}
       className="fixed inset-x-0 bottom-0 z-[60] border-t border-greyblue/30 bg-offwhite/95 backdrop-blur"
     >
-      <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-        <p className="text-sm text-navy/80">
+      {/* Compact on phones (it overlays the hero); equal-weight buttons keep Reject as easy as Accept (PECR). */}
+      <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 sm:py-4">
+        <p className="text-xs leading-snug text-navy/80 sm:text-sm">
           {content.message} {" "}
           <Link href="/cookie-policy" className="font-semibold text-accent hover:underline">
             {content.policyLabel}
@@ -67,14 +68,14 @@ export function CookieConsent({ content }: { content: CookieConsentContent }) {
           <button
             type="button"
             onClick={() => choose("rejected")}
-            className="rounded-lg border border-greyblue/50 px-5 py-2 text-sm font-semibold text-navy transition-colors hover:bg-greyblue/10"
+            className="min-h-11 flex-1 whitespace-nowrap rounded-lg border border-greyblue/50 px-3 py-2 text-sm font-semibold text-navy transition-colors hover:bg-greyblue/10 sm:flex-none sm:px-5"
           >
             {content.rejectLabel}
           </button>
           <button
             type="button"
             onClick={() => choose("accepted")}
-            className="rounded-xl bg-accent px-5 py-2 text-sm font-semibold text-white shadow-sm shadow-accent/20 transition-all hover:bg-brand-hover hover:shadow-md"
+            className="min-h-11 flex-1 whitespace-nowrap rounded-xl bg-accent px-3 py-2 text-sm font-semibold text-white shadow-sm shadow-accent/20 transition-all hover:bg-brand-hover hover:shadow-md sm:flex-none sm:px-5"
           >
             {content.acceptLabel}
           </button>

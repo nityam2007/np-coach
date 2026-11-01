@@ -131,6 +131,7 @@ export default async function SlugPage({ params }: { params: Promise<{ slug: str
               <div className="mt-3 flex flex-wrap items-center gap-3">
                 <h1 className="inline-flex flex-wrap items-center gap-3 font-display text-4xl font-bold leading-[1.08] sm:text-5xl">
                   {route.from}
+                  <span className="sr-only"> to </span>
                   <Icon name="arrowRight" className="h-7 w-7 text-accent" />
                   {route.to}
                 </h1>

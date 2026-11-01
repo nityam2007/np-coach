@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { motion } from "motion/react";
 import type { Faq } from "@/lib/site-config";
 import { Reveal } from "@/components/ui/motion";
 import { safeJson } from "@/lib/safe-json";
@@ -49,19 +49,16 @@ export function FaqAccordion({ faqs }: { faqs: Faq[] }) {
                   </span>
                 </button>
               </dt>
-              <AnimatePresence initial={false}>
-                {isOpen && (
-                  <motion.dd
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                    className="overflow-hidden text-sm text-navy/70"
-                  >
-                    <div className="px-5 pb-5">{faq.answer}</div>
-                  </motion.dd>
-                )}
-              </AnimatePresence>
+              {/* Always rendered so every answer is in the server HTML (crawlers + FAQPage parity); closed answers collapse and go inert. */}
+              <motion.dd
+                initial={false}
+                animate={isOpen ? { height: "auto", opacity: 1 } : { height: 0, opacity: 0 }}
+                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                inert={!isOpen}
+                className="overflow-hidden text-sm text-navy/70"
+              >
+                <div className="px-5 pb-5">{faq.answer}</div>
+              </motion.dd>
             </div>
           );
         })}

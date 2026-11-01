@@ -1,5 +1,9 @@
+import type { Metadata } from "next";
 import { ButtonLink } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
+
+// Own title (instead of inheriting the homepage default) and kept out of the index.
+export const metadata: Metadata = { title: "Page not found", robots: { index: false, follow: true } };
 
 /** Branded 404 — calm, on-system, and always offers a way forward. */
 export default function NotFound() {

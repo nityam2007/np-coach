@@ -5,13 +5,19 @@ import { ButtonLink } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { Reveal } from "@/components/ui/motion";
 import { CmsHtml } from "@/components/ui/CmsHtml";
+import { buildMetadata } from "@/lib/seo";
 import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 
-export const metadata: Metadata = {
-  title: "About NP Coaches | Family-Run Coach Hire Since 1999",
-  description: "Meet NP Coaches, the family-run West London coach operator serving schools, businesses, tours and private groups across the UK since 1999.",
-  alternates: { canonical: "/about-us" },
-};
+// CMS `seo_title` is the complete title (brand included), so it bypasses the layout template.
+export async function generateMetadata(): Promise<Metadata> {
+  const page = await getPage("about-us");
+  return buildMetadata({
+    title: page?.seoTitle || "About NP Coaches | Family-Run Coach Hire Since 1999",
+    description: page?.seoDescription || "Meet NP Coaches, the family-run West London coach operator serving schools, businesses, tours and private groups across the UK since 1999.",
+    path: "/about-us",
+    titleAbsolute: true,
+  });
+}
 
 const principles = [
   { icon: "shield" as const, title: "Safety first", text: "Every journey is planned around dependable vehicles, professional drivers and the people travelling with us." },

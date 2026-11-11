@@ -6,13 +6,18 @@ import { ButtonLink } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { Reveal } from "@/components/ui/motion";
 import { CmsHtml } from "@/components/ui/CmsHtml";
+import { buildMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Lost & Found | NP Coaches",
-  description:
-    "Lost something on an NP Coaches service? Learn how our lost-and-found process works, then submit a secure claim online.",
-  alternates: { canonical: "/lost-property" },
-};
+// CMS `seo_title` is the complete title (brand included), so it bypasses the layout template.
+export async function generateMetadata(): Promise<Metadata> {
+  const page = await getPage("lost-property");
+  return buildMetadata({
+    title: page?.seoTitle || "Lost & Found | NP Coaches",
+    description: page?.seoDescription || "Lost something on an NP Coaches service? Learn how our lost-and-found process works, then submit a secure claim online.",
+    path: "/lost-property",
+    titleAbsolute: true,
+  });
+}
 
 function formatGBP(pence: number) {
   return new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(pence / 100);

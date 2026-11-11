@@ -391,3 +391,10 @@ Append-only. Newest entries at the bottom. Never edit or delete past entries —
 - Six phase-1 drafts seeded: Slough, West London, Heathrow, Uxbridge, Southall, Windsor. Copy uses only verifiable facts (depot, fleet sizes, Daily Express stops, partner schools, real local landmarks, ULEZ boundaries) — no prices, journey times or pickup promises. **Rows arrive as Draft**; the fallback carries `status: "draft"` and `getServiceAreas()` filters fallback rows to Published, so nothing goes live until the client reviews and publishes in Directus.
 - Not done here: `public/llms.txt` and a footer "Areas we cover" link (footer columns are CMS-owned) — to follow once PR 1 merges. `directus/schema-snapshot.yaml` not regenerated (needs a running Directus: `npm run schema:snapshot`).
 - TypeScript, ESLint, 47/47 tests, `verify:scripts` and whitespace checks pass. No CMS writes, seed run, build or deploy.
+
+## 2026-11-10 — Duplicate brand in page titles
+
+- `/about-us` and `/lost-property` set a static `metadata.title` that already ended in "NP Coaches", so the layout's `%s | NP Coaches` template doubled the brand (e.g. "Lost & Found | NP Coaches | NP Coaches"). Both now use `generateMetadata()` + `buildMetadata({ titleAbsolute: true })` with the CMS `seo_title`/`seo_description`, matching `/faqs` and `[slug]`. The old strings remain as the fallback when Directus is unreachable.
+- Live titles become the CMS values: "About NP Coaches | Family-Run Coach Hire Since 1999" and "Lost Property | NP Coaches". Both pages also gain per-page OpenGraph/Twitter tags via `buildMetadata`.
+- TypeScript and ESLint pass. No CMS writes, seed, build or deploy.
+- `public/llms.txt`: restored the 35-seat midi coach line (removed in audit PR 1 while the vehicle was Draft). The client confirmed the 35-seater is still in the fleet and it is published again in Directus.

@@ -82,6 +82,23 @@ export function ContactForm() {
         className="absolute left-[-9999px] h-0 w-0"
       />
 
+      <div>
+        <label className="flex items-start gap-3 text-sm text-navy">
+          <input
+            type="checkbox"
+            name="retentionAcknowledged"
+            required
+            aria-invalid={Boolean(state.errors?.retentionAcknowledged)}
+            aria-describedby={state.errors?.retentionAcknowledged ? "retention-error" : undefined}
+            className="mt-0.5 size-4 shrink-0 accent-accent"
+          />
+          New Punjab Coaches LTD will retain your information for 7 years
+        </label>
+        {state.errors?.retentionAcknowledged && (
+          <p id="retention-error" className="mt-1 text-xs text-red-600">{state.errors.retentionAcknowledged}</p>
+        )}
+      </div>
+
       <Turnstile resetSignal={state} />
       <SubmitButton />
     </form>

@@ -20,6 +20,7 @@ export const contactSchema = z.object({
   phone: z.string().trim().max(40).optional().default(""),
   subject: z.string().trim().max(160).optional().default(""),
   message: z.string().trim().min(10, "Please tell us a little more (10+ characters)").max(4000),
+  retentionAcknowledged: z.literal("on", { message: "Please acknowledge the seven-year retention notice." }),
   website: honeypot,
 });
 

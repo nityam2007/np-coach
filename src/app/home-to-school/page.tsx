@@ -34,7 +34,7 @@ const schoolFaqs: Faq[] = [
   {
     question: "How can I track the bus and see if my child is on board?",
     answer:
-      "Sign in at passenger.shuttleid.uk, open Notifications, and enable email boarding notifications — you'll be alerted when your child scans on.",
+      "Sign in at Trackaroo App, open Notifications, and enable email boarding notifications — you'll be alerted when your child scans on.",
   },
   {
     question: "My child forgot their QR code — can they scan on with a friend's code?",
@@ -162,6 +162,12 @@ export default async function HomeToSchoolPage() {
             </li>
           ))}
         </ul>
+        <a
+          href="/home-to-school-terms-and-conditions.pdf"
+          className="mt-6 inline-block font-semibold text-accent underline underline-offset-4"
+        >
+          Home to School Terms and Conditions (PDF)
+        </a>
       </section>
     </article>
   );

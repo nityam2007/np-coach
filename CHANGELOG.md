@@ -395,3 +395,4 @@ Append-only. Newest entries at the bottom. Never edit or delete past entries —
 ## 2026-11-24 — Home to School copy
 
 - Updated the introduction and search description to name Trackaroo. Removed the direct-debit bank details question and its GoCardless answer from both the accordion and FAQ structured data.
+- Updated the boarding notifications FAQ to direct parents to Trackaroo App and linked the supplied Home to School terms PDF beneath the parent and carer rules. Contact enquiries now require acknowledgement of the seven-year retention notice.

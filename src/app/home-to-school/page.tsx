@@ -10,7 +10,7 @@ import type { Faq } from "@/lib/site-config";
 export const metadata = buildMetadata({
   title: "Home to School Coach Service | Slough, Burnham, Langley",
   description:
-    "Daily home-to-school coach transport for Pioneer Secondary Academy and Herschel Grammar School in Slough. DBS-checked drivers, QR-code boarding and ShuttleID live tracking.",
+    "Daily home-to-school coach transport for Pioneer Secondary Academy and Herschel Grammar School in Slough. DBS-checked drivers, QR-code boarding and Trackaroo live tracking.",
   path: "/home-to-school",
   titleAbsolute: true,
 });
@@ -51,10 +51,6 @@ const schoolFaqs: Faq[] = [
       "Buses leave on time whenever possible and never early. Please be at your stop at least 3 minutes before the scheduled time.",
   },
   {
-    question: "How do I change my direct debit bank details?",
-    answer: "Contact GoCardless directly on 020 7183 8674 to update your bank details.",
-  },
-  {
     question: "Why is a pass so important if the driver knows my child?",
     answer:
       "It's a legal requirement for all passengers to be manifested. Scanning the pass lets us trace each child and their guardian in an emergency — without a scan, we have no record on board.",
@@ -83,7 +79,7 @@ export default async function HomeToSchoolPage() {
       <PageHero
         eyebrow="Safety first, every day"
         title="Home to School Transport"
-        intro="Safe, tracked daily coach travel with DBS-checked drivers, QR-code boarding and live tracking via ShuttleID. Select your school below to buy passes and manage tickets."
+        intro="Safe, tracked daily coach travel with DBS-checked drivers, QR-code boarding and live tracking via Trackaroo. Select your school below to buy passes and manage tickets."
         crumbs={[{ label: "Home", href: "/" }, { label: "Home to School" }]}
         image={settings.homeToSchoolImage}
         imageAlt={settings.homeToSchoolImageAlt}

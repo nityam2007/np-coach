@@ -391,3 +391,7 @@ Append-only. Newest entries at the bottom. Never edit or delete past entries —
 - Six phase-1 drafts seeded: Slough, West London, Heathrow, Uxbridge, Southall, Windsor. Copy uses only verifiable facts (depot, fleet sizes, Daily Express stops, partner schools, real local landmarks, ULEZ boundaries) — no prices, journey times or pickup promises. **Rows arrive as Draft**; the fallback carries `status: "draft"` and `getServiceAreas()` filters fallback rows to Published, so nothing goes live until the client reviews and publishes in Directus.
 - Not done here: `public/llms.txt` and a footer "Areas we cover" link (footer columns are CMS-owned) — to follow once PR 1 merges. `directus/schema-snapshot.yaml` not regenerated (needs a running Directus: `npm run schema:snapshot`).
 - TypeScript, ESLint, 47/47 tests, `verify:scripts` and whitespace checks pass. No CMS writes, seed run, build or deploy.
+
+## 2026-11-24 — Home to School copy
+
+- Updated the introduction and search description to name Trackaroo. Removed the direct-debit bank details question and its GoCardless answer from both the accordion and FAQ structured data.
